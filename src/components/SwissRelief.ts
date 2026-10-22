@@ -1,28 +1,39 @@
 import { reliefTileUrl, waterTileUrl, visibleReliefTiles } from "@/game/swissMap";
 import type { Site } from "@/game/sites";
 
-type Tile = { image: HTMLImageElement; tinted?: HTMLCanvasElement; loaded: boolean; failedAt: number };
+type Tile = { image: HTMLImageElement; surface?: HTMLCanvasElement; loaded: boolean; failedAt: number };
 const cache = new Map<string, Tile>();
 
-function tileImage(url: string, tint?: string): Tile {
-  const key = `${url}/${tint ?? ""}`;
+function tileImage(url: string, filter = "none", tint = ""): Tile {
+  const key = `${url}/${filter}/${tint}`;
   const existing = cache.get(key);
-  if (existing && (!existing.failedAt || Date.now() - existing.failedAt < 30000)) return existing;
+  if (existing && (!existing.failedAt || Date.now() - existing.failedAt < 30000)) {
+    // Keep recently visible tiles when the pilot pans into a new area.
+    cache.delete(key);
+    cache.set(key, existing);
+    return existing;
+  }
   const image = new Image();
   image.crossOrigin = "anonymous";
   const tile: Tile = { image, loaded: false, failedAt: 0 };
   image.onload = () => {
-    if (tint) {
+    if (tint || filter !== "none") {
       const surface = document.createElement("canvas");
       surface.width = image.naturalWidth;
       surface.height = image.naturalHeight;
       const context = surface.getContext("2d");
       if (context) {
+        // Apply the expensive relief filter once at native tile resolution,
+        // never to the enlarged high-DPI map on every animation frame.
+        context.filter = filter;
         context.drawImage(image, 0, 0);
-        context.globalCompositeOperation = "source-in";
-        context.fillStyle = tint;
-        context.fillRect(0, 0, surface.width, surface.height);
-        tile.tinted = surface;
+        context.filter = "none";
+        if (tint) {
+          context.globalCompositeOperation = "source-in";
+          context.fillStyle = tint;
+          context.fillRect(0, 0, surface.width, surface.height);
+        }
+        tile.surface = surface;
       }
     }
     tile.loaded = true;
@@ -44,17 +55,14 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
   const reliefFilter = theme.getPropertyValue("--map-relief-filter").trim() || "none";
   const waterColor = theme.getPropertyValue("--map-water").trim();
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr)) {
-    const tile = tileImage(reliefTileUrl(position.x, position.y, position.level));
+    const tile = tileImage(reliefTileUrl(position.x, position.y, position.level), reliefFilter);
     if (tile.loaded) {
-      ctx.save();
-      ctx.filter = reliefFilter;
-      ctx.drawImage(tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
-      ctx.restore();
+      ctx.drawImage(tile.surface ?? tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
       loaded++;
     } else if (tile.failedAt) failed++;
-    const water = tileImage(waterTileUrl(position.x, position.y, position.level), waterColor);
+    const water = tileImage(waterTileUrl(position.x, position.y, position.level), "none", waterColor);
     if (tile.loaded && water.loaded) {
-      ctx.drawImage(water.tinted ?? water.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
+      ctx.drawImage(water.surface ?? water.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
     }
   }
   return { loaded, failed };
