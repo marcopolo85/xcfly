@@ -69,7 +69,6 @@ export function FlightGame() {
       if (cancelled) return;
       const rnd = mulberry32((Math.random() * 1e9) | 0);
       const thermals = generateHotspotThermals(terrain, hotspots, rnd);
-      const task = generateTask(rnd);
       const season = SEASONS[config.season];
       const g = gradientAt(terrain, 0, 0);
       const sim: Sim = {
@@ -77,7 +76,7 @@ export function FlightGame() {
         vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour, landed: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
-      let next = 0, last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
+      let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       if (cancelled) return;
       setPhase("flying");
 
@@ -96,30 +95,25 @@ export function FlightGame() {
         }
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
         vario.current?.update(smoothVz);
-        if (next < 3 && inCylinder(sim.x, sim.y, task.waypoints[next])) next++;
         trailT += simDt;
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, task, next, trail, dusk, thermals: showThermalsRef.current ? thermals : null }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermals: showThermalsRef.current ? thermals : null }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
-        const xc = xcDistance(task, next, sim.x, sim.y);
+        const xc = sim.distance;
         if (now - lastHud > 100) {
           lastHud = now;
-          const wp = task.waypoints[Math.min(next, 2)];
-          const brg = Math.atan2(wp.x - sim.x, wp.y - sim.y);
           setHud({
             alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, speed: sim.speed,
-            wpName: wp.name, wpDist: Math.hypot(wp.x - sim.x, wp.y - sim.y), wpRel: brg - sim.heading,
             xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
-            taskType: task.type, next,
           });
         }
-        if (sim.landed || next >= 3) {
+        if (sim.landed) {
           vario.current?.update(0);
-          setResult({ goal: next >= 3, xc, time: sim.flightTime, reason: next >= 3 ? "Ziel erreicht!" : "Gelandet" });
+          setResult({ goal: false, xc, time: sim.flightTime, reason: "Gelandet" });
           setPhase("done");
           return;
         }
@@ -170,7 +164,6 @@ export function FlightGame() {
       <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
-      {hud && <WaypointCompass d={hud} />}
       {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
         <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
