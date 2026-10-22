@@ -25,6 +25,7 @@ export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
       const n = normalAt(t, x, y);
       // Thermals detach at realistic trigger points: summits/ridges,
       // large open flats and pronounced slope breaks.
+      if (Math.hypot(x, y) < 600) continue; // launch source covers this area
       const rel = releaseScore(t, x, y);
       if (rnd() > 0.08 + rel * 0.85) continue;
       const th: Thermal = {
