@@ -19,6 +19,44 @@ function getWingImage() {
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
+/** Subtle contour lines (100 m, major every 500 m) from the simulation terrain grid. */
+function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number) => number, sy: (y: number) => number, z: number, xMin: number, xMax: number, yMin: number, yMax: number) {
+  const step = Math.max(1, Math.round(4 / (RES * z))); // keep cells a few px apart at any zoom
+  const i0 = Math.max(0, Math.floor((xMin + EXTENT) / RES));
+  const i1 = Math.min(N - 1, Math.ceil((xMax + EXTENT) / RES));
+  const j0 = Math.max(0, Math.floor((EXTENT - yMax) / RES));
+  const j1 = Math.min(N - 1, Math.ceil((EXTENT - yMin) / RES));
+  if (i1 - i0 < step || j1 - j0 < step) return;
+  const minor = new Path2D(), major = new Path2D();
+  const h = t.h;
+  for (let level = Math.ceil(t.site.valley / 100) * 100; level <= t.site.peak; level += 100) {
+    const path = level % 500 === 0 ? major : minor;
+    for (let j = j0; j < j1; j += step) {
+      const j2 = Math.min(j + step, N - 1);
+      for (let i = i0; i < i1; i += step) {
+        const i2 = Math.min(i + step, N - 1);
+        const h00 = h[j * N + i], h10 = h[j * N + i2], h01 = h[j2 * N + i], h11 = h[j2 * N + i2];
+        const x0 = i * RES - EXTENT, x1 = i2 * RES - EXTENT;
+        const y0 = EXTENT - j * RES, y1 = EXTENT - j2 * RES;
+        const pts: [number, number][] = [];
+        if ((h00 - level) * (h10 - level) < 0) pts.push([x0 + ((level - h00) / (h10 - h00)) * (x1 - x0), y0]);
+        if ((h10 - level) * (h11 - level) < 0) pts.push([x1, y0 + ((level - h10) / (h11 - h10)) * (y1 - y0)]);
+        if ((h01 - level) * (h11 - level) < 0) pts.push([x0 + ((level - h01) / (h11 - h01)) * (x1 - x0), y1]);
+        if ((h00 - level) * (h01 - level) < 0) pts.push([x0, y0 + ((level - h00) / (h01 - h00)) * (y1 - y0)]);
+        for (let p = 0; p + 1 < pts.length; p += 2) {
+          path.moveTo(sx(pts[p][0]), sy(pts[p][1]));
+          path.lineTo(sx(pts[p + 1][0]), sy(pts[p + 1][1]));
+        }
+      }
+    }
+  }
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(120,80,40,0.16)";
+  ctx.stroke(minor);
+  ctx.strokeStyle = "rgba(120,80,40,0.3)";
+  ctx.stroke(major);
+}
+
 export interface SceneData {
   site: Site;
   terrain: Terrain;
