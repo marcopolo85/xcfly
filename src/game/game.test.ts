@@ -24,7 +24,7 @@ describe("game rules", () => {
       const realFrames = 120;
       for (let i = 0; i < realFrames; i++) {
         steer(sim, input, totalReal / realFrames, simSpeed);
-        stepPhysics(sim, input, (totalReal / realFrames) * simSpeed, { h: () => 0 }, 0);
+        stepPhysics(sim, input, (totalReal / realFrames) * simSpeed, flat, 0);
       }
       // Distance flown per radian of turn = turn radius.
       return sim.distance / sim.heading;
