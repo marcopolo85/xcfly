@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { timeScale } from "./physicsEngine";
+import { timeScale, steer, stepPhysics, type Sim } from "./physicsEngine";
 import { cloudbaseFromPeak } from "./terrain";
 import { inCylinder, generateTask, mulberry32 } from "./task";
 import { slopeTrigger } from "./thermals";
