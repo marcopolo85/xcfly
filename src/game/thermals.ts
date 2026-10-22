@@ -49,7 +49,7 @@ export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
   const x = Math.sin(heading) * 120, y = Math.cos(heading) * 120;
   const launchSource: Thermal = {
     x, y, nx: launchNormal.x, ny: launchNormal.y, nz: launchNormal.z,
-    r: 240, power: 1, period: 600, phase: rnd() * Math.PI * 2,
+    r: 260, power: 1.4, period: 600, phase: rnd() * Math.PI * 2,
   };
   const k = key(Math.floor(x / CELL), Math.floor(y / CELL));
   const sources = grid.get(k) ?? [];
