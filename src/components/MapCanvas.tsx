@@ -4,6 +4,7 @@ import { drawSwissRelief } from "./SwissRelief";
 import type { Sim } from "@/game/physicsEngine";
 import { CYLINDER_RADIUS, type Task } from "@/game/task";
 import type { ZoomTransform } from "d3-zoom";
+import type { ThermalField } from "@/game/thermals";
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
@@ -14,6 +15,7 @@ export interface SceneData {
   next: number;
   trail: { x: number; y: number; vz: number }[];
   dusk: number; // 0..1 darkness
+  thermals?: ThermalField | null;
 }
 
 export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTransform) {
@@ -42,6 +44,19 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.font = "12px monospace";
     ctx.textAlign = "center";
     ctx.fillText(map.failed ? "Karte nicht erreichbar · erneuter Versuch folgt" : "Schweizer Reliefkarte lädt…", W / 2, H * 0.65);
+  }
+
+  // thermal map
+  if (s.thermals) {
+    for (const arr of s.thermals.grid.values()) for (const th of arr) {
+      const px = sx(th.x), py = sy(th.y), r = Math.max(3, th.r * z);
+      if (px < -r || py < -r || px > W + r || py > H + r) continue;
+      const g = ctx.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0, `rgba(255,120,30,${0.25 + th.power * 0.35})`);
+      g.addColorStop(1, "rgba(255,120,30,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
+    }
   }
 
   // task line

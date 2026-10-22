@@ -27,6 +27,12 @@ export function FlightGame() {
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
+  const [simSpeed, setSimSpeed] = useState(1);
+  const [showThermals, setShowThermals] = useState(false);
+  const simSpeedRef = useRef(1);
+  const showThermalsRef = useRef(false);
+  simSpeedRef.current = simSpeed;
+  showThermalsRef.current = showThermals;
   const vario = useRef<AudioVario | null>(null);
 
   const start = (c: FlightConfig) => {
@@ -66,7 +72,7 @@ export function FlightGame() {
         last = now;
         const inp = input.current;
         steer(sim, inp, dtReal);
-        const simDt = dtReal * timeScale(inp.accel);
+        const simDt = dtReal * timeScale(inp.accel, simSpeedRef.current);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
         const sv = sunVector(sp);
         const steps = Math.ceil(simDt / 0.05);
@@ -81,7 +87,7 @@ export function FlightGame() {
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, sim, task, next, trail, dusk }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, sim, task, next, trail, dusk, thermals: showThermalsRef.current ? thermals : null }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = xcDistance(task, next, sim.x, sim.y);
@@ -144,8 +150,18 @@ export function FlightGame() {
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Generiere Gelände & Thermik…</p>
         </div>
       )}
-      <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1 backdrop-blur-md">
+      <div className="absolute left-3 top-3 flex flex-col gap-1 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
+        <label className="flex items-center gap-2">
+          <span className="w-16">Sim ×{simSpeed}</span>
+          <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
+            onChange={(e) => setSimSpeed(Number(e.target.value))} className="w-24 accent-primary" />
+        </label>
+        <span className="text-muted-foreground">Speed-Bar ×{simSpeed * 5}</span>
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
+          Thermikkarte
+        </label>
       </div>
       {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
         <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md sm:w-[340px] sm:flex-none">
@@ -166,7 +182,7 @@ export function FlightGame() {
           else vario.current.update(0);
         }
         setMuted(nextMuted);
-      }} className="ctrl-btn absolute left-3 top-16 h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
+      }} className="ctrl-btn absolute left-3 top-[150px] h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
         {muted ? "🔇" : "🔊"}
       </Button>
       <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 sm:hidden">

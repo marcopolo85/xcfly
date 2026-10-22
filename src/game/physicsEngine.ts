@@ -8,8 +8,9 @@ export const TURN_RATE = (32 * Math.PI) / 180; // rad per real second
 export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 5;
 
-export function timeScale(accel: boolean) {
-  return accel ? ACCEL_TIME_FACTOR : 1;
+/** Game-time factor: base simulation speed, multiplied by 5 on speedbar. */
+export function timeScale(accel: boolean, simSpeed = 1) {
+  return simSpeed * (accel ? ACCEL_TIME_FACTOR : 1);
 }
 
 export interface Sim {
