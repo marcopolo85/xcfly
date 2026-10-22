@@ -6,6 +6,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 it("filters each relief tile once and reuses the processed surface on subsequent frames", () => {
   const images: { onload?: () => void }[] = [];
+  const appliedFilters: string[] = [];
   const surfaces: { filter: string; drawImage: ReturnType<typeof vi.fn>; fillRect: ReturnType<typeof vi.fn> }[] = [];
   vi.stubGlobal("Image", class {
     naturalWidth = 256;
@@ -16,6 +17,7 @@ it("filters each relief tile once and reuses the processed surface on subsequent
   vi.stubGlobal("document", {
     createElement: () => {
       const context = { filter: "none", drawImage: vi.fn(), fillRect: vi.fn() };
+      context.drawImage.mockImplementation(() => appliedFilters.push(context.filter));
       surfaces.push(context);
       return { getContext: () => context };
     },
@@ -32,6 +34,7 @@ it("filters each relief tile once and reuses the processed surface on subsequent
   const initialImages = images.length;
   const processed = surfaces.length;
   expect(processed).toBe(initialImages);
+  expect(appliedFilters.filter(filter => filter === "contrast(1.45) brightness(0.88)")).toHaveLength(initialImages / 2);
   for (let frame = 0; frame < 60; frame++) {
     expect(drawSwissRelief(ctx, site, 0, 0, 426, 791, 0.085, 2.25).loaded).toBe(initialImages / 2);
   }
@@ -40,4 +43,8 @@ it("filters each relief tile once and reuses the processed surface on subsequent
   expect(surfaces.every(surface => surface.drawImage.mock.calls.length === 1)).toBe(true);
   expect(context.filter).toBe("none");
   expect(context.drawImage).toHaveBeenCalledTimes(initialImages * 60);
+  // Appearance changes must not reuse tiles processed with the previous theme.
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "none" }));
+  drawSwissRelief(ctx, site, 0, 0, 426, 791, 0.085, 2.25);
+  expect(images).toHaveLength(initialImages * 2);
 });
