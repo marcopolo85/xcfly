@@ -48,7 +48,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   ctx.fillStyle = theme.getPropertyValue("--background").trim();
   ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true;
-  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * 0.55) / z, W, H, z);
+  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * 0.55) / z, W, H, z, dpr);
   if (!map.loaded) {
     ctx.fillStyle = theme.getPropertyValue("--foreground").trim();
     ctx.font = "12px monospace";
