@@ -1,4 +1,4 @@
-import { reliefTileUrl, waterTileUrl, forestTileUrl, visibleReliefTiles } from "@/game/swissMap";
+import { reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleReliefTiles } from "@/game/swissMap";
 import type { Site } from "@/game/sites";
 
 type Tile = { image: HTMLImageElement; surface?: HTMLCanvasElement; loaded: boolean; failedAt: number };
@@ -68,6 +68,10 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
     const forest = tileImage(forestTileUrl(position.x, position.y, position.level), "none", forestColor);
     if (tile.loaded && forest.loaded) {
       ctx.drawImage(forest.surface ?? forest.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
+    }
+    const river = tileImage(riverTileUrl(position.x, position.y, position.level), "none", waterColor);
+    if (tile.loaded && river.loaded) {
+      ctx.drawImage(river.surface ?? river.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
     }
   }
   return { loaded, failed };
