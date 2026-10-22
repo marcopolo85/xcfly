@@ -108,13 +108,32 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.stroke();
   }
 
-  // glide-range line: how far the glider reaches at best glide from current AGL
+  // glide-range line: best glide from current AGL, ending at the next terrain collision
   if (!sim.landed) {
     const agl = sim.alt - heightAt(s.terrain, sim.x, sim.y);
     if (agl > 1) {
-      const range = agl * (POLAR.trim.v / POLAR.trim.sink);
-      const ex = sim.x + Math.sin(sim.heading) * range;
-      const ey = sim.y + Math.cos(sim.heading) * range;
+      const gr = POLAR.trim.v / POLAR.trim.sink;
+      const maxRange = agl * gr;
+      const dx = Math.sin(sim.heading), dy = Math.cos(sim.heading);
+      const step = 40; // m between terrain samples along the glide path
+      let range = maxRange;
+      let prev = 0;
+      for (let d = step; d <= maxRange; d += step) {
+        if (sim.alt - d / gr <= heightAt(s.terrain, sim.x + dx * d, sim.y + dy * d)) {
+          // refine the collision point between the last free and first blocked sample
+          let lo = prev, hi = d;
+          for (let i = 0; i < 8; i++) {
+            const mid = (lo + hi) / 2;
+            if (sim.alt - mid / gr <= heightAt(s.terrain, sim.x + dx * mid, sim.y + dy * mid)) hi = mid;
+            else lo = mid;
+          }
+          range = lo;
+          break;
+        }
+        prev = d;
+      }
+      const ex = sim.x + dx * range;
+      const ey = sim.y + dy * range;
       ctx.setLineDash([6, 6]);
       ctx.strokeStyle = "rgba(255,255,255,0.85)";
       ctx.lineWidth = 2.5;
