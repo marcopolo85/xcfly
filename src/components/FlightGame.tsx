@@ -3,7 +3,8 @@ import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt, normalAt } from "@/game/terrain";
-import { generateThermals, airLift, slopeTrigger } from "@/game/thermals";
+import { airLift, slopeTrigger } from "@/game/thermals";
+import { generateHotspotThermals, loadThermalHotspots } from "@/game/thermalHotspots";
 import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from "@/game/physicsEngine";
 import { generateTask, inCylinder, xcDistance, mulberry32 } from "@/game/task";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
@@ -15,7 +16,7 @@ import { ZoomControls } from "./ZoomControls";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
 
-type Phase = "config" | "loading" | "flying" | "done";
+type Phase = "config" | "loading" | "flying" | "done" | "error";
 
 export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
@@ -23,6 +24,7 @@ export function FlightGame() {
   const [hud, setHud] = useState<HudData | null>(null);
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string } | null>(null);
   const [muted, setMuted] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [runId, setRunId] = useState(0);
   const mapZoom = useCanvasZoom(0.3, 8, phase !== "config");
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
@@ -41,6 +43,8 @@ export function FlightGame() {
     vario.current.muted = muted;
     vario.current.start();
     setConfig(c);
+    setHud(null);
+    setLoadError(null);
     mapZoom.reset(); profileZoom.reset();
     setResult(null);
     setPhase("loading");
@@ -53,12 +57,22 @@ export function FlightGame() {
     if (runId === 0 || !config) return;
     let raf = 0, cancelled = false;
     const timer = setTimeout(async () => {
-      let terrain;
-      try { terrain = await loadRealTerrain(config.site); }
-      catch { terrain = generateTerrain(config.site); }
+      let terrain, hotspots;
+      try {
+        [terrain, hotspots] = await Promise.all([
+          loadRealTerrain(config.site).catch(() => generateTerrain(config.site)),
+          loadThermalHotspots(config.site),
+        ]);
+      } catch {
+        if (cancelled) return;
+        vario.current?.update(0);
+        setLoadError("Thermikpunkte von KK7 konnten nicht geladen werden.");
+        setPhase("error");
+        return;
+      }
       if (cancelled) return;
       const rnd = mulberry32((Math.random() * 1e9) | 0);
-      const thermals = generateThermals(terrain, rnd);
+      const thermals = generateHotspotThermals(terrain, hotspots, rnd);
       const task = generateTask(rnd);
       const season = SEASONS[config.season];
       const g = gradientAt(terrain, 0, 0);
@@ -148,10 +162,14 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 z-10 bg-background/90 px-2 py-1 font-mono text-[10px] text-foreground">© swisstopo · Landeskarte</a>
+      <div className="absolute bottom-0 right-0 z-10 flex flex-wrap justify-end gap-x-2 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground">
+        <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · Landeskarte</a>
+        <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer">Thermik: M. von Känel · KK7</a>
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0 · bearbeitet</a>
+      </div>
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
-          <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade echte Geländehöhen & Thermik…</p>
+          <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikpunkte…</p>
         </div>
       )}
       <div className="absolute left-3 top-3 flex flex-col gap-1 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
@@ -210,6 +228,15 @@ export function FlightGame() {
           </div>
         </div>
       )}
+      {phase === "error" && <div className="absolute inset-0 z-20 grid place-items-center bg-background/95 p-6">
+        <div className="max-w-sm space-y-4 text-center">
+          <p className="text-foreground">{loadError}</p>
+          <div className="flex justify-center gap-2">
+            <Button onClick={() => config && start(config)}>Erneut versuchen</Button>
+            <Button variant="outline" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</Button>
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }
