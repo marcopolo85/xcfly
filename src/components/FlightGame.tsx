@@ -102,7 +102,7 @@ export function FlightGame() {
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, sim, task, next, trail, dusk, thermals: showThermalsRef.current ? thermals : null }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, task, next, trail, dusk, thermals: showThermalsRef.current ? thermals : null }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = xcDistance(task, next, sim.x, sim.y);
