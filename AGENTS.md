@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Simulation logic lives in src/game/* as pure TS (terrain, thermals, physics, task, sun, audio); React components only render and wire input — keeps the engine testable.
+- Simulation logic lives in src/game/* as pure TS (terrain, thermals, physics, sun, audio); React components only render and wire input — keeps the engine testable. No turnpoint/task feature: flights end on landing, and the HUD "XC" distance is the distance flown (sim.distance).
 - noUncheckedIndexedAccess is off: the engine does hot-loop typed-array indexing where per-access undefined checks add noise.
 - Display the real relief using browser-loaded swisstopo colored relief WMTS tiles and pure launch-relative Mercator projection in src/game/swissMap.ts; tiles use the highest WMTS level that renders ≥256 device pixels per tile (reliefLevel, capped at 17) so the map stays sharp on high-dpi screens and when zoomed in. Flight terrain is loaded from open Terrarium DEM tiles in src/game/realTerrain.ts using the same projection, with procedural terrain only as offline fallback.
 - Use independent d3-zoom canvas transforms for the map and heading-relative side profile; the profile samples existing simulation terrain and projects current vertical speed without affecting flight physics.

@@ -3,7 +3,7 @@ import { SITES } from "./sites";
 import { generateTerrain, heightAt } from "./terrain";
 import { airLift, generateThermals } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
-import { mulberry32 } from "./task";
+import { mulberry32 } from "./rng";
 import { POLAR } from "./physicsEngine";
 
 describe("usable solar thermals", () => {

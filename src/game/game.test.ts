@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { timeScale, steer, stepPhysics, TURN_RATE, type Sim } from "./physicsEngine";
 import { cloudbaseFromPeak, N } from "./terrain";
-import { inCylinder, generateTask, mulberry32 } from "./task";
+import { mulberry32 } from "./rng";
 import { slopeTrigger } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 
@@ -38,13 +38,6 @@ describe("game rules", () => {
   });
   it("cloudbase is 500 m above the peaks", () => {
     expect(cloudbaseFromPeak(2800)).toBe(3300);
-  });
-  it("waypoint is reached inside a 400 m cylinder", () => {
-    expect(inCylinder(399, 0, { x: 0, y: 0 })).toBe(true);
-    expect(inCylinder(401, 0, { x: 0, y: 0 })).toBe(false);
-  });
-  it("task has 3 waypoints", () => {
-    expect(generateTask(mulberry32(3)).waypoints).toHaveLength(3);
   });
   it("east slopes trigger in the morning, west slopes in the evening", () => {
     const east = { x: 0.6, y: 0, z: 0.8 }, west = { x: -0.6, y: 0, z: 0.8 };

@@ -1,9 +1,7 @@
 export interface HudData {
   alt: number; agl: number; vz: number; speed: number;
-  wpName: string; wpDist: number; wpRel: number; // rel bearing rad
   xc: number; xcSpeed: number;
   clock: string; accel: boolean; cloudbase: number;
-  taskType: string; next: number;
 }
 
 function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string; cls?: string }) {
@@ -39,17 +37,3 @@ export function FlightHUD({ d }: { d: HudData }) {
   );
 }
 
-export function WaypointCompass({ d }: { d: HudData }) {
-  return (
-    <section aria-label="Kompass zum Wegpunkt" className="pointer-events-none absolute right-2 top-2 flex items-center gap-1.5 rounded-md border border-border bg-card/95 p-1.5 font-mono backdrop-blur-md">
-      <svg viewBox="-20 -20 40 40" className="h-9 w-9 shrink-0">
-        <circle r="18" className="fill-none stroke-border" />
-        <g transform={`rotate(${(d.wpRel * 180) / Math.PI})`}><path d="M0 -15 L7 8 L0 3 L-7 8 Z" className="fill-primary" /></g>
-      </svg>
-      <div>
-        <div className="hud-label">{d.wpName} · {Math.min(d.next + 1, 3)}/3</div>
-        <div className="hud-value text-sm">{(d.wpDist / 1000).toFixed(1)}<span className="hud-unit">km</span></div>
-      </div>
-    </section>
-  );
-}
