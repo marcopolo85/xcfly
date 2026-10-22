@@ -180,6 +180,7 @@ export function FlightGame() {
           </header>
           <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>
+        <FlightHUD d={hud} />
         <div className="flex flex-col items-center justify-between gap-1 rounded-md border border-border bg-card/95 px-1.5 py-1 font-mono text-foreground backdrop-blur-md">
           <label className="flex items-center gap-1 text-[9px]" title="Thermikkarte ein-/ausblenden">
             <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
@@ -191,7 +192,6 @@ export function FlightGame() {
             className="min-h-0 w-5 flex-1 accent-primary [direction:rtl] [writing-mode:vertical-rl]" />
           <span className="text-[9px]">×{simSpeed}</span>
         </div>
-        <FlightHUD d={hud} />
       </div>}
       <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
