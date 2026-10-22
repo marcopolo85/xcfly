@@ -1,7 +1,8 @@
 import { forwardRef } from "react";
 import type { Site } from "@/game/sites";
 import { drawSwissRelief } from "./SwissRelief";
-import type { Sim } from "@/game/physicsEngine";
+import { POLAR, type Sim } from "@/game/physicsEngine";
+import { heightAt, type Terrain } from "@/game/terrain";
 import { CYLINDER_RADIUS, type Task } from "@/game/task";
 import type { ZoomTransform } from "d3-zoom";
 import type { ThermalField } from "@/game/thermals";
@@ -20,6 +21,7 @@ export const ZOOM = 0.085; // px per metre (CSS px)
 
 export interface SceneData {
   site: Site;
+  terrain: Terrain;
   sim: Sim;
   task: Task;
   next: number;
