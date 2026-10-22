@@ -6,6 +6,7 @@ export const MERCATOR_EXTENT = Math.PI * EARTH_RADIUS;
 export const RELIEF_LAYER = "ch.swisstopo.leichte-basiskarte_reliefschattierung";
 export const WATER_LAYER = "ch.bafu.vec25-seen";
 export const FOREST_LAYER = "ch.swisstopo.swisstlm3d-wald";
+export const RIVER_LAYER = "ch.bafu.vec25-gewaessernetz_2000";
 export const MIN_RELIEF_LEVEL = 8;
 export const MAX_RELIEF_LEVEL = 17;
 
@@ -39,6 +40,10 @@ export function waterTileUrl(x: number, y: number, level: number) {
 
 export function forestTileUrl(x: number, y: number, level: number) {
   return `https://wmts.geo.admin.ch/1.0.0/${FOREST_LAYER}/default/current/3857/${level}/${x}/${y}.png`;
+}
+
+export function riverTileUrl(x: number, y: number, level: number) {
+  return `https://wmts.geo.admin.ch/1.0.0/${RIVER_LAYER}/default/current/3857/${level}/${x}/${y}.png`;
 }
 
 export function visibleReliefTiles(site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number, dpr = 1) {
