@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { mapOrigin, reliefLevel, reliefTileUrl, visibleReliefTiles } from "./swissMap";
+import { mapOrigin, reliefLevel, reliefTileUrl, waterTileUrl, visibleReliefTiles } from "./swissMap";
 
 describe("Swiss relief map", () => {
+  it("uses real water geometry in the same projection as the relief", () => {
+    expect(waterTileUrl(8544, 5784, 14)).toBe("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swisstlm3d-gewaessernetz/default/current/3857/14/8544/5784.png");
+  });
   it("uses the public Swiss relief layer", () => {
     expect(reliefTileUrl(2136, 1445, 13)).toBe("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.leichte-basiskarte_reliefschattierung/default/current/3857/13/2136/1445.png");
   });
