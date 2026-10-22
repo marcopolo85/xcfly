@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
-import { FlightHUD, WaypointCompass, type HudData } from "./FlightHUD";
+import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt, normalAt } from "@/game/terrain";
 import { airLift, slopeTrigger } from "@/game/thermals";
 import { generateHotspotThermals, loadThermalHotspots } from "@/game/thermalHotspots";
 import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from "@/game/physicsEngine";
-import { generateTask, inCylinder, xcDistance, mulberry32 } from "@/game/task";
+import { mulberry32 } from "@/game/rng";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { loadRealTerrain } from "@/game/realTerrain";
