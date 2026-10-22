@@ -4,7 +4,7 @@ export const POLAR = {
   trim: { v: 10.5, sink: 1.1 }, // ~38 km/h, L/D ≈ 9.5
   accel: { v: 14.5, sink: 2.05 }, // ~52 km/h, L/D ≈ 7.1
 };
-export const TURN_RATE = (32 * Math.PI) / 180; // rad per real second
+export const TURN_RATE = (32 * Math.PI) / 180; // rad per simulated second
 export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 5;
 
@@ -22,9 +22,14 @@ export interface Sim {
 
 export interface Input { left: boolean; right: boolean; accel: boolean }
 
-export function steer(sim: Sim, input: Input, dtReal: number) {
+/**
+ * Applies the turn rate per simulated second so the flown circle keeps the
+ * same radius regardless of the simulation speed (see game.test.ts).
+ */
+export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
   const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  sim.heading = (sim.heading + dir * TURN_RATE * dtReal + Math.PI * 2) % (Math.PI * 2);
+  const dtSim = dtReal * timeScale(input.accel, simSpeed);
+  sim.heading = (sim.heading + dir * TURN_RATE * dtSim + Math.PI * 2) % (Math.PI * 2);
 }
 
 export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift: number) {
