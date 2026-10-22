@@ -21,8 +21,8 @@ describe("acoustic vario", () => {
     const { resume, gain, frequency } = setup();
     const vario = new AudioVario(); vario.start(); vario.update(1);
     expect(resume).toHaveBeenCalledOnce();
-    expect(frequency.setValueAtTime).toHaveBeenCalledWith(820, 1);
-    expect(gain.setValueAtTime).toHaveBeenCalledWith(0.13, 1);
+    expect(frequency.setValueAtTime).toHaveBeenCalledWith(1200, 1);
+    expect(gain.setValueAtTime).toHaveBeenCalledWith(0.08, 1);
   });
   it("muting cancels pending sound and unmuting can beep immediately", () => {
     const { gain } = setup();
