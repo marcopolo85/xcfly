@@ -52,7 +52,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         <Cell label="Basis" value={d.cloudbase.toFixed(0)} unit="m" />
         <div className="col-span-3 mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
           <span>{d.taskType} · WP {Math.min(d.next + 1, 3)}/3</span>
-          {d.accel && <span className="font-bold text-sun">×5</span>}
+          {d.accel && <span className="font-bold text-sun">SPEED</span>}
         </div>
       </div>
     </section>

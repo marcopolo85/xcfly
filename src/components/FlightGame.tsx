@@ -182,7 +182,7 @@ export function FlightGame() {
           else vario.current.update(0);
         }
         setMuted(nextMuted);
-      }} className="ctrl-btn absolute left-3 top-16 h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
+      }} className="ctrl-btn absolute left-3 top-[150px] h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
         {muted ? "🔇" : "🔊"}
       </Button>
       <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 sm:hidden">
