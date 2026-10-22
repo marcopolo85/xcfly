@@ -1,5 +1,5 @@
 # Aufgaben
-- [ ] Ruckler im laufenden Flug messen, Kartenzeichnung optimieren und Vergleich sowie Regressionstests prüfen.
+- [x] Ruckler im laufenden Flug messen und Kartenzeichnung optimieren: Filter pro Kachel zwischengespeichert; Bildintervall im Handy-Test von 467 ms auf 16,7 ms reduziert, 27 Tests bestanden, Zoom/Thermik/SPEED auf Handy und Desktop geprüft.
 - [x] Thermikpositionen aus der hochgeladenen KK7-KML übernehmen und im Flug prüfen (154 KK7-Punkte bei Niederhorn, unveränderte Koordinaten, Desktop/Handy und vier Regressionstests).
 - [x] Flugkarte mit Zoom und Verschieben versehen.
 - [x] GPS kompakt unten rechts platzieren.
