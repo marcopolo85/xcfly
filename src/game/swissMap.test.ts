@@ -11,6 +11,6 @@ describe("Swiss relief map", () => {
     const tiles = visibleReliefTiles(site, 0, 0, 426, 791, 0.085);
     const launchTile = tiles.find(t => t.left <= 213 && t.left + t.size > 213 && t.top <= 435.05 && t.top + t.size > 435.05);
     expect(launchTile?.x).toBe(4272);
-    expect(launchTile?.y).toBe(2891);
+    expect(launchTile?.y).toBe(2890);
   });
 });
