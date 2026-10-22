@@ -23,8 +23,8 @@ export function FlightGame() {
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string } | null>(null);
   const [muted, setMuted] = useState(false);
   const [runId, setRunId] = useState(0);
-  const mapZoom = useCanvasZoom();
-  const profileZoom = useCanvasZoom(0.5, 6);
+  const mapZoom = useCanvasZoom(0.3, 8, phase !== "config");
+  const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
   const vario = useRef<AudioVario | null>(null);
