@@ -1,5 +1,5 @@
 export interface HudData {
-  alt: number; agl: number; vz: number; vz10: number; speed: number;
+  alt: number; agl: number; vz: number; speed: number;
   wpName: string; wpDist: number; wpRel: number; // rel bearing rad
   xc: number; xcSpeed: number;
   clock: string; accel: boolean; cloudbase: number;
@@ -29,7 +29,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         <Cell label="Höhe" value={d.alt.toFixed(0)} unit="m" />
         <Cell label="Über Grund" value={d.agl.toFixed(0)} unit="m" />
         <Cell label="Vario 1s" value={fmtVz(d.vz)} unit="m/s" cls={vzCls(d.vz)} />
-        <Cell label="Vario 10s" value={fmtVz(d.vz10)} unit="m/s" cls={vzCls(d.vz10)} />
+        <Cell label="Gleitzahl" value={d.vz < -0.1 ? `1:${(d.speed / -d.vz).toFixed(0)}` : "1:∞"} />
         <Cell label="Speed" value={(d.speed * 3.6).toFixed(0)} unit="km/h" />
         <Cell label="XC-Speed" value={d.xcSpeed.toFixed(1)} unit="km/h" />
         <Cell label="XC" value={(d.xc / 1000).toFixed(1)} unit="km" />

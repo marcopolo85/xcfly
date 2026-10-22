@@ -77,7 +77,7 @@ export function FlightGame() {
         vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour, landed: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
-      let next = 0, last = performance.now(), lastHud = 0, smoothVz = 0, avgVz10 = 0, trailT = 0;
+      let next = 0, last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       if (cancelled) return;
       setPhase("flying");
 
@@ -95,7 +95,6 @@ export function FlightGame() {
           stepPhysics(sim, inp, simDt / steps, terrain, lift);
         }
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
-        avgVz10 += (sim.vz - avgVz10) * Math.min(1, simDt / 10);
         vario.current?.update(smoothVz);
         if (next < 3 && inCylinder(sim.x, sim.y, task.waypoints[next])) next++;
         trailT += simDt;
@@ -111,7 +110,7 @@ export function FlightGame() {
           const wp = task.waypoints[Math.min(next, 2)];
           const brg = Math.atan2(wp.x - sim.x, wp.y - sim.y);
           setHud({
-            alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, vz10: avgVz10, speed: sim.speed,
+            alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, speed: sim.speed,
             wpName: wp.name, wpDist: Math.hypot(wp.x - sim.x, wp.y - sim.y), wpRel: brg - sim.heading,
             xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
