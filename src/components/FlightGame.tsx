@@ -9,6 +9,10 @@ import { generateTask, inCylinder, xcDistance, mulberry32 } from "@/game/task";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { AudioVario } from "@/game/audioVario";
+import { useCanvasZoom } from "@/hooks/useCanvasZoom";
+import { ZoomControls } from "./ZoomControls";
+import { SideProfile, drawSideProfile } from "./SideProfile";
+import { Button } from "./ui/button";
 
 type Phase = "config" | "loading" | "flying" | "done";
 
@@ -19,7 +23,9 @@ export function FlightGame() {
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string } | null>(null);
   const [muted, setMuted] = useState(false);
   const [runId, setRunId] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mapZoom = useCanvasZoom();
+  const profileZoom = useCanvasZoom(0.5, 6);
+  const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
   const vario = useRef<AudioVario | null>(null);
 
@@ -27,6 +33,7 @@ export function FlightGame() {
     if (!vario.current) vario.current = new AudioVario();
     vario.current.start();
     setConfig(c);
+    mapZoom.reset(); profileZoom.reset();
     setResult(null);
     setPhase("loading");
     setRunId((r) => r + 1);
@@ -73,7 +80,8 @@ export function FlightGame() {
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, sim, task, next, trail, dusk });
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, sim, task, next, trail, dusk }, mapZoom.transform.current);
+        if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = xcDistance(task, next, sim.x, sim.y);
         if (now - lastHud > 100) {
@@ -135,10 +143,23 @@ export function FlightGame() {
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Generiere Gelände & Thermik…</p>
         </div>
       )}
-      {hud && <FlightHUD d={hud} />}
-      <button onClick={() => setMuted((m) => !m)} className="ctrl-btn absolute bottom-24 left-3 h-10 w-10 text-sm sm:bottom-4">
+      <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1 backdrop-blur-md">
+        <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
+      </div>
+      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
+        <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md sm:w-[340px] sm:flex-none">
+          <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
+            <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL · SIM</span>
+            <ZoomControls label="Seitenansicht" scale={profileZoom.scale} change={profileZoom.change} reset={profileZoom.reset} />
+          </header>
+          <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
+          <footer className="flex flex-wrap justify-between gap-x-2 px-2 py-1 font-mono text-[9px] text-muted-foreground"><span className="text-sun">— Gleitpfad</span><span>Flugrichtung →</span></footer>
+        </section>
+        <FlightHUD d={hud} />
+      </div>}
+      <Button variant="outline" aria-label={muted ? "Ton einschalten" : "Ton ausschalten"} onClick={() => setMuted((m) => !m)} className="ctrl-btn absolute left-3 top-16 h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
         {muted ? "🔇" : "🔊"}
-      </button>
+      </Button>
       <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 sm:hidden">
         <button className="ctrl-btn h-16 w-20 text-2xl" {...hold("left")}>←</button>
         <button className="ctrl-btn h-16 w-24 text-sm font-bold" {...hold("accel")}>SPEED</button>
