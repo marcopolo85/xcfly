@@ -1,11 +1,11 @@
 import type { Site } from "./sites";
 
 const EARTH_RADIUS = 6378137;
-export const MAP_ZOOM = 12;
+export const MAP_ZOOM = 13;
 export const TILE_SIZE = 256;
 export const MERCATOR_EXTENT = Math.PI * EARTH_RADIUS;
 export const TILE_METRES = (2 * MERCATOR_EXTENT) / 2 ** MAP_ZOOM;
-export const RELIEF_LAYER = "ch.swisstopo.swissalti3d-reliefschattierung";
+export const RELIEF_LAYER = "ch.swisstopo.pixelkarte-farbe";
 
 /** Local flight coordinates: east/north metres relative to the launch site. */
 export function mapOrigin(site: Pick<Site, "lat" | "lon">) {
@@ -18,7 +18,7 @@ export function mapOrigin(site: Pick<Site, "lat" | "lon">) {
 }
 
 export function reliefTileUrl(x: number, y: number) {
-  return `https://wmts.geo.admin.ch/1.0.0/${RELIEF_LAYER}/default/current/3857/${MAP_ZOOM}/${x}/${y}.png`;
+  return `https://wmts.geo.admin.ch/1.0.0/${RELIEF_LAYER}/default/current/3857/${MAP_ZOOM}/${x}/${y}.jpeg`;
 }
 
 export function visibleReliefTiles(site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number) {
