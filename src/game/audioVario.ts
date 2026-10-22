@@ -7,7 +7,7 @@ export class AudioVario {
   muted = false;
 
   start() {
-    if (this.ctx) { void this.ctx.resume(); return; }
+    if (this.ctx) { this.nextBeep = 0; void this.ctx.resume().catch(() => {}); return; }
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     this.ctx = new Ctx();
     this.osc = this.ctx.createOscillator();
@@ -19,13 +19,20 @@ export class AudioVario {
     filter.frequency.value = 2200;
     this.osc.connect(filter).connect(this.gain).connect(this.ctx.destination);
     this.osc.start();
+    // Mobile browsers may create the context suspended, even in a tap handler.
+    void this.ctx.resume().catch(() => {});
   }
 
   update(vz: number) {
     const ctx = this.ctx, g = this.gain, o = this.osc;
     if (!ctx || !g || !o) return;
     const now = ctx.currentTime;
-    if (this.muted) { g.gain.setTargetAtTime(0, now, 0.01); return; }
+    if (this.muted) {
+      g.gain.cancelScheduledValues(now);
+      g.gain.setTargetAtTime(0, now, 0.01);
+      this.nextBeep = 0;
+      return;
+    }
     if (vz > 0.15) {
       if (now >= this.nextBeep) {
         const freq = Math.min(1700, 560 + vz * 160);
@@ -43,12 +50,14 @@ export class AudioVario {
       g.gain.setTargetAtTime(0.07, now, 0.05);
       this.nextBeep = 0;
     } else {
-      if (this.nextBeep === 0 || now > this.nextBeep) g.gain.setTargetAtTime(0, now, 0.03);
+      g.gain.cancelScheduledValues(now);
+      g.gain.setTargetAtTime(0, now, 0.03);
+      this.nextBeep = 0;
     }
   }
 
   stop() {
     void this.ctx?.close();
-    this.ctx = null; this.osc = null; this.gain = null;
+    this.ctx = null; this.osc = null; this.gain = null; this.nextBeep = 0;
   }
 }
