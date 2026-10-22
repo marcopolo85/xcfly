@@ -1,5 +1,5 @@
 # Aufgaben
-- [ ] Thermikpositionen aus der hochgeladenen KK7-KML übernehmen und im Flug prüfen.
+- [x] Thermikpositionen aus der hochgeladenen KK7-KML übernehmen und im Flug prüfen (154 KK7-Punkte bei Niederhorn, unveränderte Koordinaten, Desktop/Handy und vier Regressionstests).
 - [x] Flugkarte mit Zoom und Verschieben versehen.
 - [x] GPS kompakt unten rechts platzieren.
 - [x] Zoombare Berg-Seitenansicht mit Gleitpfad neben dem GPS ergänzen.
