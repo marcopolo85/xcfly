@@ -92,6 +92,8 @@
   --climb: oklch(0.8 0.19 145);
   --sink: oklch(0.7 0.15 250);
   --sun: oklch(0.85 0.17 85);
+  --profile-mountain: oklch(0.35 0.045 155);
+  --profile-ridge: oklch(0.7 0.065 155);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -121,7 +123,7 @@
 @layer components {
   .hud-panel { @apply rounded-xl border border-border bg-card/85 p-2 backdrop-blur-md; }
   .hud-cell { @apply rounded-md bg-background/60 px-2 py-1.5; }
-  .hud-label { @apply font-mono text-[10px] uppercase tracking-widest text-muted-foreground; }
+  .hud-label { @apply font-mono text-[10px] uppercase text-muted-foreground; }
   .hud-value { @apply font-mono font-semibold leading-tight tabular-nums; }
   .hud-unit { @apply ml-0.5 text-[10px] font-normal text-muted-foreground; }
   .choice { @apply rounded-lg border border-border bg-background/60 px-3 py-2 text-left text-foreground transition; }
