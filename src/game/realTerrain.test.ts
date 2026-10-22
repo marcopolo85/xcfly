@@ -4,7 +4,7 @@ import { reliefTileUrl } from "./swissMap";
 
 describe("real elevation", () => {
   it("decodes terrarium pixels to metres", () => {
-    expect(decodeTerrarium(135, 158, 0)).toBe(2462); // 135*256+158-32768
+    expect(decodeTerrarium(135, 158, 0)).toBe(1950);
   });
   it("launch maps to the same tile as the swiss map projection", () => {
     const { px, py } = localToPixel({ lat: 46.73, lon: 7.77 }, 0, 0, 13);
