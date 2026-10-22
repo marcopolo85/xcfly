@@ -23,7 +23,6 @@ export function FlightGame() {
   const [config, setConfig] = useState<FlightConfig | null>(null);
   const [hud, setHud] = useState<HudData | null>(null);
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string } | null>(null);
-  const [muted, setMuted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [runId, setRunId] = useState(0);
   const mapZoom = useCanvasZoom(0.3, 8, phase !== "config");
@@ -40,7 +39,6 @@ export function FlightGame() {
 
   const start = (c: FlightConfig) => {
     if (!vario.current) vario.current = new AudioVario();
-    vario.current.muted = muted;
     vario.current.start();
     setConfig(c);
     setHud(null);
@@ -50,8 +48,6 @@ export function FlightGame() {
     setPhase("loading");
     setRunId((r) => r + 1);
   };
-
-  useEffect(() => { if (vario.current) vario.current.muted = muted; }, [muted]);
 
   useEffect(() => {
     if (runId === 0 || !config) return;
