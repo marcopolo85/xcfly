@@ -1,4 +1,5 @@
 # Aufgaben
+- [ ] Thermikpositionen aus der hochgeladenen KK7-KML übernehmen und im Flug prüfen.
 - [x] Flugkarte mit Zoom und Verschieben versehen.
 - [x] GPS kompakt unten rechts platzieren.
 - [x] Zoombare Berg-Seitenansicht mit Gleitpfad neben dem GPS ergänzen.
