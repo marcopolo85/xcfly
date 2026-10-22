@@ -144,7 +144,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 z-10 bg-background/90 px-2 py-1 font-mono text-[10px] text-foreground">© swisstopo · swissALTI3D</a>
+      <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 z-10 bg-background/90 px-2 py-1 font-mono text-[10px] text-foreground">© swisstopo · Landeskarte</a>
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Generiere Gelände & Thermik…</p>

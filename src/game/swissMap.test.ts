@@ -3,7 +3,7 @@ import { mapOrigin, reliefTileUrl, visibleReliefTiles } from "./swissMap";
 
 describe("Swiss relief map", () => {
   it("uses the public Swiss relief layer", () => {
-    expect(reliefTileUrl(2136, 1445)).toBe("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissalti3d-reliefschattierung/default/current/3857/12/2136/1445.png");
+    expect(reliefTileUrl(2136, 1445)).toBe("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/13/2136/1445.jpeg");
   });
   it("centres the launch coordinates on the real Swiss location", () => {
     const site = { lat: 46.71, lon: 7.77 };
