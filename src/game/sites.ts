@@ -12,7 +12,7 @@ export interface Site {
 }
 
 export const SITES: Site[] = [
-  { id: "monte-carasso", name: "Monte Carasso", region: "Bellinzona · Tessin", lat: 46.183, lon: 8.975, launchAlt: 1350, valley: 230, peak: 2700, lake: false, seed: 11 },
+  { id: "mornera", name: "Mornera", region: "Monte Carasso · Tessin", lat: 46.20581, lon: 8.98583, launchAlt: 1350, valley: 230, peak: 2700, lake: false, seed: 11 },
   { id: "pany", name: "Pany (Chrüz)", region: "Prättigau · Graubünden", lat: 46.928, lon: 9.783, launchAlt: 1600, valley: 900, peak: 2500, lake: false, seed: 23 },
   { id: "gummen", name: "Gummen", region: "Kandersteg · Berner Oberland", lat: 46.478, lon: 7.707, launchAlt: 1950, valley: 1150, peak: 3200, lake: false, seed: 37 },
   { id: "zugerberg", name: "Zugerberg", region: "Zug · Zentralschweiz", lat: 47.146, lon: 8.528, launchAlt: 1000, valley: 420, peak: 1100, lake: true, seed: 51 },
