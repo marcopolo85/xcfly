@@ -4,7 +4,7 @@ const EARTH_RADIUS = 6378137;
 export const TILE_SIZE = 256;
 export const MERCATOR_EXTENT = Math.PI * EARTH_RADIUS;
 export const RELIEF_LAYER = "ch.swisstopo.leichte-basiskarte_reliefschattierung";
-export const WATER_LAYER = "ch.swisstopo.swisstlm3d-gewaessernetz";
+export const WATER_LAYER = "ch.bafu.vec25-seen";
 export const MIN_RELIEF_LEVEL = 8;
 export const MAX_RELIEF_LEVEL = 17;
 
