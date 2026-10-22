@@ -1,4 +1,4 @@
-import { EXTENT, cloudbaseAt, normalAt, type Terrain } from "./terrain";
+import { EXTENT, cloudbaseAt, normalAt, heightAt, gradientAt, type Terrain } from "./terrain";
 
 export interface Thermal {
   x: number; y: number;
@@ -23,13 +23,15 @@ export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
       const x = gx + (rnd() - 0.5) * 300;
       const y = gy + (rnd() - 0.5) * 300;
       const n = normalAt(t, x, y);
-      // Sunlit gentle slopes and flat launch meadows also release thermals.
-      // The terrain's smoothed slopes rarely exceed the old 22° cutoff.
-      if (rnd() > 0.5) continue;
+      // Thermals detach at realistic trigger points: summits/ridges,
+      // large open flats and pronounced slope breaks.
+      if (Math.hypot(x, y) < 600) continue; // launch source covers this area
+      const rel = releaseScore(t, x, y);
+      if (rnd() > 0.08 + rel * 0.85) continue;
       const th: Thermal = {
         x, y, nx: n.x, ny: n.y, nz: n.z,
         r: 150 + rnd() * 110,
-        power: 0.55 + rnd() * 0.65,
+        power: 0.45 + rel * 0.6 + rnd() * 0.3,
         period: 250 + rnd() * 500,
         phase: rnd() * Math.PI * 2,
       };
@@ -47,12 +49,35 @@ export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
   const x = Math.sin(heading) * 120, y = Math.cos(heading) * 120;
   const launchSource: Thermal = {
     x, y, nx: launchNormal.x, ny: launchNormal.y, nz: launchNormal.z,
-    r: 240, power: 1, period: 600, phase: rnd() * Math.PI * 2,
+    r: 260, power: 1.4, period: 600, phase: rnd() * Math.PI * 2,
   };
   const k = key(Math.floor(x / CELL), Math.floor(y / CELL));
   const sources = grid.get(k) ?? [];
   sources.push(launchSource); grid.set(k, sources); count++;
   return { grid, count };
+}
+
+/**
+ * Likelihood (0..1) that warm air detaches here: summits and ridges
+ * (height above surroundings), large flat open areas, and marked
+ * terrain transitions (strong change of slope, e.g. valley floor to flank).
+ */
+export function releaseScore(t: Terrain, x: number, y: number) {
+  const h = heightAt(t, x, y);
+  let ring = 0, slopeIn = 0, slopeOut = 0, flatSum = 0;
+  const K = 8;
+  for (let i = 0; i < K; i++) {
+    const a = (i / K) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+    ring += heightAt(t, x + c * 500, y + s * 500);
+    const gi = gradientAt(t, x + c * 100, y + s * 100), go = gradientAt(t, x + c * 400, y + s * 400);
+    slopeIn += Math.hypot(gi.gx, gi.gy); slopeOut += Math.hypot(go.gx, go.gy);
+    flatSum += Math.hypot(go.gx, go.gy);
+  }
+  ring /= K; slopeIn /= K; slopeOut /= K;
+  const peak = Math.max(0, Math.min(1, (h - ring) / 120));
+  const flat = Math.max(0, Math.min(1, 1 - (flatSum / K) / 0.08));
+  const brk = Math.max(0, Math.min(1, Math.abs(slopeOut - slopeIn) / 0.25));
+  return Math.max(peak, flat * 0.8, brk);
 }
 
 /** How strongly a surface with normal n is lit by sun vector s (0..1 trigger). */
