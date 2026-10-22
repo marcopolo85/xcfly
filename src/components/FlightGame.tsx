@@ -46,7 +46,7 @@ export function FlightGame() {
       const season = SEASONS[config.season];
       const g = gradientAt(terrain, 0, 0);
       const sim: Sim = {
-        x: 0, y: 0, alt: heightAt(terrain, 0, 0) + 25, heading: Math.atan2(-g.gx, -g.gy),
+        x: 0, y: 0, alt: heightAt(terrain, 0, 0) + 40, heading: Math.atan2(-g.gx, -g.gy),
         vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour, landed: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];

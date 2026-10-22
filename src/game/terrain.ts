@@ -70,8 +70,8 @@ export function generateTerrain(site: Site): Terrain {
   const c = (N - 1) / 2;
   const h0 = h[c * N + c];
   const delta = site.launchAlt - h0;
-  const sig2 = 2 * 1400 * 1400;
-  const rad = Math.ceil(4200 / RES);
+  const sig2 = 2 * 900 * 900;
+  const rad = Math.ceil(3000 / RES);
   for (let j = c - rad; j <= c + rad; j++) {
     for (let i = c - rad; i <= c + rad; i++) {
       const dx = (i - c) * RES, dy = (j - c) * RES;
