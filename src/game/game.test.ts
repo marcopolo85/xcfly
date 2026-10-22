@@ -22,15 +22,18 @@ describe("game rules", () => {
       // Simulate the same real-time span a full turn would need at ×1.
       const totalReal = (2 * Math.PI) / ((32 * Math.PI) / 180);
       const realFrames = 120;
+      let turned = 0;
       for (let i = 0; i < realFrames; i++) {
-        steer(sim, input, totalReal / realFrames, simSpeed);
-        stepPhysics(sim, input, (totalReal / realFrames) * simSpeed, flat, 0);
+        const dtReal = totalReal / realFrames;
+        turned += TURN_RATE * dtReal * timeScale(input.accel, simSpeed);
+        steer(sim, input, dtReal, simSpeed);
+        stepPhysics(sim, input, dtReal * simSpeed, flat, 0);
       }
       // Distance flown per radian of turn = turn radius.
-      return sim.distance / sim.heading;
+      return sim.distance / turned;
     };
     const r1 = turnAt(1);
-    expect(Math.abs(r1 - 10.5 / ((32 * Math.PI) / 180))).toBeLessThan(1);
+    expect(Math.abs(r1 - 10.5 / TURN_RATE)).toBeLessThan(1);
     expect(turnAt(8)).toBeCloseTo(r1, 0);
   });
   it("cloudbase is 500 m above the peaks", () => {
