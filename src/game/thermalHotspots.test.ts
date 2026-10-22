@@ -27,7 +27,7 @@ describe("KK7 thermal positions", () => {
     expect(hotspotUrl(site)).toContain("/geojson/all_all/");
   });
   it("reads longitude then latitude from the provider's GeoJSON", () => {
-    expect(parseHotspots({ features: [{ geometry: { type: "Point", coordinates: [7.8806305, 46.5491818] }, properties: { probability: 0.996 } }] })).toEqual([point]);
+    expect(parseHotspots({ features: [{ geometry: { type: "Point", coordinates: [8.99, 46.19] }, properties: { probability: 0.9 } }] })).toEqual([point]);
     expect(() => parseHotspots({ features: [] })).toThrow();
   });
 });
