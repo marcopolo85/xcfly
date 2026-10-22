@@ -18,6 +18,7 @@ describe("game rules", () => {
     const turnAt = (simSpeed: number) => {
       const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, landed: false };
       const input = { left: false, right: true, accel: false };
+      const flat = { h: new Float32Array(1), cb: new Float32Array([5000]), cbN: 1, site: { x: 0, y: 0, alt: 0 } as never };
       // Simulate the same real-time span a full turn would need at ×1.
       const totalReal = (2 * Math.PI) / ((32 * Math.PI) / 180);
       const realFrames = 120;
