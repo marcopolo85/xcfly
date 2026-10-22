@@ -4,7 +4,7 @@ export const POLAR = {
   trim: { v: 10.5, sink: 1.1 }, // ~38 km/h, L/D ≈ 9.5
   accel: { v: 14.5, sink: 2.05 }, // ~52 km/h, L/D ≈ 7.1
 };
-export const TURN_RATE = (32 * Math.PI) / 180; // rad per real second
+export const TURN_RATE = (32 * Math.PI) / 180; // rad per simulated second
 export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 5;
 
