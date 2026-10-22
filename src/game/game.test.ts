@@ -14,6 +14,24 @@ describe("game rules", () => {
     expect(timeScale(false, 3)).toBe(3);
     expect(timeScale(true, 3)).toBe(15);
   });
+  it("turn radius is the same at any simulation speed", () => {
+    const turnAt = (simSpeed: number) => {
+      const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, landed: false };
+      const input = { left: false, right: true, accel: false };
+      // Simulate the same real-time span a full turn would need at ×1.
+      const totalReal = (2 * Math.PI) / ((32 * Math.PI) / 180);
+      const realFrames = 120;
+      for (let i = 0; i < realFrames; i++) {
+        steer(sim, input, totalReal / realFrames, simSpeed);
+        stepPhysics(sim, input, (totalReal / realFrames) * simSpeed, { h: () => 0 }, 0);
+      }
+      // Distance flown per radian of turn = turn radius.
+      return sim.distance / sim.heading;
+    };
+    const r1 = turnAt(1);
+    expect(Math.abs(r1 - 10.5 / ((32 * Math.PI) / 180))).toBeLessThan(1);
+    expect(turnAt(8)).toBeCloseTo(r1, 0);
+  });
   it("cloudbase is 500 m above the peaks", () => {
     expect(cloudbaseFromPeak(2800)).toBe(3300);
   });
