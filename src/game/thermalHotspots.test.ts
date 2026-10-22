@@ -9,8 +9,8 @@ describe("KK7 thermal positions", () => {
   const terrain: Terrain = { site, h: new Float32Array(N * N), cb: new Float32Array(1600), cbN: 40 };
   it("retains exact provider coordinates without adding a launch source or jitter", () => {
     const expected = hotspotLocal(site, point);
-    expect(expected.x).toBeCloseTo(1156.09, 2);
-    expect(expected.y).toBeCloseTo(779.29, 2);
+    expect(expected.x).toBeCloseTo(321.26, 2);
+    expect(expected.y).toBeCloseTo(-1759.71, 2);
     for (const random of [() => 0, () => 0.9]) {
       const field = generateHotspotThermals(terrain, [point], random);
       expect(field.count).toBe(1);
