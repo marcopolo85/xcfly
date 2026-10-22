@@ -95,6 +95,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.textAlign = "center";
     ctx.fillText(map.failed ? "Karte nicht erreichbar · erneuter Versuch folgt" : "Schweizer Reliefkarte lädt…", W / 2, H * 0.65);
   }
+  drawContours(ctx, s.terrain, sx, sy, z, sim.x - cx / z, sim.x + (W - cx) / z, sim.y - (H - cy) / z, sim.y + cy / z);
 
   // thermal map
   if (s.thermals) {
