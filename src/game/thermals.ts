@@ -23,10 +23,12 @@ export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
       const x = gx + (rnd() - 0.5) * 300;
       const y = gy + (rnd() - 0.5) * 300;
       const n = normalAt(t, x, y);
-      if (n.z > 0.93 || rnd() > 0.4) continue; // only on real slopes
+      // Sunlit gentle slopes and flat launch meadows also release thermals.
+      // The terrain's smoothed slopes rarely exceed the old 22° cutoff.
+      if (rnd() > 0.5) continue;
       const th: Thermal = {
         x, y, nx: n.x, ny: n.y, nz: n.z,
-        r: 110 + rnd() * 120,
+        r: 150 + rnd() * 110,
         power: 0.55 + rnd() * 0.65,
         period: 250 + rnd() * 500,
         phase: rnd() * Math.PI * 2,
@@ -38,6 +40,18 @@ export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
       count++;
     }
   }
+  // A local source lets pilots encounter the launch meadow's thermal before
+  // their limited initial ground clearance is exhausted; sunlight still gates it.
+  const launchNormal = normalAt(t, 0, 0);
+  const heading = Math.atan2(launchNormal.x, launchNormal.y);
+  const x = Math.sin(heading) * 120, y = Math.cos(heading) * 120;
+  const launchSource: Thermal = {
+    x, y, nx: launchNormal.x, ny: launchNormal.y, nz: launchNormal.z,
+    r: 240, power: 1, period: 600, phase: rnd() * Math.PI * 2,
+  };
+  const k = key(Math.floor(x / CELL), Math.floor(y / CELL));
+  const sources = grid.get(k) ?? [];
+  sources.push(launchSource); grid.set(k, sources); count++;
   return { grid, count };
 }
 
@@ -71,7 +85,7 @@ export function airLift(
         if (d2 > 9 * r2) continue;
         const trig = slopeTrigger({ x: th.nx, y: th.ny, z: th.nz }, sun);
         if (trig <= 0) continue;
-        const pulse = 0.55 + 0.45 * Math.sin(simTime / th.period + th.phase);
+        const pulse = 0.8 + 0.2 * Math.sin(simTime / th.period + th.phase);
         const core = sunAmp * th.power * trig * pulse;
         lift += core * (1.3 * Math.exp(-d2 / r2) - 0.3 * Math.exp(-d2 / (4 * r2)));
       }

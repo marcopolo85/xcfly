@@ -31,6 +31,7 @@ export function FlightGame() {
 
   const start = (c: FlightConfig) => {
     if (!vario.current) vario.current = new AudioVario();
+    vario.current.muted = muted;
     vario.current.start();
     setConfig(c);
     mapZoom.reset(); profileZoom.reset();
@@ -157,7 +158,15 @@ export function FlightGame() {
         </section>
         <FlightHUD d={hud} />
       </div>}
-      <Button variant="outline" aria-label={muted ? "Ton einschalten" : "Ton ausschalten"} onClick={() => setMuted((m) => !m)} className="ctrl-btn absolute left-3 top-16 h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
+      <Button variant="outline" aria-label={muted ? "Ton einschalten" : "Ton ausschalten"} onClick={() => {
+        const nextMuted = !muted;
+        if (vario.current) {
+          vario.current.muted = nextMuted;
+          if (!nextMuted) vario.current.start();
+          else vario.current.update(0);
+        }
+        setMuted(nextMuted);
+      }} className="ctrl-btn absolute left-3 top-16 h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
         {muted ? "🔇" : "🔊"}
       </Button>
       <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 sm:hidden">
