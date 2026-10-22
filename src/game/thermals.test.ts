@@ -24,3 +24,14 @@ describe("usable solar thermals", () => {
     expect(airLift(field, terrain, 0, 0, 1990, 0, { x: 0, y: 0, z: -1 }, 4.5)).toBeLessThanOrEqual(0);
   });
 });
+describe("thermal release points", () => {
+  it("summits release more readily than mid-slope points", async () => {
+    const { releaseScore } = await import("./thermals");
+    const t = generateTerrain(SITES[0]);
+    let best = { x: 0, y: 0, h: -1 };
+    for (let y = -8000; y <= 8000; y += 400) for (let x = -8000; x <= 8000; x += 400) {
+      const h = heightAt(t, x, y); if (h > best.h) best = { x, y, h };
+    }
+    expect(releaseScore(t, best.x, best.y)).toBeGreaterThan(0.5);
+  });
+});
