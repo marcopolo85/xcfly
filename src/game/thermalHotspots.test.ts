@@ -5,12 +5,12 @@ import { generateHotspotThermals, hotspotLocal, hotspotUrl, parseHotspots } from
 
 describe("KK7 thermal positions", () => {
   const site = SITES[0];
-  const point = { lon: 7.8806305, lat: 46.5491818, probability: 0.996 };
+  const point = { lon: 8.99, lat: 46.19, probability: 0.9 };
   const terrain: Terrain = { site, h: new Float32Array(N * N), cb: new Float32Array(1600), cbN: 40 };
   it("retains exact provider coordinates without adding a launch source or jitter", () => {
     const expected = hotspotLocal(site, point);
-    expect(expected.x).toBeCloseTo(7985, -1);
-    expect(expected.y).toBeCloseTo(-18097.58, 2);
+    expect(expected.x).toBeCloseTo(1156.09, 2);
+    expect(expected.y).toBeCloseTo(779.29, 2);
     for (const random of [() => 0, () => 0.9]) {
       const field = generateHotspotThermals(terrain, [point], random);
       expect(field.count).toBe(1);
@@ -27,7 +27,7 @@ describe("KK7 thermal positions", () => {
     expect(hotspotUrl(site)).toContain("/geojson/all_all/");
   });
   it("reads longitude then latitude from the provider's GeoJSON", () => {
-    expect(parseHotspots({ features: [{ geometry: { type: "Point", coordinates: [7.8806305, 46.5491818] }, properties: { probability: 0.996 } }] })).toEqual([point]);
+    expect(parseHotspots({ features: [{ geometry: { type: "Point", coordinates: [8.99, 46.19] }, properties: { probability: 0.9 } }] })).toEqual([point]);
     expect(() => parseHotspots({ features: [] })).toThrow();
   });
 });

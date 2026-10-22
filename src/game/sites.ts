@@ -12,10 +12,12 @@ export interface Site {
 }
 
 export const SITES: Site[] = [
-  { id: "niederhorn", name: "Niederhorn", region: "Interlaken · Berner Oberland", lat: 46.712, lon: 7.776, launchAlt: 1950, valley: 560, peak: 3000, lake: true, seed: 11 },
-  { id: "fiesch", name: "Kühboden", region: "Fiesch · Goms", lat: 46.416, lon: 8.108, launchAlt: 2200, valley: 1050, peak: 3400, lake: false, seed: 23 },
-  { id: "pizol", name: "Pizol", region: "Bad Ragaz · St. Galler Oberland", lat: 46.98, lon: 9.444, launchAlt: 2220, valley: 500, peak: 2900, lake: false, seed: 37 },
-  { id: "jakobshorn", name: "Jakobshorn", region: "Davos · Graubünden", lat: 46.764, lon: 9.862, launchAlt: 2590, valley: 1560, peak: 3150, lake: true, seed: 51 },
+  { id: "mornera", name: "Mornera", region: "Monte Carasso · Tessin", lat: 46.183, lon: 8.975, launchAlt: 1350, valley: 230, peak: 2700, lake: false, seed: 11 },
+  { id: "pany", name: "Pany (Chrüz)", region: "Prättigau · Graubünden", lat: 46.928, lon: 9.783, launchAlt: 1600, valley: 900, peak: 2500, lake: false, seed: 23 },
+  { id: "gummen", name: "Gummen", region: "Kandersteg · Berner Oberland", lat: 46.478, lon: 7.707, launchAlt: 1950, valley: 1150, peak: 3200, lake: false, seed: 37 },
+  { id: "zugerberg", name: "Zugerberg", region: "Zug · Zentralschweiz", lat: 47.146, lon: 8.528, launchAlt: 1000, valley: 420, peak: 1100, lake: true, seed: 51 },
+  { id: "weissenstein", name: "Weissenstein", region: "Solothurn · Jura", lat: 47.255, lon: 7.512, launchAlt: 1280, valley: 450, peak: 1400, lake: false, seed: 67 },
+  { id: "niesen", name: "Niesen", region: "Mülenen · Berner Oberland", lat: 46.643, lon: 7.652, launchAlt: 2100, valley: 560, peak: 2362, lake: true, seed: 83 },
 ];
 
 export type Season = "spring" | "summer" | "autumn" | "winter";
