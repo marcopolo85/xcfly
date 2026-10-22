@@ -5,6 +5,16 @@ import type { Sim } from "@/game/physicsEngine";
 import { CYLINDER_RADIUS, type Task } from "@/game/task";
 import type { ZoomTransform } from "d3-zoom";
 import type { ThermalField } from "@/game/thermals";
+import wingUrl from "@/assets/glider-wing.png";
+
+let wingImage: HTMLImageElement | null = null;
+function getWingImage() {
+  if (!wingImage) {
+    wingImage = new Image();
+    wingImage.src = wingUrl;
+  }
+  return wingImage.complete && wingImage.naturalWidth > 0 ? wingImage : null;
+}
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
@@ -102,24 +112,23 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.fillRect(0, 0, W, H);
   }
 
-  // glider
+  // glider (photo wing on transparent background)
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(sim.heading);
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath(); ctx.ellipse(6, 8, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#e3262b";
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(-18, 2); ctx.quadraticCurveTo(0, -10, 18, 2); ctx.lineTo(16, 6); ctx.quadraticCurveTo(0, -3, -16, 6); ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(-1.5, 2, 3, 3);
   ctx.strokeStyle = "rgba(255,255,255,0.6)";
   ctx.setLineDash([3, 4]);
   ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, -70); ctx.stroke();
   ctx.setLineDash([]);
+  const wing = getWingImage();
+  if (wing) {
+    const w = 44, h = (w * wing.naturalHeight) / wing.naturalWidth;
+    ctx.drawImage(wing, -w / 2, -h / 2 - 1, w, h);
+  }
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(-1.5, 2, 3, 3);
   ctx.restore();
 }
 
