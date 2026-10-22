@@ -5,6 +5,16 @@ import type { Sim } from "@/game/physicsEngine";
 import { CYLINDER_RADIUS, type Task } from "@/game/task";
 import type { ZoomTransform } from "d3-zoom";
 import type { ThermalField } from "@/game/thermals";
+import wingUrl from "@/assets/glider-wing.png";
+
+let wingImage: HTMLImageElement | null = null;
+function getWingImage() {
+  if (!wingImage) {
+    wingImage = new Image();
+    wingImage.src = wingUrl;
+  }
+  return wingImage.complete && wingImage.naturalWidth > 0 ? wingImage : null;
+}
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
