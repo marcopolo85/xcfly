@@ -10,6 +10,10 @@ describe("game rules", () => {
     expect(timeScale(true)).toBe(5);
     expect(timeScale(false)).toBe(1);
   });
+  it("speedbar is a multiple of the chosen simulation speed", () => {
+    expect(timeScale(false, 3)).toBe(3);
+    expect(timeScale(true, 3)).toBe(15);
+  });
   it("cloudbase is 500 m above the peaks", () => {
     expect(cloudbaseFromPeak(2800)).toBe(3300);
   });
