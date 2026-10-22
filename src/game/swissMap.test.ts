@@ -3,7 +3,7 @@ import { mapOrigin, reliefLevel, reliefTileUrl, visibleReliefTiles } from "./swi
 
 describe("Swiss relief map", () => {
   it("uses the public Swiss relief layer", () => {
-    expect(reliefTileUrl(2136, 1445, 13)).toBe("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/13/2136/1445.jpeg");
+    expect(reliefTileUrl(2136, 1445, 13)).toBe("https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.leichte-basiskarte_reliefschattierung/default/current/3857/13/2136/1445.png");
   });
   it("picks the tile level from screen zoom and device pixel ratio", () => {
     expect(reliefLevel(0.687, 0.085, 1)).toBe(13);

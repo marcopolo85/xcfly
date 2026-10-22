@@ -159,7 +159,7 @@ export function FlightGame() {
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
       <div className="absolute bottom-0 right-0 z-10 flex flex-wrap justify-end gap-x-2 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground">
-        <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · Landeskarte</a>
+        <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · Relief</a>
         <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer">Thermik: M. von Känel · KK7</a>
         <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0 · bearbeitet</a>
       </div>
