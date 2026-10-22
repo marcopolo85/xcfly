@@ -3,7 +3,6 @@ import type { Site } from "@/game/sites";
 import { drawSwissRelief } from "./SwissRelief";
 import { POLAR, type Sim } from "@/game/physicsEngine";
 import { EXTENT, N, RES, heightAt, type Terrain } from "@/game/terrain";
-import { CYLINDER_RADIUS, type Task } from "@/game/task";
 import type { ZoomTransform } from "d3-zoom";
 import type { ThermalField } from "@/game/thermals";
 import wingUrl from "@/assets/glider-wing.png";
@@ -61,8 +60,6 @@ export interface SceneData {
   site: Site;
   terrain: Terrain;
   sim: Sim;
-  task: Task;
-  next: number;
   trail: { x: number; y: number; vz: number }[];
   dusk: number; // 0..1 darkness
   thermals?: ThermalField | null;
@@ -109,32 +106,6 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
     }
   }
-
-  // task line
-  ctx.setLineDash([8, 6]);
-  ctx.strokeStyle = "rgba(30,30,40,0.7)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(sx(0), sy(0));
-  for (const w of s.task.waypoints) ctx.lineTo(sx(w.x), sy(w.y));
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // cylinders
-  s.task.waypoints.forEach((w, i) => {
-    const done = i < s.next, active = i === s.next;
-    ctx.beginPath();
-    ctx.arc(sx(w.x), sy(w.y), CYLINDER_RADIUS * z, 0, Math.PI * 2);
-    ctx.fillStyle = done ? "rgba(40,160,90,0.25)" : active ? "rgba(220,40,40,0.22)" : "rgba(40,40,60,0.12)";
-    ctx.fill();
-    ctx.lineWidth = active ? 3 : 1.5;
-    ctx.strokeStyle = done ? "#1f8a4c" : active ? "#d42a2a" : "#333";
-    ctx.stroke();
-    ctx.fillStyle = "#111";
-    ctx.font = "600 12px 'JetBrains Mono', monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(w.name, sx(w.x), sy(w.y) - CYLINDER_RADIUS * z - 6);
-  });
 
   // trail coloured by climb
   for (let i = 1; i < s.trail.length; i++) {

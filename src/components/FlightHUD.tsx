@@ -1,9 +1,7 @@
 export interface HudData {
   alt: number; agl: number; vz: number; speed: number;
-  wpName: string; wpDist: number; wpRel: number; // rel bearing rad
   xc: number; xcSpeed: number;
   clock: string; accel: boolean; cloudbase: number;
-  taskType: string; next: number;
 }
 
 function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string; cls?: string }) {
