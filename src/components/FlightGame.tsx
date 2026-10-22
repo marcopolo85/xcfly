@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
-import { FlightHUD, type HudData } from "./FlightHUD";
+import { FlightHUD, WaypointCompass, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt, normalAt } from "@/game/terrain";
 import { airLift, slopeTrigger } from "@/game/thermals";
@@ -81,7 +81,7 @@ export function FlightGame() {
         vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour, landed: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
-      let next = 0, last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
+      let next = 0, last = performance.now(), lastHud = 0, smoothVz = 0, avgVz10 = 0, trailT = 0;
       if (cancelled) return;
       setPhase("flying");
 
@@ -99,6 +99,7 @@ export function FlightGame() {
           stepPhysics(sim, inp, simDt / steps, terrain, lift);
         }
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
+        avgVz10 += (sim.vz - avgVz10) * Math.min(1, simDt / 10);
         vario.current?.update(smoothVz);
         if (next < 3 && inCylinder(sim.x, sim.y, task.waypoints[next])) next++;
         trailT += simDt;
@@ -114,11 +115,10 @@ export function FlightGame() {
           const wp = task.waypoints[Math.min(next, 2)];
           const brg = Math.atan2(wp.x - sim.x, wp.y - sim.y);
           setHud({
-            alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, ld: glideRatio(sim.speed, smoothVz),
+            alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, vz10: avgVz10, speed: sim.speed,
             wpName: wp.name, wpDist: Math.hypot(wp.x - sim.x, wp.y - sim.y), wpRel: brg - sim.heading,
-            flightTime: sim.flightTime, distance: sim.distance, xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
+            xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
-            sunEl: sp.el, sunAz: sp.az, slopeIrr: slopeTrigger(normalAt(terrain, sim.x, sim.y), sv),
             taskType: task.type, next,
           });
         }
@@ -172,28 +172,29 @@ export function FlightGame() {
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikpunkte…</p>
         </div>
       )}
-      <div className="absolute left-3 top-3 flex flex-col gap-1 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
+      <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
-        <label className="flex items-center gap-2">
-          <span className="w-16">Sim ×{simSpeed}</span>
-          <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
-            onChange={(e) => setSimSpeed(Number(e.target.value))} className="w-24 accent-primary" />
-        </label>
-        <span className="text-muted-foreground">Speed-Bar ×{simSpeed * 5}</span>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
-          Thermikkarte
-        </label>
       </div>
-      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
-        <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md sm:w-[340px] sm:flex-none">
+      {hud && <WaypointCompass d={hud} />}
+      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex flex-wrap items-end justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3 sm:flex-nowrap">
+        <section aria-label="Seitenansicht" className="flex w-full flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md sm:w-[300px]">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
-            <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL · SIM</span>
+            <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL</span>
             <ZoomControls label="Seitenansicht" scale={profileZoom.scale} change={profileZoom.change} reset={profileZoom.reset} />
           </header>
-          <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
-          <footer className="flex flex-wrap justify-between gap-x-2 px-2 py-1 font-mono text-[9px] text-muted-foreground"><span className="text-sun">— Gleitpfad</span><span>Flugrichtung →</span></footer>
+          <div className="relative h-24"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>
+        <div className="flex flex-col gap-1 self-end rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
+          <label className="flex flex-col gap-0.5">
+            <span>Sim ×{simSpeed} · Speed ×{simSpeed * 5}</span>
+            <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
+              onChange={(e) => setSimSpeed(Number(e.target.value))} className="w-24 accent-primary" />
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
+            Thermikkarte
+          </label>
+        </div>
         <FlightHUD d={hud} />
       </div>}
       <Button variant="outline" aria-label={muted ? "Ton einschalten" : "Ton ausschalten"} onClick={() => {
