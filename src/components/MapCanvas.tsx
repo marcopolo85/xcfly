@@ -108,6 +108,34 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.stroke();
   }
 
+  // glide-range line: how far the glider reaches at best glide from current AGL
+  if (!sim.landed) {
+    const agl = sim.alt - heightAt(s.terrain, sim.x, sim.y);
+    if (agl > 1) {
+      const range = agl * (POLAR.trim.v / POLAR.trim.sink);
+      const ex = sim.x + Math.sin(sim.heading) * range;
+      const ey = sim.y + Math.cos(sim.heading) * range;
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(sx(sim.x), sy(sim.y));
+      ctx.lineTo(sx(ex), sy(ey));
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(20,30,60,0.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx(sim.x), sy(sim.y));
+      ctx.lineTo(sx(ex), sy(ey));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(sx(ex), sy(ey), 4, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fill();
+    }
+  }
+
   // dusk
   if (s.dusk > 0) {
     ctx.fillStyle = `rgba(10,15,40,${s.dusk * 0.6})`;
