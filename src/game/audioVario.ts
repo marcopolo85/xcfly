@@ -4,10 +4,11 @@
  * beep; continuous falling low tone in strong sink.
  */
 export function flytecTone(vz: number) {
-  const freq = Math.min(1800, 700 + vz * 120);
-  const rate = Math.min(9, 1.6 + vz * 1.3); // beeps per second
-  const period = 1 / rate;
-  return { freq, period, on: period * 0.55 };
+  // Calibrated on the user's reference recording: ~1085 Hz at weak climb
+  // rising to ~1640 Hz, beeps ~90 ms every ~175 ms, square-like timbre.
+  const freq = Math.min(1800, 1050 + vz * 150);
+  const period = Math.max(0.13, 0.2 - vz * 0.012);
+  return { freq, period, on: period * 0.52 };
 }
 export class AudioVario {
   private ctx: AudioContext | null = null;
@@ -21,12 +22,12 @@ export class AudioVario {
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     this.ctx = new Ctx();
     this.osc = this.ctx.createOscillator();
-    this.osc.type = "triangle";
+    this.osc.type = "square";
     this.gain = this.ctx.createGain();
     this.gain.gain.value = 0;
     const filter = this.ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 3000;
+    filter.frequency.value = 5000;
     this.osc.connect(filter).connect(this.gain).connect(this.ctx.destination);
     this.osc.start();
     // Mobile browsers may create the context suspended, even in a tap handler.
@@ -48,9 +49,9 @@ export class AudioVario {
         const { freq, period, on } = flytecTone(vz);
         o.frequency.cancelScheduledValues?.(now);
         o.frequency.setValueAtTime(freq, now);
-        o.frequency.linearRampToValueAtTime(freq * 1.06, now + on);
+        
         g.gain.cancelScheduledValues(now);
-        g.gain.setValueAtTime(0.13, now);
+        g.gain.setValueAtTime(0.08, now);
         g.gain.setValueAtTime(0, now + on);
         this.nextBeep = now + period;
       }
