@@ -1,4 +1,4 @@
-import { reliefTileUrl, waterTileUrl, visibleReliefTiles } from "@/game/swissMap";
+import { reliefTileUrl, waterTileUrl, forestTileUrl, visibleReliefTiles } from "@/game/swissMap";
 import type { Site } from "@/game/sites";
 
 type Tile = { image: HTMLImageElement; surface?: HTMLCanvasElement; loaded: boolean; failedAt: number };
@@ -54,6 +54,7 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
   const theme = getComputedStyle(ctx.canvas);
   const reliefFilter = theme.getPropertyValue("--map-relief-filter").trim() || "none";
   const waterColor = theme.getPropertyValue("--map-water").trim();
+  const forestColor = theme.getPropertyValue("--map-forest").trim();
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr)) {
     const tile = tileImage(reliefTileUrl(position.x, position.y, position.level), reliefFilter);
     if (tile.loaded) {
@@ -63,6 +64,10 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
     const water = tileImage(waterTileUrl(position.x, position.y, position.level), "none", waterColor);
     if (tile.loaded && water.loaded) {
       ctx.drawImage(water.surface ?? water.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
+    }
+    const forest = tileImage(forestTileUrl(position.x, position.y, position.level), "none", forestColor);
+    if (tile.loaded && forest.loaded) {
+      ctx.drawImage(forest.surface ?? forest.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
     }
   }
   return { loaded, failed };
