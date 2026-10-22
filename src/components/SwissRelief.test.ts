@@ -34,9 +34,9 @@ it("filters each relief tile once and reuses the processed surface on subsequent
   const initialImages = images.length;
   const processed = surfaces.length;
   expect(processed).toBe(initialImages);
-  expect(appliedFilters.filter(filter => filter === "contrast(1.45) brightness(0.88)")).toHaveLength(initialImages / 3);
+  expect(appliedFilters.filter(filter => filter === "contrast(1.45) brightness(0.88)")).toHaveLength(initialImages / 4);
   for (let frame = 0; frame < 60; frame++) {
-    expect(drawSwissRelief(ctx, site, 0, 0, 426, 791, 0.085, 2.25).loaded).toBe(initialImages / 3);
+    expect(drawSwissRelief(ctx, site, 0, 0, 426, 791, 0.085, 2.25).loaded).toBe(initialImages / 4);
   }
   expect(images).toHaveLength(initialImages);
   expect(surfaces).toHaveLength(processed);
