@@ -8,6 +8,7 @@ import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from 
 import { generateTask, inCylinder, xcDistance, mulberry32 } from "@/game/task";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
+import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
@@ -51,8 +52,11 @@ export function FlightGame() {
   useEffect(() => {
     if (runId === 0 || !config) return;
     let raf = 0, cancelled = false;
-    const timer = setTimeout(() => {
-      const terrain = generateTerrain(config.site);
+    const timer = setTimeout(async () => {
+      let terrain;
+      try { terrain = await loadRealTerrain(config.site); }
+      catch { terrain = generateTerrain(config.site); }
+      if (cancelled) return;
       const rnd = mulberry32((Math.random() * 1e9) | 0);
       const thermals = generateThermals(terrain, rnd);
       const task = generateTask(rnd);
@@ -147,7 +151,7 @@ export function FlightGame() {
       <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 z-10 bg-background/90 px-2 py-1 font-mono text-[10px] text-foreground">© swisstopo · Landeskarte</a>
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
-          <p className="animate-pulse font-mono text-sm text-muted-foreground">Generiere Gelände & Thermik…</p>
+          <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade echte Geländehöhen & Thermik…</p>
         </div>
       )}
       <div className="absolute left-3 top-3 flex flex-col gap-1 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">

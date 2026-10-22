@@ -78,6 +78,11 @@ export function generateTerrain(site: Site): Terrain {
       h[j * N + i] = Math.max(site.valley, h[j * N + i] + delta * Math.exp(-(dx * dx + dy * dy) / sig2));
     }
   }
+  return finalizeTerrain(site, h);
+}
+
+/** Wraps a height grid (N×N, row 0 = north) and derives cloudbase. */
+export function finalizeTerrain(site: Site, h: Float32Array): Terrain {
   // Cloudbase: local max peak (±2km) + 500 m
   const cbN = (EXTENT * 2) / CB_CELL;
   const cellMax = new Float32Array(cbN * cbN);
