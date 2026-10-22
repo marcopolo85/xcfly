@@ -176,24 +176,24 @@ export function FlightGame() {
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
       {hud && <WaypointCompass d={hud} />}
-      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex flex-wrap items-end justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3 sm:flex-nowrap">
-        <section aria-label="Seitenansicht" className="flex w-full flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md sm:w-[300px]">
+      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-end justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
+        <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
             <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL</span>
             <ZoomControls label="Seitenansicht" scale={profileZoom.scale} change={profileZoom.change} reset={profileZoom.reset} />
           </header>
           <div className="relative h-24"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>
-        <div className="flex flex-col gap-1 self-end rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
-          <label className="flex flex-col gap-0.5">
-            <span>Sim ×{simSpeed} · Speed ×{simSpeed * 5}</span>
-            <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
-              onChange={(e) => setSimSpeed(Number(e.target.value))} className="w-24 accent-primary" />
-          </label>
-          <label className="flex items-center gap-1.5">
+        <div className="flex flex-col items-center gap-1 self-end rounded-md border border-border bg-card/95 px-1.5 py-1 font-mono text-foreground backdrop-blur-md">
+          <label className="flex items-center gap-1 text-[9px]" title="Thermikkarte ein-/ausblenden">
             <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
-            Thermikkarte
+            Thermik
           </label>
+          <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
+            title={`Sim ×${simSpeed} · Speed ×${simSpeed * 5}`}
+            onChange={(e) => setSimSpeed(Number(e.target.value))}
+            className="h-24 w-5 accent-primary [direction:rtl] [writing-mode:vertical-rl]" />
+          <span className="text-[9px]">×{simSpeed}</span>
         </div>
         <FlightHUD d={hud} />
       </div>}
