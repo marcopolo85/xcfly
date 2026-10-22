@@ -20,12 +20,12 @@ const fmtVz = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 
 export function FlightHUD({ d }: { d: HudData }) {
   return (
-    <section aria-label="GPS Fluginstrument" className="pointer-events-none w-[150px] shrink-0 self-end rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
+    <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[150px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
       <header className="flex items-center justify-between border-b border-border font-mono text-[10px]">
         <span className="font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}</span>
         <span className="text-muted-foreground">{d.clock}</span>
       </header>
-      <div className="grid grid-cols-2 gap-x-2">
+      <div className="grid flex-1 grid-cols-2 content-between gap-x-2">
         <Cell label="Höhe" value={d.alt.toFixed(0)} unit="m" />
         <Cell label="Über Grund" value={d.agl.toFixed(0)} unit="m" />
         <Cell label="Vario 1s" value={fmtVz(d.vz)} unit="m/s" cls={vzCls(d.vz)} />
