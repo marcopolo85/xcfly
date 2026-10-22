@@ -18,6 +18,7 @@ export function FlightGame() {
   const [hud, setHud] = useState<HudData | null>(null);
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string } | null>(null);
   const [muted, setMuted] = useState(false);
+  const [runId, setRunId] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const input = useRef<Input>({ left: false, right: false, accel: false });
   const vario = useRef<AudioVario | null>(null);
@@ -28,12 +29,13 @@ export function FlightGame() {
     setConfig(c);
     setResult(null);
     setPhase("loading");
+    setRunId((r) => r + 1);
   };
 
   useEffect(() => { if (vario.current) vario.current.muted = muted; }, [muted]);
 
   useEffect(() => {
-    if (phase !== "loading" || !config) return;
+    if (runId === 0 || !config) return;
     let raf = 0, cancelled = false;
     const timer = setTimeout(() => {
       const terrain = generateTerrain(config.site);
@@ -99,7 +101,8 @@ export function FlightGame() {
       raf = requestAnimationFrame(loop);
     }, 30);
     return () => { cancelled = true; clearTimeout(timer); cancelAnimationFrame(raf); };
-  }, [phase, config]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runId]);
 
   useEffect(() => {
     const set = (e: KeyboardEvent, v: boolean) => {
@@ -152,7 +155,7 @@ export function FlightGame() {
             </div>
             <div className="mt-5 flex gap-2">
               <button className="flex-1 rounded-lg bg-primary py-3 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
-              <button className="flex-1 rounded-lg border border-border py-3 font-bold text-foreground" onClick={() => setPhase("config")}>Menü</button>
+              <button className="flex-1 rounded-lg border border-border py-3 font-bold text-foreground" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</button>
             </div>
           </div>
         </div>
