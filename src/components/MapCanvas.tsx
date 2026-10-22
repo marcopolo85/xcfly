@@ -3,6 +3,7 @@ import type { Site } from "@/game/sites";
 import { drawSwissRelief } from "./SwissRelief";
 import type { Sim } from "@/game/physicsEngine";
 import { CYLINDER_RADIUS, type Task } from "@/game/task";
+import type { ZoomTransform } from "d3-zoom";
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
@@ -15,7 +16,7 @@ export interface SceneData {
   dusk: number; // 0..1 darkness
 }
 
-export function drawScene(canvas: HTMLCanvasElement, s: SceneData) {
+export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTransform) {
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
@@ -25,9 +26,9 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const z = ZOOM;
+  const z = ZOOM * view.k;
   const { sim } = s;
-  const cx = W / 2, cy = H * 0.55;
+  const cx = view.applyX(W / 2), cy = view.applyY(H * 0.55);
   const sx = (x: number) => cx + (x - sim.x) * z;
   const sy = (y: number) => cy - (y - sim.y) * z;
 
@@ -35,7 +36,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData) {
   ctx.fillStyle = theme.getPropertyValue("--background").trim();
   ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true;
-  const map = drawSwissRelief(ctx, s.site, sim.x, sim.y, W, H, z);
+  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * 0.55) / z, W, H, z);
   if (!map.loaded) {
     ctx.fillStyle = theme.getPropertyValue("--foreground").trim();
     ctx.font = "12px monospace";
@@ -108,5 +109,5 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData) {
 }
 
 export const MapCanvas = forwardRef<HTMLCanvasElement>(function MapCanvas(_, ref) {
-  return <canvas ref={ref} className="absolute inset-0 h-full w-full" />;
+  return <canvas ref={ref} aria-label="Zoombare Schweizer Flugkarte" className="absolute inset-0 h-full w-full cursor-grab touch-none active:cursor-grabbing" />;
 });
