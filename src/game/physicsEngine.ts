@@ -22,9 +22,14 @@ export interface Sim {
 
 export interface Input { left: boolean; right: boolean; accel: boolean }
 
-export function steer(sim: Sim, input: Input, dtReal: number) {
+/**
+ * Applies the turn rate per simulated second so the flown circle keeps the
+ * same radius regardless of the simulation speed (see game.test.ts).
+ */
+export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
   const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  sim.heading = (sim.heading + dir * TURN_RATE * dtReal + Math.PI * 2) % (Math.PI * 2);
+  const dtSim = dtReal * timeScale(input.accel, simSpeed);
+  sim.heading = (sim.heading + dir * TURN_RATE * dtSim + Math.PI * 2) % (Math.PI * 2);
 }
 
 export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift: number) {
