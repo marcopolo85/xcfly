@@ -172,15 +172,15 @@ export function FlightGame() {
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
       {hud && <WaypointCompass d={hud} />}
-      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-end justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
+      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
         <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
             <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL</span>
             <ZoomControls label="Seitenansicht" scale={profileZoom.scale} change={profileZoom.change} reset={profileZoom.reset} />
           </header>
-          <div className="relative h-24"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
+          <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>
-        <div className="flex flex-col items-center gap-1 self-end rounded-md border border-border bg-card/95 px-1.5 py-1 font-mono text-foreground backdrop-blur-md">
+        <div className="flex flex-col items-center justify-between gap-1 rounded-md border border-border bg-card/95 px-1.5 py-1 font-mono text-foreground backdrop-blur-md">
           <label className="flex items-center gap-1 text-[9px]" title="Thermikkarte ein-/ausblenden">
             <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
             Thermik
@@ -188,26 +188,15 @@ export function FlightGame() {
           <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
             title={`Sim ×${simSpeed} · Speed ×${simSpeed * 5}`}
             onChange={(e) => setSimSpeed(Number(e.target.value))}
-            className="h-24 w-5 accent-primary [direction:rtl] [writing-mode:vertical-rl]" />
+            className="min-h-0 w-5 flex-1 accent-primary [direction:rtl] [writing-mode:vertical-rl]" />
           <span className="text-[9px]">×{simSpeed}</span>
         </div>
         <FlightHUD d={hud} />
       </div>}
-      <Button variant="outline" aria-label={muted ? "Ton einschalten" : "Ton ausschalten"} onClick={() => {
-        const nextMuted = !muted;
-        if (vario.current) {
-          vario.current.muted = nextMuted;
-          if (!nextMuted) vario.current.start();
-          else vario.current.update(0);
-        }
-        setMuted(nextMuted);
-      }} className="ctrl-btn absolute left-3 top-[150px] h-10 w-10 text-sm sm:bottom-4 sm:top-auto">
-        {muted ? "🔇" : "🔊"}
-      </Button>
-      <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 sm:hidden">
-        <button className="ctrl-btn h-16 w-20 text-2xl" {...hold("left")}>←</button>
-        <button className="ctrl-btn h-16 w-24 text-sm font-bold" {...hold("accel")}>SPEED</button>
-        <button className="ctrl-btn h-16 w-20 text-2xl" {...hold("right")}>→</button>
+      <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
+        <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
+        <button className="ctrl-btn h-16 flex-1 text-sm font-bold" {...hold("accel")}>SPEED</button>
+        <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("right")}>→</button>
       </div>
       {phase === "done" && result && (
         <div className="absolute inset-0 grid place-items-center bg-background/70 p-6 backdrop-blur-sm">
