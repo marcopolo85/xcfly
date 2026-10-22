@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
-import { generateTerrain, renderTerrain, heightAt, gradientAt, cloudbaseAt, normalAt } from "@/game/terrain";
+import { generateTerrain, heightAt, gradientAt, cloudbaseAt, normalAt } from "@/game/terrain";
 import { generateThermals, airLift, slopeTrigger } from "@/game/thermals";
 import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from "@/game/physicsEngine";
 import { generateTask, inCylinder, xcDistance, mulberry32 } from "@/game/task";
@@ -39,7 +39,6 @@ export function FlightGame() {
     let raf = 0, cancelled = false;
     const timer = setTimeout(() => {
       const terrain = generateTerrain(config.site);
-      const terrainImg = renderTerrain(terrain);
       const rnd = mulberry32((Math.random() * 1e9) | 0);
       const thermals = generateThermals(terrain, rnd);
       const task = generateTask(rnd);
@@ -74,7 +73,7 @@ export function FlightGame() {
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { terrainImg, sim, task, next, trail, dusk });
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, sim, task, next, trail, dusk });
 
         const xc = xcDistance(task, next, sim.x, sim.y);
         if (now - lastHud > 100) {
@@ -130,6 +129,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
+      <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="absolute bottom-0 right-0 z-10 bg-background/90 px-2 py-1 font-mono text-[10px] text-foreground">© swisstopo · swissALTI3D</a>
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Generiere Gelände & Thermik…</p>

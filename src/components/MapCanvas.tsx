@@ -1,12 +1,13 @@
 import { forwardRef } from "react";
-import { EXTENT, RES } from "@/game/terrain";
+import type { Site } from "@/game/sites";
+import { drawSwissRelief } from "./SwissRelief";
 import type { Sim } from "@/game/physicsEngine";
 import { CYLINDER_RADIUS, type Task } from "@/game/task";
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
 export interface SceneData {
-  terrainImg: HTMLCanvasElement;
+  site: Site;
   sim: Sim;
   task: Task;
   next: number;
@@ -21,7 +22,8 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData) {
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
   }
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const z = ZOOM;
   const { sim } = s;
@@ -29,11 +31,17 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData) {
   const sx = (x: number) => cx + (x - sim.x) * z;
   const sy = (y: number) => cy - (y - sim.y) * z;
 
-  ctx.fillStyle = "#2a3328";
+  const theme = getComputedStyle(canvas);
+  ctx.fillStyle = theme.getPropertyValue("--background").trim();
   ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true;
-  const size = EXTENT * 2 * z;
-  ctx.drawImage(s.terrainImg, sx(-EXTENT), sy(EXTENT), size, size * (s.terrainImg.height * RES) / (EXTENT * 2));
+  const map = drawSwissRelief(ctx, s.site, sim.x, sim.y, W, H, z);
+  if (!map.loaded) {
+    ctx.fillStyle = theme.getPropertyValue("--foreground").trim();
+    ctx.font = "12px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(map.failed ? "Karte nicht erreichbar · erneuter Versuch folgt" : "Schweizer Reliefkarte lädt…", W / 2, H * 0.65);
+  }
 
   // task line
   ctx.setLineDash([8, 6]);
