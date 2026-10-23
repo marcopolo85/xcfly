@@ -102,8 +102,30 @@ function airspacePath(a: Airspace) {
   return p;
 }
 
-/** Airspaces at 20 % opacity, labelled with lower/upper limit; spaces whose vertical band
- * contains the glider altitude get a solid coloured border. */
+/** Point on the airspace boundary closest to the glider; cached until the glider moves 300 m. */
+const edgeLabelCache = new WeakMap<Airspace, { gx: number; gy: number; x: number; y: number }>();
+function edgeLabelPoint(a: Airspace, gx: number, gy: number) {
+  const hit = edgeLabelCache.get(a);
+  if (hit && Math.hypot(hit.gx - gx, hit.gy - gy) < 300) return hit;
+  let best = a.label, bestD = Infinity;
+  for (const r of a.rings) {
+    for (let i = 0; i < r.length; i++) {
+      const p = r[i], q = r[(i + 1) % r.length];
+      const dx = q.x - p.x, dy = q.y - p.y;
+      const len2 = dx * dx + dy * dy;
+      const t = len2 > 0 ? Math.max(0, Math.min(1, ((gx - p.x) * dx + (gy - p.y) * dy) / len2)) : 0;
+      const x = p.x + t * dx, y = p.y + t * dy;
+      const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
+      if (d < bestD) { bestD = d; best = { x, y }; }
+    }
+  }
+  const entry = { gx, gy, x: best.x, y: best.y };
+  edgeLabelCache.set(a, entry);
+  return entry;
+}
+
+/** Airspaces at 15 % opacity, labelled along the edge nearest the glider with lower/upper
+ * limit; spaces whose vertical band contains the glider altitude get a solid coloured border. */
 function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: number, gy: number, alt: number, ground: number, sx: (x: number) => number, sy: (y: number) => number, z: number, W: number, H: number) {
   const labels: { a: Airspace; active: boolean }[] = [];
   for (const a of list) {
@@ -124,7 +146,8 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.font = "bold 10px monospace";
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
-    const lx = sx(a.label.x), ly = sy(a.label.y);
+    const edge = edgeLabelPoint(a, gx, gy);
+    const lx = sx(edge.x), ly = sy(edge.y);
     if (lx < -60 || lx > W + 60 || ly < -30 || ly > H + 30) continue;
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
     const lines = [a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`, formatLimit(a.upper), formatLimit(a.lower)];
