@@ -34,6 +34,9 @@ export interface Sim {
   trackX: number[]; trackY: number[]; // downsampled path for XC optimization
   xcDist: number; // XContest-style optimized free distance
   landed: boolean;
+  // Flight statistics for the results screen.
+  maxAlt: number; climbTotal: number; thermals: number; circles: number;
+  turnAcc: number; inLift: boolean;
 }
 
 /** Meters between track points used for the XC distance optimization. */
@@ -70,7 +73,16 @@ export interface Input { left: boolean; right: boolean; accel: boolean; steer?: 
 export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
   const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0) + (input.steer ?? 0) * STEER_ANALOG_FACTOR;
   const dtSim = dtReal * timeScale(input.accel, simSpeed);
-  sim.heading = (sim.heading + dir * TURN_RATE * dtSim + Math.PI * 2) % (Math.PI * 2);
+  const rot = dir * TURN_RATE * dtSim;
+  // A full 360° rotation counts as a thermalling circle, but only while climbing.
+  if (dir !== 0) {
+    sim.turnAcc += Math.abs(rot);
+    if (sim.turnAcc >= Math.PI * 2) {
+      sim.turnAcc -= Math.PI * 2;
+      if (sim.vz > 0.3) sim.circles++;
+    }
+  } else sim.turnAcc = 0;
+  sim.heading = (sim.heading + rot + Math.PI * 2) % (Math.PI * 2);
 }
 
 export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift: number) {
