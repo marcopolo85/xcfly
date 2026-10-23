@@ -5,6 +5,8 @@ import { mulberry32 } from "./rng";
 import { slopeTrigger } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 
+const newSim = (alt = 2000, vz = -1): Sim => ({ x: 0, y: 0, alt, heading: 0, vz, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false, maxAlt: alt, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false });
+
 describe("game rules", () => {
   it("speedbar runs game time 5x faster", () => {
     expect(timeScale(true)).toBe(20);
