@@ -26,7 +26,17 @@ export function FlightHUD({ d }: { d: HudData }) {
         <span className="font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}</span>
         <span className="text-muted-foreground">{d.clock}</span>
       </header>
-      <div className="grid flex-1 grid-cols-2 content-between gap-x-2 gap-y-0.5 pt-0.5">
+      <div className="flex flex-1 gap-1.5 pt-0.5">
+      <div className="relative w-3 shrink-0 border-r border-border" role="meter" aria-label="Höhe über Grund" aria-valuemin={0} aria-valuemax={Math.max(1500, Math.ceil(d.agl / 500) * 500)} aria-valuenow={Math.max(0, d.agl)} aria-valuetext={`${Math.round(d.agl)} Meter über Grund`}>
+        <span className="absolute inset-x-0 top-0 text-[7px] font-mono text-muted-foreground">AGL</span>
+        <div className="absolute bottom-2 left-0 top-4 w-1.5 overflow-hidden rounded-sm bg-muted">
+          <div className="absolute inset-x-0 bottom-0 bg-climb transition-[height] duration-100 ease-linear motion-reduce:transition-none" style={{ height: `${Math.max(0, Math.min(100, d.agl / Math.max(1500, Math.ceil(d.agl / 500) * 500) * 100))}%` }} />
+          <span className="absolute inset-x-0 top-1/3 border-t border-card/70" />
+          <span className="absolute inset-x-0 top-2/3 border-t border-card/70" />
+        </div>
+        <span className="absolute bottom-0 left-0 text-[7px] font-mono text-muted-foreground">0</span>
+      </div>
+      <div className="grid min-w-0 flex-1 grid-cols-2 content-between gap-x-2 gap-y-0.5">
         <Cell label="ALT" value={d.alt.toFixed(0)} unit="m" />
         <Cell label="AGL" value={d.agl.toFixed(0)} unit="m" />
         <Cell label="VARIO" value={fmtVz(d.vz)} unit="m/s" cls={vzCls(d.vz)} />
@@ -42,6 +52,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         </div>
         <Cell label="CLOSE" value={d.close > 0 ? (d.close / 1000).toFixed(1) : "0.0"} unit="km" cls={d.close > 0 ? "text-sun" : "text-climb"} />
         <Cell label="WOLKENBASIS" value={d.cloudbase.toFixed(0)} unit="m" />
+      </div>
       </div>
     </section>
   );
