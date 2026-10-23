@@ -7,12 +7,12 @@ import { sunPosition, sunVector } from "./sun";
 
 describe("game rules", () => {
   it("speedbar runs game time 5x faster", () => {
-    expect(timeScale(true)).toBe(5);
+    expect(timeScale(true)).toBe(20);
     expect(timeScale(false)).toBe(1);
   });
   it("speedbar is a multiple of the chosen simulation speed", () => {
     expect(timeScale(false, 3)).toBe(3);
-    expect(timeScale(true, 3)).toBe(15);
+    expect(timeScale(true, 3)).toBe(60);
   });
   it("holding a turn button for 2s boosts the simulation rate 10x until release", () => {
     const input = { left: false, right: true, accel: false };

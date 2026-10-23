@@ -14,7 +14,7 @@ export function timeScale(accel: boolean, simSpeed = 1) {
 }
 
 export const HOLD_BOOST_MS = 2000;
-export const HOLD_BOOST_FACTOR = 10;
+export const HOLD_BOOST_FACTOR = 20;
 
 export type HoldStarts = { left: number | null; right: number | null };
 
