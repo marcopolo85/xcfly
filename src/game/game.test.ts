@@ -9,13 +9,13 @@ import { sunPosition, sunVector } from "./sun";
 const newSim = (alt = 2000, vz = -1): Sim => ({ x: 0, y: 0, alt, heading: 0, vz, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false, maxAlt: alt, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false });
 
 describe("game rules", () => {
-  it("speedbar runs game time 5x faster", () => {
-    expect(timeScale(true)).toBe(20);
+  it("speedbar runs game time 40x faster", () => {
+    expect(timeScale(true)).toBe(40);
     expect(timeScale(false)).toBe(1);
   });
   it("speedbar is a multiple of the chosen simulation speed", () => {
     expect(timeScale(false, 3)).toBe(3);
-    expect(timeScale(true, 3)).toBe(60);
+    expect(timeScale(true, 3)).toBe(120);
   });
   it("holding a turn button for 2s boosts the simulation rate 10x until release", () => {
     const input = { left: false, right: true, accel: false };

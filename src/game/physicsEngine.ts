@@ -8,9 +8,9 @@ export const TURN_RATE = (128 * Math.PI) / 180; // rad per simulated second
 /** Slide steering on the speed button turns at a fraction of the full turn rate. */
 export const STEER_ANALOG_FACTOR = 0.125;
 export const TURN_SINK = 0.45;
-export const ACCEL_TIME_FACTOR = 20;
+export const ACCEL_TIME_FACTOR = 40;
 
-/** Game-time factor: base simulation speed, multiplied by 20 on speedbar. */
+/** Game-time factor: base simulation speed, multiplied by 40 on speedbar. */
 export function timeScale(accel: boolean, simSpeed = 1) {
   return simSpeed * (accel ? ACCEL_TIME_FACTOR : 1);
 }
