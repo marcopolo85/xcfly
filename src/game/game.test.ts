@@ -47,6 +47,24 @@ describe("game rules", () => {
   it("cloudbase is 500 m above the peaks", () => {
     expect(cloudbaseFromPeak(2800)).toBe(3300);
   });
+  it("XC distance is the XContest-style optimized free distance, not the distance flown", () => {
+    const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
+    const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: 0, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
+    const fly = (seconds: number) => {
+      for (let i = 0; i < seconds * 20; i++) stepPhysics(sim, { left: false, right: false, accel: false }, 0.05, flat, 0);
+    };
+    // Fly 3 km straight out, then turn around and fly 3 km back to the launch.
+    fly(3000 / 10.5);
+    expect(sim.xcDist).toBeGreaterThan(2900);
+    expect(sim.xcDist).toBeLessThan(3100);
+    sim.heading = Math.PI;
+    fly(3000 / 10.5);
+    // Back at the launch: flown distance stays 6 km, but XC distance counts
+    // launch -> turnpoint -> current position = 3 km + 3 km, like XContest.
+    expect(Math.hypot(sim.x, sim.y)).toBeLessThan(200);
+    expect(sim.xcDist).toBeGreaterThan(5900);
+    expect(sim.xcDist).toBeLessThan(6100);
+  });
   it("east slopes trigger in the morning, west slopes in the evening", () => {
     const east = { x: 0.6, y: 0, z: 0.8 }, west = { x: -0.6, y: 0, z: 0.8 };
     const am = sunVector(sunPosition(46.7, 172, 9, true));
