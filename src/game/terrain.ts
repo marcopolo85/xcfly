@@ -13,6 +13,8 @@ export interface Terrain {
   cb: Float32Array; // cloudbase per 1km cell
   cbN: number;
   site: Site;
+  centerX?: number; // launch-relative centre of the currently loaded grid
+  centerY?: number;
 }
 
 function hash2(ix: number, iy: number, seed: number) {
@@ -84,7 +86,7 @@ export function generateTerrain(site: Site): Terrain {
 }
 
 /** Wraps a height grid (N×N, row 0 = north) and derives cloudbase. */
-export function finalizeTerrain(site: Site, h: Float32Array): Terrain {
+export function finalizeTerrain(site: Site, h: Float32Array, centerX = 0, centerY = 0): Terrain {
   // Cloudbase: local max peak (±2km) + 500 m, but never below
   // FLAT_THERMAL_TOP above the lowest ground of the 1km cell, so thermals
   // in flatland still reach FLAT_THERMAL_TOP above ground.
@@ -112,7 +114,7 @@ export function finalizeTerrain(site: Site, h: Float32Array): Terrain {
         }
       cb[cj * cbN + ci] = Math.max(cloudbaseFromPeak(m), cellMin[cj * cbN + ci] + FLAT_THERMAL_TOP);
     }
-  return { h, cb, cbN, site };
+  return { h, cb, cbN, site, centerX, centerY };
 }
 
 export function cloudbaseFromPeak(peak: number) {
@@ -120,8 +122,8 @@ export function cloudbaseFromPeak(peak: number) {
 }
 
 export function heightAt(t: Terrain, x: number, y: number) {
-  const fi = Math.max(0, Math.min(N - 1.001, (x + EXTENT) / RES));
-  const fj = Math.max(0, Math.min(N - 1.001, (EXTENT - y) / RES));
+  const fi = Math.max(0, Math.min(N - 1.001, (x - (t.centerX ?? 0) + EXTENT) / RES));
+  const fj = Math.max(0, Math.min(N - 1.001, (EXTENT - y + (t.centerY ?? 0)) / RES));
   const i = Math.floor(fi), j = Math.floor(fj);
   const u = fi - i, v = fj - j;
   const a = t.h[j * N + i], b = t.h[j * N + i + 1];
@@ -145,8 +147,8 @@ export function normalAt(t: Terrain, x: number, y: number) {
 }
 
 export function cloudbaseAt(t: Terrain, x: number, y: number) {
-  const ci = Math.max(0, Math.min(t.cbN - 1, Math.floor((x + EXTENT) / CB_CELL)));
-  const cj = Math.max(0, Math.min(t.cbN - 1, Math.floor((EXTENT - y) / CB_CELL)));
+  const ci = Math.max(0, Math.min(t.cbN - 1, Math.floor((x - (t.centerX ?? 0) + EXTENT) / CB_CELL)));
+  const cj = Math.max(0, Math.min(t.cbN - 1, Math.floor((EXTENT - y + (t.centerY ?? 0)) / CB_CELL)));
   return t.cb[cj * t.cbN + ci];
 }
 

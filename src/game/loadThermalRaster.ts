@@ -18,11 +18,12 @@ function loadTile(url: string): Promise<HTMLImageElement> {
 }
 
 /** Load the actual July / All day raster once; never invent missing sources. */
-export async function loadThermalRaster(site: Site): Promise<ThermalMap> {
-  const cached = cache.get(site.id);
+export async function loadThermalRaster(site: Site, centerX = 0, centerY = 0): Promise<ThermalMap> {
+  const key = `${site.id}:${centerX}:${centerY}`;
+  const cached = cache.get(key);
   if (cached) return cached;
-  const a = localToPixel(site, -EXTENT, EXTENT, THERMAL_ZOOM);
-  const b = localToPixel(site, EXTENT, -EXTENT, THERMAL_ZOOM);
+  const a = localToPixel(site, centerX - EXTENT, centerY + EXTENT, THERMAL_ZOOM);
+  const b = localToPixel(site, centerX + EXTENT, centerY - EXTENT, THERMAL_ZOOM);
   const tx0 = Math.floor(a.px / 256), ty0 = Math.floor(a.py / 256);
   const tx1 = Math.floor(b.px / 256), ty1 = Math.floor(b.py / 256);
   const image = document.createElement("canvas");
@@ -45,7 +46,7 @@ export async function loadThermalRaster(site: Site): Promise<ThermalMap> {
   const strength = new Float32Array(image.width * image.height);
   for (let i = 0; i < strength.length; i++) strength[i] = thermalHeat(pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2], pixels[i * 4 + 3]);
   const map = { image, raster: { site, left: tx0 * 256, top: ty0 * 256, width: image.width, height: image.height, strength } };
-  cache.set(site.id, map);
+  cache.set(key, map);
   if (cache.size > 2) {
     const oldest = cache.keys().next().value;
     if (oldest !== undefined) cache.delete(oldest);
