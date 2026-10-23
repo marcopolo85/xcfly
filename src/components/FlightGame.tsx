@@ -1,3 +1,5 @@
+import { loadAirspace } from "@/game/loadAirspace";
+import type { Airspace } from "@/game/airspace";
 import { bestTriangle, closingGap, faiRange, type XcTriangle } from "@/game/xcTriangle";
 import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
@@ -77,6 +79,8 @@ export function FlightGame() {
         return;
       }
       if (cancelled) return;
+      let airspaces: Airspace[] | null = null;
+      loadAirspace(config.site).then((a) => { airspaces = a; }).catch(() => {});
       const thermals: ThermalField = { grid: new Map(), count: 0, raster: thermalMap.raster };
       const season = SEASONS[config.season];
       const g = gradientAt(terrain, 0, 0);
@@ -114,7 +118,7 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = sim.xcDist;
