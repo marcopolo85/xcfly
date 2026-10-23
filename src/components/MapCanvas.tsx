@@ -9,7 +9,7 @@ import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 import { THERMAL_ZOOM } from "@/game/thermalRaster";
 import { CLOSING_RATIO, type XcTriangle } from "@/game/xcTriangle";
 import wingUrl from "@/assets/glider-wing.png";
-import { AIRSPACE_COLORS, formatLimit, insideVertical, type Airspace } from "@/game/airspace";
+import { AIRSPACE_COLORS, formatLimitM, insideVertical, type Airspace } from "@/game/airspace";
 
 let wingImage: HTMLImageElement | null = null;
 function getWingImage() {
@@ -102,26 +102,42 @@ function airspacePath(a: Airspace) {
   return p;
 }
 
-/** Point on the airspace boundary closest to the glider; cached until the glider moves 300 m. */
-const edgeLabelCache = new WeakMap<Airspace, { gx: number; gy: number; x: number; y: number }>();
-function edgeLabelPoint(a: Airspace, gx: number, gy: number) {
-  const hit = edgeLabelCache.get(a);
-  if (hit && Math.hypot(hit.gx - gx, hit.gy - gy) < 300) return hit;
-  let best = a.label, bestD = Infinity;
-  for (const r of a.rings) {
-    for (let i = 0; i < r.length; i++) {
-      const p = r[i], q = r[(i + 1) % r.length];
-      const dx = q.x - p.x, dy = q.y - p.y;
-      const len2 = dx * dx + dy * dy;
-      const t = len2 > 0 ? Math.max(0, Math.min(1, ((gx - p.x) * dx + (gy - p.y) * dy) / len2)) : 0;
-      const x = p.x + t * dx, y = p.y + t * dy;
-      const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
-      if (d < bestD) { bestD = d; best = { x, y }; }
+/** Point on the airspace boundary closest to the glider, with the edge tangent angle.
+ * Target is cached until the glider moves 300 m; the drawn label glides smoothly towards it. */
+interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number }
+const edgeLabelCache = new WeakMap<Airspace, EdgeLabel>();
+function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
+  let e = edgeLabelCache.get(a);
+  if (!e || Math.hypot(e.gx - gx, e.gy - gy) >= 300) {
+    let bx = a.label.x, by = a.label.y, bdx = 1, bdy = 0, bestD = Infinity;
+    for (const r of a.rings) {
+      for (let i = 0; i < r.length; i++) {
+        const p = r[i], q = r[(i + 1) % r.length];
+        const dx = q.x - p.x, dy = q.y - p.y;
+        const len2 = dx * dx + dy * dy;
+        const t = len2 > 0 ? Math.max(0, Math.min(1, ((gx - p.x) * dx + (gy - p.y) * dy) / len2)) : 0;
+        const x = p.x + t * dx, y = p.y + t * dy;
+        const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
+        if (d < bestD) { bestD = d; bx = x; by = y; bdx = dx; bdy = dy; }
+      }
     }
+    // screen-space tangent angle (world y points up, screen y down), kept readable (not upside down)
+    let ang = Math.atan2(-bdy, bdx);
+    if (ang > Math.PI / 2) ang -= Math.PI;
+    if (ang < -Math.PI / 2) ang += Math.PI;
+    if (!e) e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang };
+    else { e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; }
+    edgeLabelCache.set(a, e);
   }
-  const entry = { gx, gy, x: best.x, y: best.y };
-  edgeLabelCache.set(a, entry);
-  return entry;
+  // smooth glide towards the target so the label never jumps
+  const k = 0.12;
+  e.dx += (e.x - e.dx) * k;
+  e.dy += (e.y - e.dy) * k;
+  let da = e.ang - e.dang;
+  if (da > Math.PI / 2) da -= Math.PI;
+  if (da < -Math.PI / 2) da += Math.PI;
+  e.dang += da * k;
+  return e;
 }
 
 /** Airspaces at 15 % opacity, labelled along the edge nearest the glider with lower/upper
@@ -147,24 +163,25 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
     const edge = edgeLabelPoint(a, gx, gy);
-    const lx = sx(edge.x), ly = sy(edge.y);
-    if (lx < -60 || lx > W + 60 || ly < -30 || ly > H + 30) continue;
+    const lx = sx(edge.dx), ly = sy(edge.dy);
+    if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
-    const lines = [a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`, formatLimit(a.upper), formatLimit(a.lower)];
     if (z < 0.02 && a.kind === "AD") continue;
-    const w = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 8;
+    const name = a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`;
+    const text = `${name}  ${formatLimitM(a.lower)} – ${formatLimitM(a.upper)}`;
+    const w = ctx.measureText(text).width + 8;
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(edge.dang);
     ctx.fillStyle = "rgba(255,255,255,0.8)";
-    ctx.fillRect(lx - w / 2, ly - 16, w, 36);
+    ctx.fillRect(-w / 2, -8, w, 15);
     ctx.strokeStyle = `rgba(${r},${g},${b},${active ? 1 : 0.6})`;
     ctx.lineWidth = active ? 2 : 1;
-    ctx.strokeRect(lx - w / 2, ly - 16, w, 36);
+    ctx.strokeRect(-w / 2, -8, w, 15);
     ctx.fillStyle = `rgb(${r * 0.6},${g * 0.6},${b * 0.6})`;
-    ctx.fillText(lines[0], lx, ly - 6);
-    ctx.fillText(lines[1], lx, ly + 5);
-    ctx.fillRect(lx - w / 2 + 4, ly + 7, w - 8, 1);
-    ctx.fillText(lines[2], lx, ly + 17);
+    ctx.fillText(text, 0, 3);
+    ctx.restore();
   }
-  void gx; void gy;
 }
 
 interface Sector { path: Path2D; minP: number; maxP: number; lx: number; ly: number }

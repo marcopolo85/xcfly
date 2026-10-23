@@ -46,6 +46,13 @@ export function formatLimit(l: Limit) {
   return `${Math.round(l.value)} ft${l.type === "AGL" ? " AGL" : ""}`;
 }
 
+/** Limit in metres: FL and ft are converted, AGL keeps its suffix. */
+export function formatLimitM(l: Limit) {
+  if (l.type === "AGL" && l.value === 0) return "GND";
+  const m = Math.round(l.value * (l.type === "FL" ? 100 : 1) * FT);
+  return `${m} m${l.type === "AGL" ? " AGL" : ""}`;
+}
+
 export function insideVertical(a: Airspace, alt: number, ground: number) {
   return alt >= limitMetres(a.lower, ground) && alt <= limitMetres(a.upper, ground);
 }
