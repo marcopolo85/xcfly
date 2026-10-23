@@ -1,3 +1,4 @@
+import { valleyWindAt, ridgeLift } from "./valleyWind";
 import { cloudbaseAt, heightAt, type Terrain } from "./terrain";
 
 export const POLAR = {
@@ -78,11 +79,13 @@ export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift
   const turning = input.left !== input.right;
   sim.speed += (p.v - sim.speed) * Math.min(1, dt * 1.5);
   const sink = p.sink + (turning ? TURN_SINK : 0);
+  lift += ridgeLift(t, sim.x, sim.y, sim.alt);
   sim.airLift = lift;
   sim.vz = lift - sink;
   const dx = Math.sin(sim.heading) * sim.speed * dt;
   const dy = Math.cos(sim.heading) * sim.speed * dt;
-  sim.x += dx; sim.y += dy;
+  const w = valleyWindAt(t, sim.x, sim.y, sim.alt);
+  sim.x += dx + w.wx * dt; sim.y += dy + w.wy * dt;
   sim.distance += Math.hypot(dx, dy);
   updateXc(sim);
   sim.alt += sim.vz * dt;
