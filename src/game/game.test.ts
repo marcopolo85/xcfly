@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { timeScale, steer, stepPhysics, TURN_RATE, type Sim } from "./physicsEngine";
+import { timeScale, steer, stepPhysics, TURN_RATE, holdBoost, HOLD_BOOST_FACTOR, type Sim } from "./physicsEngine";
 import { cloudbaseFromPeak, N } from "./terrain";
 import { mulberry32 } from "./rng";
 import { slopeTrigger } from "./thermals";
@@ -13,6 +13,14 @@ describe("game rules", () => {
   it("speedbar is a multiple of the chosen simulation speed", () => {
     expect(timeScale(false, 3)).toBe(3);
     expect(timeScale(true, 3)).toBe(15);
+  });
+  it("holding a turn button for 2s boosts the simulation rate 10x until release", () => {
+    const input = { left: false, right: true, accel: false };
+    const starts = { left: null, right: 1000 };
+    expect(holdBoost(input, starts, 1000 + 1999)).toBe(1);
+    expect(holdBoost(input, starts, 1000 + 2000)).toBe(HOLD_BOOST_FACTOR);
+    expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
+    expect(holdBoost(input, { left: null, right: null }, 5000)).toBe(1);
   });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {

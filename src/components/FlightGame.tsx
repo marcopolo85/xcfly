@@ -5,7 +5,7 @@ import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster } from "@/game/loadThermalRaster";
-import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from "@/game/physicsEngine";
+import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { loadRealTerrain } from "@/game/realTerrain";
@@ -28,6 +28,7 @@ export function FlightGame() {
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
+  const holdStart = useRef<HoldStarts>({ left: null, right: null });
   const [simSpeed, setSimSpeed] = useState(1);
   const [showThermals, setShowThermals] = useState(false);
   const simSpeedRef = useRef(1);
@@ -85,8 +86,10 @@ export function FlightGame() {
         const dtReal = Math.min(0.05, (now - last) / 1000);
         last = now;
         const inp = input.current;
-        steer(sim, inp, dtReal, simSpeedRef.current);
-        const simDt = dtReal * timeScale(inp.accel, simSpeedRef.current);
+        const boost = holdBoost(inp, holdStart.current, now);
+        const effSimSpeed = simSpeedRef.current * boost;
+        steer(sim, inp, dtReal, effSimSpeed);
+        const simDt = dtReal * timeScale(inp.accel, effSimSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
         const sv = sunVector(sp);
         const steps = Math.ceil(simDt / 0.05);
@@ -128,9 +131,13 @@ export function FlightGame() {
 
   useEffect(() => {
     const set = (e: KeyboardEvent, v: boolean) => {
-      if (e.code === "ArrowLeft") input.current.left = v;
-      else if (e.code === "ArrowRight") input.current.right = v;
-      else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
+      if (e.code === "ArrowLeft") {
+        input.current.left = v;
+        holdStart.current.left = v ? performance.now() : null;
+      } else if (e.code === "ArrowRight") {
+        input.current.right = v;
+        holdStart.current.right = v ? performance.now() : null;
+      } else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
       else return;
       e.preventDefault();
     };
@@ -142,11 +149,20 @@ export function FlightGame() {
 
   if (phase === "config") return <StartScreen onStart={start} />;
 
+  const stopHold = (k: keyof Input) => {
+    if (k === "left" || k === "right") holdStart.current[k] = null;
+    input.current[k] = false;
+  };
+
   const hold = (k: keyof Input) => ({
-    onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); input.current[k] = true; },
-    onPointerUp: () => { input.current[k] = false; },
-    onPointerLeave: () => { input.current[k] = false; },
-    onPointerCancel: () => { input.current[k] = false; },
+    onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault();
+      input.current[k] = true;
+      if (k === "left" || k === "right") holdStart.current[k] = performance.now();
+    },
+    onPointerUp: () => stopHold(k),
+    onPointerLeave: () => stopHold(k),
+    onPointerCancel: () => stopHold(k),
   });
 
   return (
