@@ -45,3 +45,21 @@ export function bestTriangle(xs: number[], ys: number[], cur: Pt): XcTriangle | 
   }
   return best && best.perimeter > 300 ? best : null;
 }
+
+/**
+ * FAI-valid perimeter range still achievable with the current triangle's legs:
+ * the smallest valid perimeter is set by the longest leg (others at the 28 %
+ * minimum), the largest by the shortest leg (it must stay ≥ 28 %).
+ */
+export function faiRange(t: XcTriangle): { min: number; max: number } {
+  const legs = [d(t.a, t.b), d(t.b, t.c), d(t.c, t.a)];
+  return {
+    min: Math.max(...legs) / (1 - 2 * FAI_MIN_LEG),
+    max: Math.min(...legs) / FAI_MIN_LEG,
+  };
+}
+
+/** Distance still to fly until the current position enters the closing cylinder. */
+export function closingGap(t: XcTriangle): number {
+  return Math.max(0, t.closing - CLOSING_RATIO * t.perimeter);
+}
