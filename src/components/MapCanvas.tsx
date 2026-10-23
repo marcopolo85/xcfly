@@ -163,24 +163,25 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
     const edge = edgeLabelPoint(a, gx, gy);
-    const lx = sx(edge.x), ly = sy(edge.y);
-    if (lx < -60 || lx > W + 60 || ly < -30 || ly > H + 30) continue;
+    const lx = sx(edge.dx), ly = sy(edge.dy);
+    if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
-    const lines = [a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`, formatLimit(a.upper), formatLimit(a.lower)];
     if (z < 0.02 && a.kind === "AD") continue;
-    const w = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 8;
+    const name = a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`;
+    const text = `${name}  ${formatLimitM(a.lower)} – ${formatLimitM(a.upper)}`;
+    const w = ctx.measureText(text).width + 8;
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(edge.dang);
     ctx.fillStyle = "rgba(255,255,255,0.8)";
-    ctx.fillRect(lx - w / 2, ly - 16, w, 36);
+    ctx.fillRect(-w / 2, -8, w, 15);
     ctx.strokeStyle = `rgba(${r},${g},${b},${active ? 1 : 0.6})`;
     ctx.lineWidth = active ? 2 : 1;
-    ctx.strokeRect(lx - w / 2, ly - 16, w, 36);
+    ctx.strokeRect(-w / 2, -8, w, 15);
     ctx.fillStyle = `rgb(${r * 0.6},${g * 0.6},${b * 0.6})`;
-    ctx.fillText(lines[0], lx, ly - 6);
-    ctx.fillText(lines[1], lx, ly + 5);
-    ctx.fillRect(lx - w / 2 + 4, ly + 7, w - 8, 1);
-    ctx.fillText(lines[2], lx, ly + 17);
+    ctx.fillText(text, 0, 3);
+    ctx.restore();
   }
-  void gx; void gy;
 }
 
 interface Sector { path: Path2D; minP: number; maxP: number; lx: number; ly: number }
