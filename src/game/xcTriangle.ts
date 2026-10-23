@@ -47,15 +47,15 @@ export function bestTriangle(xs: number[], ys: number[], cur: Pt): XcTriangle | 
 }
 
 /**
- * FAI-valid perimeter range still achievable with the current triangle's legs:
- * the smallest valid perimeter is set by the longest leg (others at the 28 %
- * minimum), the largest by the shortest leg (it must stay ≥ 28 %).
+ * Min/max perimeter of the FAI sector on the fixed leg A–B (where the third
+ * vertex can still be placed) — identical to the "min/max km" label the map
+ * draws for that sector: min = L/0.44, max = L/0.28.
  */
 export function faiRange(t: XcTriangle): { min: number; max: number } {
-  const legs = [d(t.a, t.b), d(t.b, t.c), d(t.c, t.a)];
+  const L = d(t.a, t.b);
   return {
-    min: Math.max(...legs) / (1 - 2 * FAI_MIN_LEG),
-    max: Math.min(...legs) / FAI_MIN_LEG,
+    min: L / (1 - 2 * FAI_MIN_LEG),
+    max: L / FAI_MIN_LEG,
   };
 }
 
