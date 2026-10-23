@@ -1,4 +1,5 @@
 /** Bounded, shared browser tile cache: overlapping flight windows reuse downloads. */
+import { tileResponse } from "@/lib/offline-data";
 const tiles = new Map<string, Promise<HTMLImageElement>>();
 export function loadRasterTile(url: string): Promise<HTMLImageElement> {
   const cached = tiles.get(url);
@@ -10,9 +11,12 @@ export function loadRasterTile(url: string): Promise<HTMLImageElement> {
     const image = new Image();
     image.crossOrigin = "anonymous";
     const timeout = setTimeout(() => reject(new Error("Kachel-Zeitüberschreitung")), 20000);
-    image.onload = () => { clearTimeout(timeout); resolve(image); };
-    image.onerror = () => { clearTimeout(timeout); reject(new Error("Kachel nicht erreichbar")); };
-    image.src = url;
+    let objectUrl: string | undefined;
+    image.onload = () => { clearTimeout(timeout); if (objectUrl) URL.revokeObjectURL(objectUrl); resolve(image); };
+    image.onerror = () => { clearTimeout(timeout); if (objectUrl) URL.revokeObjectURL(objectUrl); reject(new Error("Kachel nicht erreichbar")); };
+    tileResponse(url).then((r) => r.blob()).then((blob) => {
+      objectUrl = URL.createObjectURL(blob); image.src = objectUrl;
+    }).catch((error) => { clearTimeout(timeout); reject(error); });
   });
   tiles.set(url, tile);
   tile.catch(() => { if (tiles.get(url) === tile) tiles.delete(url); });

@@ -46,9 +46,9 @@ export function riverTileUrl(x: number, y: number, level: number) {
   return `https://wmts.geo.admin.ch/1.0.0/${RIVER_LAYER}/default/current/3857/${level}/${x}/${y}.png`;
 }
 
-export function visibleReliefTiles(site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number, dpr = 1) {
+export function visibleReliefTiles(site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number, dpr = 1, maxLevel = MAX_RELIEF_LEVEL) {
   const origin = mapOrigin(site);
-  const level = reliefLevel(origin.scale, zoom, dpr);
+  const level = Math.min(maxLevel, reliefLevel(origin.scale, zoom, dpr));
   const tileMetresAtLevel = tileMetres(level);
   const centerX = origin.x + x / origin.scale;
   const centerY = origin.y + y / origin.scale;

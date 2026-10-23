@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
 import { sunTimes } from "@/game/sun";
 import heroImg from "@/assets/hero-alps.jpg";
@@ -15,6 +15,13 @@ const FIXED_START_HOUR = 11;
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
   const [site, setSite] = useState<Site>(SITES[0]);
   const [choosing, setChoosing] = useState(false);
+  useEffect(() => {
+    if (navigator.onLine) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem("xcfly-offline-area") ?? "null");
+      if (saved && typeof saved.id === "string" && typeof saved.lat === "number" && typeof saved.lon === "number") setSite(saved);
+    } catch { /* Keep the default launch if device metadata is missing. */ }
+  }, []);
   const st = sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst);
 
 

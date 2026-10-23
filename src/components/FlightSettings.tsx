@@ -5,11 +5,10 @@ import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 import { MAP_STYLES, setMapStyle, type MapStyle } from "./SwissRelief";
 import { useEffect, useState } from "react";
+import type { Site } from "@/game/sites";
+import { OfflineSettings } from "./OfflineSettings";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
-  const [mapStyle, setStyle] = useState<MapStyle>(() => (typeof localStorage !== "undefined" && (localStorage.getItem("mapStyle") as MapStyle)) || "relief");
-  useEffect(() => { setMapStyle(mapStyle); localStorage.setItem("mapStyle", mapStyle); }, [mapStyle]);
-  const credit = MAP_STYLES.find((m) => m.v === mapStyle)?.credit ?? "© swisstopo";
   return (
     <div className="space-y-2">
       <div className="font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
@@ -18,7 +17,8 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
+export function FlightSettings({ site, thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
+  site: Site;
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
   showProfile: boolean;
@@ -90,6 +90,7 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
                 <Switch checked={showAirspaceLabels} onCheckedChange={onShowAirspaceLabels} aria-label="Luftraum-Beschriftung anzeigen" />
               </div>
             </Section>
+            <Section title="Offline"><OfflineSettings site={site} /></Section>
             <Section title="Copyright & Quellen">
               <div className="space-y-2 text-[11px] leading-snug">
                 <div>
