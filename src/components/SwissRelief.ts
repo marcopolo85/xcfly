@@ -75,14 +75,14 @@ function tileImage(url: string, filter = "none", tint = "", underlayUrl?: string
     tile.image = image;
     if (tint || filter !== "none" || underlayUrl) {
       const surface = document.createElement("canvas");
-      surface.width = loadedImage.naturalWidth;
-      surface.height = loadedImage.naturalHeight;
+      surface.width = image.naturalWidth;
+      surface.height = image.naturalHeight;
       const context = surface.getContext("2d");
       if (context) {
         // Apply the expensive relief filter once at native tile resolution,
         // never to the enlarged high-DPI map on every animation frame.
         context.filter = filter;
-        context.drawImage(loadedImage, 0, 0);
+        context.drawImage(image, 0, 0);
         context.filter = "none";
         if (tint) {
           context.globalCompositeOperation = "source-in";
