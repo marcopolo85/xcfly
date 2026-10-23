@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
-import { fmtClock, sunTimes } from "@/game/sun";
+import { sunTimes } from "@/game/sun";
 import heroImg from "@/assets/hero-alps.jpg";
 import { MapPin } from "lucide-react";
 import { Button } from "./ui/button";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number }
+
+const FIXED_SEASON: Season = "summer";
+const FIXED_START_HOUR = 11;
+
+export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
+  const [site, setSite] = useState<Site>(SITES[0]);
+  const [choosing, setChoosing] = useState(false);
+  const st = sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst);
 
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
   const [site, setSite] = useState<Site>(SITES[0]);

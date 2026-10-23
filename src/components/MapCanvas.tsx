@@ -153,16 +153,6 @@ function drawTriangle(ctx: CanvasRenderingContext2D, t: XcTriangle, sx: (x: numb
     ctx.stroke(sec.path);
     ctx.restore();
   });
-  ctx.font = "bold 11px monospace";
-  ctx.textAlign = "center";
-  for (const sec of sectors) {
-    if (!isFinite(sec.minP)) continue;
-    const tx = sx(sec.lx), ty = sy(sec.ly);
-    const l1 = `min ${(sec.minP / 1000).toFixed(1)} km`, l2 = `max ${(sec.maxP / 1000).toFixed(1)} km`;
-    ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.fillStyle = "rgba(20,30,60,0.95)";
-    ctx.strokeText(l1, tx, ty); ctx.fillText(l1, tx, ty);
-    ctx.strokeText(l2, tx, ty + 13); ctx.fillText(l2, tx, ty + 13);
-  }
   const col = t.fai ? "rgba(40,110,255,0.95)" : "rgba(30,170,60,0.95)";
   ctx.strokeStyle = col; ctx.lineWidth = 2;
   ctx.beginPath();
