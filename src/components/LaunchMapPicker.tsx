@@ -102,7 +102,7 @@ export function LaunchMapPicker({ initial, onSelect, onClose }: { initial: Site;
         <option value="" disabled>Eigener Startplatz</option>
         {SITES.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
       </select>
-      <a className="absolute bottom-0 right-0 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground" href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · Relief</a>
+      <a className="absolute bottom-0 right-0 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground" href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · OpenTopoMap · OSM</a>
     </div>
     <footer className="shrink-0 space-y-2 border-t border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-1 font-mono text-xs"><span>{selected.lat.toFixed(5)}° N · {selected.lon.toFixed(5)}° E</span><span>{loading ? "Höhe lädt…" : error ? "—" : `${selected.launchAlt} m`}</span></div>
