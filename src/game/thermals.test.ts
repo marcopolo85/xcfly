@@ -25,6 +25,27 @@ describe("usable solar thermals", () => {
     const field = generateThermals(terrain, mulberry32(1));
     expect(airLift(field, terrain, 0, 0, 1990, 0, { x: 0, y: 0, z: -1 }, 4.5)).toBeLessThanOrEqual(0);
   });
+  it("KK7 colors give randomized lift: blue 1–3 m/s, red 6–9 m/s", () => {
+    const site = SITES[0];
+    const terrain = generateTerrain(site);
+    const sun = sunVector(sunPosition(site.lat, 172, 11, true));
+    const field = (heat: number): ThermalField => {
+      const { px, py } = localToPixel(site, 0, 0, THERMAL_ZOOM);
+      return {
+        grid: new Map(), count: 0,
+        raster: { site, left: Math.floor(px), top: Math.floor(py), width: 8, height: 8, strength: new Float32Array(64).fill(heat) },
+      };
+    };
+    const alt = 1000; // well below cloudbase, so fade = 1
+    const blue = airLift(field(0.1), terrain, 0, 0, alt, 39600, sun, 4.5);
+    expect(blue).toBeGreaterThanOrEqual(1);
+    expect(blue).toBeLessThanOrEqual(3);
+    const red = airLift(field(1), terrain, 0, 0, alt, 39600, sun, 4.5);
+    expect(red).toBeGreaterThanOrEqual(6);
+    expect(red).toBeLessThanOrEqual(9);
+    // Strength is randomized but deterministic per position: same place, same lift.
+    expect(airLift(field(0.1), terrain, 0, 0, alt, 39600, sun, 4.5)).toBe(blue);
+  });
 });
 describe("thermal release points", () => {
   it("summits release more readily than mid-slope points", async () => {
