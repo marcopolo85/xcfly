@@ -102,10 +102,14 @@ export function airLift(
   const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
   let lift = 0;
   if (f.raster) {
+    // KK7 color scale mapped to climb rates: blue 2 m/s … dark red 6 m/s.
+    const heat = rasterHeatAt(f.raster, x, y);
     const local = slopeTrigger(normalAt(t, x, y), sun);
-    const pulse = 0.9 + 0.1 * Math.sin(simTime / 300);
+    const shadeSink = local < 0.05 ? -0.55 : -0.15;
+    if (sun.z <= 0 || heat <= 0) return shadeSink;
+    const t01 = Math.max(0, Math.min(1, (heat - 0.1) / 0.9));
     const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
-    return sunAmp * rasterHeatAt(f.raster, x, y) * (0.8 + 0.2 * local) * pulse * fade + (local < 0.05 ? -0.55 : -0.15);
+    return (2 + 4 * t01) * fade;
   }
   for (let dy = -1; dy <= 1; dy++)
     for (let dx = -1; dx <= 1; dx++) {
