@@ -1,5 +1,5 @@
 # Aufgaben
-- [ ] Flächige KK7-Thermik für Juli / All day in Karte und Flug verwenden und prüfen.
+- [x] Flächige KK7-Thermik für Juli / All day in Karte und Flug verwenden und prüfen: Original-Raster statt Hotspotkreise, kontinuierliche Abtastung für simuliertes Steigen; 23 Tests bestanden, 49 Juli-Kacheln im Flug geladen und Ein-/Ausblenden ohne Seitenfehler geprüft.
 - [x] Ruckler im laufenden Flug messen und Kartenzeichnung optimieren: Filter pro Kachel zwischengespeichert; Bildintervall im Handy-Test von 467 ms auf 16,7 ms reduziert, 27 Tests bestanden, Zoom/Thermik/SPEED auf Handy und Desktop geprüft.
 - [x] Thermikpositionen aus der hochgeladenen KK7-KML übernehmen und im Flug prüfen (154 KK7-Punkte bei Niederhorn, unveränderte Koordinaten, Desktop/Handy und vier Regressionstests).
 - [x] Flugkarte mit Zoom und Verschieben versehen.
