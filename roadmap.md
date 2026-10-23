@@ -1,4 +1,5 @@
 # Aufgaben
+- [ ] Höhenlinien, Gelände und KK7-Thermik entlang langer Flüge nachladen und jenseits der bisherigen Startplatzgrenze prüfen.
 - [x] Freien Startplatz auf der zoombaren Karte wählen, Geländehöhe übernehmen und Flug ab dort prüfen: Auswahl auf Handy/Desktop, 12 Tests bestanden, Flug ab 46.21300° N / 8.99881° E mit 1197 m Geländehöhe ohne Seitenfehler geprüft.
 - [x] Flächige KK7-Thermik für Juli / All day in Karte und Flug verwenden und prüfen: Original-Raster statt Hotspotkreise, kontinuierliche Abtastung für simuliertes Steigen; 23 Tests bestanden, 49 Juli-Kacheln im Flug geladen und Ein-/Ausblenden ohne Seitenfehler geprüft.
 - [x] Ruckler im laufenden Flug messen und Kartenzeichnung optimieren: Filter pro Kachel zwischengespeichert; Bildintervall im Handy-Test von 467 ms auf 16,7 ms reduziert, 27 Tests bestanden, Zoom/Thermik/SPEED auf Handy und Desktop geprüft.
