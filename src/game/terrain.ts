@@ -5,6 +5,8 @@ export const RES = 25; // metres per grid cell
 export const N = (EXTENT * 2) / RES + 1;
 export const CB_CELL = 1000;
 export const CLOUDBASE_OFFSET = 500;
+/** Thermals in flatland reach at least this height above ground. */
+export const FLAT_THERMAL_TOP = 1500;
 
 export interface Terrain {
   h: Float32Array;
@@ -83,9 +85,12 @@ export function generateTerrain(site: Site): Terrain {
 
 /** Wraps a height grid (N×N, row 0 = north) and derives cloudbase. */
 export function finalizeTerrain(site: Site, h: Float32Array): Terrain {
-  // Cloudbase: local max peak (±2km) + 500 m
+  // Cloudbase: local max peak (±2km) + 500 m, but never below
+  // FLAT_THERMAL_TOP above the lowest ground of the 1km cell, so thermals
+  // in flatland still reach FLAT_THERMAL_TOP above ground.
   const cbN = (EXTENT * 2) / CB_CELL;
   const cellMax = new Float32Array(cbN * cbN);
+  const cellMin = new Float32Array(cbN * cbN).fill(Infinity);
   const per = CB_CELL / RES;
   for (let j = 0; j < N - 1; j++) {
     const cj = Math.min(cbN - 1, Math.floor(j / per));
@@ -93,6 +98,7 @@ export function finalizeTerrain(site: Site, h: Float32Array): Terrain {
       const ci = Math.min(cbN - 1, Math.floor(i / per));
       const v = h[j * N + i];
       if (v > cellMax[cj * cbN + ci]) cellMax[cj * cbN + ci] = v;
+      if (v < cellMin[cj * cbN + ci]) cellMin[cj * cbN + ci] = v;
     }
   }
   const cb = new Float32Array(cbN * cbN);
@@ -104,7 +110,7 @@ export function finalizeTerrain(site: Site, h: Float32Array): Terrain {
           const a = ci + di, b = cj + dj;
           if (a >= 0 && b >= 0 && a < cbN && b < cbN) m = Math.max(m, cellMax[b * cbN + a]);
         }
-      cb[cj * cbN + ci] = cloudbaseFromPeak(m);
+      cb[cj * cbN + ci] = Math.max(cloudbaseFromPeak(m), cellMin[cj * cbN + ci] + FLAT_THERMAL_TOP);
     }
   return { h, cb, cbN, site };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { timeScale, steer, stepPhysics, TURN_RATE, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, type Sim } from "./physicsEngine";
-import { cloudbaseFromPeak, N } from "./terrain";
+import { cloudbaseAt, cloudbaseFromPeak, finalizeTerrain, heightAt, N } from "./terrain";
+import { SITES } from "./sites";
 import { mulberry32 } from "./rng";
 import { slopeTrigger } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
@@ -55,6 +56,12 @@ describe("game rules", () => {
   });
   it("cloudbase is 500 m above the peaks", () => {
     expect(cloudbaseFromPeak(2800)).toBe(3300);
+  });
+  it("flatland thermals reach 1500 m above ground", () => {
+    const h = new Float32Array(N * N).fill(500);
+    const t = finalizeTerrain({ ...SITES[0], valley: 500, peak: 500, launchAlt: 500 }, h);
+    expect(cloudbaseAt(t, 0, 0)).toBe(2000);
+    expect(cloudbaseAt(t, 0, 0) - heightAt(t, 0, 0)).toBe(1500);
   });
   it("XC distance is the XContest-style optimized free distance, not the distance flown", () => {
     const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
