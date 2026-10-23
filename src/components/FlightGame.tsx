@@ -30,9 +30,10 @@ export function FlightGame() {
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
-  const [thermalOpacity, setThermalOpacity] = useState(0);
-  const thermalOpacityRef = useRef(0);
+  const [thermalOpacity, setThermalOpacity] = useState(0.3);
+  const thermalOpacityRef = useRef(0.3);
   thermalOpacityRef.current = thermalOpacity;
+  const [showProfile, setShowProfile] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const vario = useRef<AudioVario | null>(null);
 
@@ -168,7 +169,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} open={settingsOpen} onOpenChange={setSettingsOpen} />
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
@@ -178,13 +179,13 @@ export function FlightGame() {
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
       {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
-        <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
+        {showProfile && <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
             <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL</span>
             <ZoomControls label="Seitenansicht" scale={profileZoom.scale} change={profileZoom.change} reset={profileZoom.reset} />
           </header>
           <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
-        </section>
+        </section>}
         <FlightHUD d={hud} />
       </div>}
       <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
