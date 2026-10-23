@@ -18,8 +18,10 @@ export class AudioVario {
   muted = false;
 
   start() {
+    try {
     if (this.ctx) { this.nextBeep = 0; void this.ctx.resume().catch(() => {}); return; }
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
     this.ctx = new Ctx();
     this.osc = this.ctx.createOscillator();
     this.osc.type = "square";
@@ -32,6 +34,12 @@ export class AudioVario {
     this.osc.start();
     // Mobile browsers may create the context suspended, even in a tap handler.
     void this.ctx.resume().catch(() => {});
+    } catch {
+      // Sound is optional: failed browser audio must not prevent a flight.
+      const failedContext = this.ctx;
+      this.ctx = null; this.osc = null; this.gain = null; this.nextBeep = 0;
+      try { void failedContext?.close().catch(() => {}); } catch { /* Already unavailable. */ }
+    }
   }
 
   update(vz: number) {

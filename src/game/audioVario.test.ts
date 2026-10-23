@@ -17,6 +17,22 @@ function setup() {
 }
 afterEach(() => vi.unstubAllGlobals());
 describe("acoustic vario", () => {
+  it("does not block a flight when browser audio is unavailable", () => {
+    vi.stubGlobal("AudioContext", undefined);
+    vi.stubGlobal("webkitAudioContext", undefined);
+    const vario = new AudioVario();
+    expect(() => vario.start()).not.toThrow();
+    expect(() => vario.update(2)).not.toThrow();
+  });
+  it("recovers from failed audio initialization and can retry", () => {
+    vi.stubGlobal("AudioContext", class { constructor() { throw new Error("Audio unavailable"); } });
+    const vario = new AudioVario();
+    expect(() => vario.start()).not.toThrow();
+    const { resume, gain } = setup();
+    vario.start(); vario.update(1);
+    expect(resume).toHaveBeenCalledOnce();
+    expect(gain.setValueAtTime).toHaveBeenCalledWith(0.08, 1);
+  });
   it("resumes a newly created audio context and schedules climb beeps", () => {
     const { resume, gain, frequency } = setup();
     const vario = new AudioVario(); vario.start(); vario.update(1);
