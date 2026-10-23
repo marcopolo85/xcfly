@@ -22,7 +22,7 @@ export default defineConfig({
         globDirectory: "dist/client",
         globPatterns: ["**/*.{js,css,png,jpg,jpeg,webp,woff2}"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        navigateFallback: undefined,
+        navigateFallback: null,
         runtimeCaching: [
           { urlPattern: ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin && !url.pathname.startsWith("/~oauth") && url.pathname === "/", handler: "NetworkFirst", options: { cacheName: "xcfly-pages-v1", networkTimeoutSeconds: 3, cacheableResponse: { statuses: [200] } } },
           { urlPattern: ({ url }) => url.origin === self.location.origin && /\/assets\/.*[-.][a-zA-Z0-9_-]{8,}\.(js|css|png|jpg|webp|woff2)$/.test(url.pathname), handler: "CacheFirst", options: { cacheName: "xcfly-assets-v1", expiration: { maxEntries: 100 }, cacheableResponse: { statuses: [200] } } },

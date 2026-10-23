@@ -14,7 +14,7 @@ export async function saveTile(url: string, signal?: AbortSignal): Promise<Respo
   const cache = await caches.open(OFFLINE_DATA_CACHE);
   const existing = await cache.match(url);
   if (existing) return existing;
-  const response = await fetch(url, { mode: "cors", signal });
+  const response = await fetch(url, { mode: "cors", signal: signal ?? null });
   if (!response.ok || response.type === "opaque") throw new Error("Karten- oder Flugdaten nicht erreichbar.");
   if ((await cache.keys()).length >= MAX_OFFLINE_TILES) throw new Error("Offline-Speicher voll. Gespeicherte Daten zuerst löschen.");
   await cache.put(url, response.clone());
