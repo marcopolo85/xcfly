@@ -26,7 +26,7 @@ export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
   const [config, setConfig] = useState<FlightConfig | null>(null);
   const [hud, setHud] = useState<HudData | null>(null);
-  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string } | null>(null);
+  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [runId, setRunId] = useState(0);
   const mapZoom = useCanvasZoom(0.3, 8, phase !== "config");
@@ -84,6 +84,7 @@ export function FlightGame() {
         x: 0, y: 0, alt: heightAt(terrain, 0, 0) + 40, heading: Math.atan2(-g.gx, -g.gy),
         vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour,
         trackX: [], trackY: [], xcDist: 0, landed: false,
+        maxAlt: 0, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
       let triangle: XcTriangle | null = null, lastTri = 0;
@@ -131,7 +132,7 @@ export function FlightGame() {
         }
         if (sim.landed) {
           vario.current?.update(0);
-          setResult({ goal: false, xc, time: sim.flightTime, reason: "Gelandet" });
+          setResult({ goal: false, xc, time: sim.flightTime, reason: "Gelandet", maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles });
           setPhase("done");
           return;
         }
@@ -237,8 +238,14 @@ export function FlightGame() {
             <p className="hud-label">{config?.site.name}</p>
             <h2 className={`mt-1 font-display text-4xl font-bold ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
             <div className="mt-5 grid grid-cols-2 gap-2">
-              <div className="hud-cell"><div className="hud-label">XC</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)} km</div></div>
-              <div className="hud-cell"><div className="hud-label">Flugzeit</div><div className="hud-value text-2xl">{Math.floor(result.time / 60)} min</div></div>
+              <div className="hud-cell"><div className="hud-label">XC Strecke</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)} km</div></div>
+              <div className="hud-cell"><div className="hud-label">XC Punkte</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)}</div></div>
+              <div className="hud-cell"><div className="hud-label">Flugdauer</div><div className="hud-value text-2xl">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
+              <div className="hud-cell"><div className="hud-label">XC Geschw.</div><div className="hud-value text-2xl">{result.time > 0 ? (((result.xc / 1000) / (result.time / 3600))).toFixed(1) : "0.0"} km/h</div></div>
+              <div className="hud-cell"><div className="hud-label">Max Höhe</div><div className="hud-value text-2xl">{Math.round(result.maxAlt)} m</div></div>
+              <div className="hud-cell"><div className="hud-label">Höhengewinn</div><div className="hud-value text-2xl">{Math.round(result.climb)} m</div></div>
+              <div className="hud-cell"><div className="hud-label">Thermiken</div><div className="hud-value text-2xl">{result.thermals}</div></div>
+              <div className="hud-cell"><div className="hud-label">Thermikkreise</div><div className="hud-value text-2xl">{result.circles}</div></div>
             </div>
             <div className="mt-5 flex gap-2">
               <button className="flex-1 rounded-lg bg-primary py-3 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
