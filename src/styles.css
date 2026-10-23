@@ -60,6 +60,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-climb: var(--climb);
+  --color-fai: var(--fai);
   --color-sink: var(--sink);
   --color-sun: var(--sun);
   --font-display: "Space Grotesk", system-ui, sans-serif;
@@ -90,6 +91,7 @@
   --input: oklch(0.38 0.02 250);
   --ring: oklch(0.6 0.22 27);
   --climb: oklch(0.8 0.19 145);
+  --fai: oklch(0.65 0.18 255);
   --sink: oklch(0.7 0.15 250);
   --sun: oklch(0.85 0.17 85);
   --profile-mountain: oklch(0.35 0.045 155);

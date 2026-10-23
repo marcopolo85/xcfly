@@ -1,6 +1,6 @@
 export interface HudData {
   alt: number; agl: number; vz: number; speed: number;
-  xc: number; xcSpeed: number;
+  xc: number; xcSpeed: number; tri: number; triFai: boolean;
   clock: string; accel: boolean; cloudbase: number;
 }
 
@@ -29,6 +29,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         <Cell value={d.xcSpeed.toFixed(1)} unit="km/h" />
         <Cell value={(d.xc / 1000).toFixed(1)} unit="km" />
         <Cell value={d.cloudbase.toFixed(0)} unit="m" />
+        <Cell value={`${d.triFai ? "FAI" : "△"} ${(d.tri / 1000).toFixed(1)}`} unit="km" cls={d.tri > 0 ? (d.triFai ? "text-fai" : "text-climb") : ""} />
       </div>
     </section>
   );
