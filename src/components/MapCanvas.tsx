@@ -1,4 +1,3 @@
-import { valleyWindAt } from "@/game/valleyWind";
 import { forwardRef } from "react";
 import type { Site } from "@/game/sites";
 import { drawSwissRelief } from "./SwissRelief";
@@ -166,36 +165,6 @@ function drawTriangle(ctx: CanvasRenderingContext2D, t: XcTriangle, sx: (x: numb
   ctx.setLineDash([]);
 }
 
-function drawValleyWind(ctx: CanvasRenderingContext2D, t: Terrain, gx0: number, gy0: number, cx: number, cy: number, z: number, W: number, H: number) {
-  const spacing = 64; // px
-  const phase = (performance.now() / 1500) % 1;
-  const offX = ((cx % spacing) + spacing) % spacing, offY = ((cy % spacing) + spacing) % spacing;
-  ctx.lineWidth = 1.5;
-  ctx.lineCap = "round";
-  for (let py = offY - spacing; py < H + spacing; py += spacing) {
-    for (let px = offX - spacing; px < W + spacing; px += spacing) {
-      // fixed world anchor so arrows don't swim when panning
-      const wx = gx0 + (px - cx) / z, wy = gy0 - (py - cy) / z;
-      const w = valleyWindAt(t, wx, wy, heightAt(t, wx, wy) + 50);
-      if (w.speed < 0.6) continue;
-      const ux = w.wx / w.speed, uy = -w.wy / w.speed;
-      const travel = (phase - 0.5) * spacing * 0.7;
-      const x = px + ux * travel, y = py + uy * travel;
-      const len = 6 + w.speed * 2;
-      const a = 0.45 * Math.sin(phase * Math.PI) * Math.min(1, w.speed / 2);
-      ctx.strokeStyle = `rgba(255,255,255,${a})`;
-      ctx.beginPath();
-      ctx.moveTo(x - ux * len, y - uy * len);
-      ctx.lineTo(x, y);
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * 4 - uy * 3, y - uy * 4 + ux * 3);
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * 4 + uy * 3, y - uy * 4 - ux * 3);
-      ctx.stroke();
-    }
-  }
-}
-
 export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTransform) {
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -237,8 +206,6 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
     ctx.globalAlpha = 1;
   }
-
-  drawValleyWind(ctx, s.terrain, sim.x, sim.y, cx, cy, z, W, H);
 
   if (s.triangle) drawTriangle(ctx, s.triangle, sx, sy, z);
 
