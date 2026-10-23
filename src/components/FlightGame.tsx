@@ -149,11 +149,20 @@ export function FlightGame() {
 
   if (phase === "config") return <StartScreen onStart={start} />;
 
+  const stopHold = (k: keyof Input) => {
+    if (k === "left" || k === "right") holdStart.current[k] = null;
+    input.current[k] = false;
+  };
+
   const hold = (k: keyof Input) => ({
-    onPointerDown: (e: React.PointerEvent) => { e.preventDefault(); input.current[k] = true; },
-    onPointerUp: () => { input.current[k] = false; },
-    onPointerLeave: () => { input.current[k] = false; },
-    onPointerCancel: () => { input.current[k] = false; },
+    onPointerDown: (e: React.PointerEvent) => {
+      e.preventDefault();
+      input.current[k] = true;
+      if (k === "left" || k === "right") holdStart.current[k] = performance.now();
+    },
+    onPointerUp: () => stopHold(k),
+    onPointerLeave: () => stopHold(k),
+    onPointerCancel: () => stopHold(k),
   });
 
   return (
