@@ -19,6 +19,9 @@ import { Button } from "./ui/button";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
+const STEER_DEADZONE_PX = 10;
+const STEER_RANGE_PX = 70;
+
 export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
   const [config, setConfig] = useState<FlightConfig | null>(null);
@@ -29,8 +32,9 @@ export function FlightGame() {
   const mapZoom = useCanvasZoom(0.3, 8, phase !== "config");
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
-  const input = useRef<Input>({ left: false, right: false, accel: false });
+  const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
+  const speedHold = useRef<{ id: number | null; startX: number }>({ id: null, startX: 0 });
   const [thermalOpacity, setThermalOpacity] = useState(0.3);
   const thermalOpacityRef = useRef(0.3);
   thermalOpacityRef.current = thermalOpacity;
@@ -157,12 +161,12 @@ export function FlightGame() {
 
   if (phase === "config") return <StartScreen onStart={start} />;
 
-  const stopHold = (k: keyof Input) => {
+  const stopHold = (k: "left" | "right" | "accel") => {
     if (k === "left" || k === "right") holdStart.current[k] = null;
     input.current[k] = false;
   };
 
-  const hold = (k: keyof Input) => ({
+  const hold = (k: "left" | "right" | "accel") => ({
     onPointerDown: (e: React.PointerEvent) => {
       e.preventDefault();
       input.current[k] = true;
@@ -172,6 +176,31 @@ export function FlightGame() {
     onPointerLeave: () => stopHold(k),
     onPointerCancel: () => stopHold(k),
   });
+
+  // Holding SPEED and sliding left/right slowly steers the glider.
+  const releaseSpeed = () => {
+    speedHold.current.id = null;
+    input.current.steer = 0;
+    input.current.accel = false;
+  };
+  const speedHandlers = {
+    onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      speedHold.current = { id: e.pointerId, startX: e.clientX };
+      input.current.accel = true;
+      input.current.steer = 0;
+    },
+    onPointerMove: (e: React.PointerEvent<HTMLButtonElement>) => {
+      if (speedHold.current.id === null || speedHold.current.id !== e.pointerId) return;
+      const dx = e.clientX - speedHold.current.startX;
+      const dead = STEER_DEADZONE_PX;
+      const v = Math.abs(dx) <= dead ? 0 : Math.max(-1, Math.min(1, (dx - Math.sign(dx) * dead) / STEER_RANGE_PX));
+      input.current.steer = v;
+    },
+    onPointerUp: releaseSpeed,
+    onPointerCancel: releaseSpeed,
+  };
 
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
@@ -197,7 +226,7 @@ export function FlightGame() {
       </div>}
       <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
-        <button className="ctrl-btn h-16 flex-1 text-sm font-bold" {...hold("accel")}>SPEED</button>
+        <button className="ctrl-btn h-16 flex-1 text-sm font-bold" {...speedHandlers}>SPEED</button>
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("right")}>→</button>
       </div>
       {phase === "done" && result && (

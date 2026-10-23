@@ -5,6 +5,8 @@ export const POLAR = {
   accel: { v: 14.5, sink: 2.05 }, // ~52 km/h, L/D ≈ 7.1
 };
 export const TURN_RATE = (64 * Math.PI) / 180; // rad per simulated second
+/** Slide steering on the speed button turns at a fraction of the full turn rate. */
+export const STEER_ANALOG_FACTOR = 0.5;
 export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 20;
 
@@ -58,14 +60,15 @@ function updateXc(sim: Sim) {
   }
 }
 
-export interface Input { left: boolean; right: boolean; accel: boolean }
+export interface Input { left: boolean; right: boolean; accel: boolean; steer?: number }
 
 /**
  * Applies the turn rate per simulated second so the flown circle keeps the
  * same radius regardless of the simulation speed (see game.test.ts).
+ * `steer` is the analog slide value (-1..1) from the speed button.
  */
 export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
-  const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0) + (input.steer ?? 0) * STEER_ANALOG_FACTOR;
   const dtSim = dtReal * timeScale(input.accel, simSpeed);
   sim.heading = (sim.heading + dir * TURN_RATE * dtSim + Math.PI * 2) % (Math.PI * 2);
 }
