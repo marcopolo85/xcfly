@@ -4,12 +4,9 @@ export interface HudData {
   clock: string; accel: boolean; cloudbase: number;
 }
 
-function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string; cls?: string }) {
+function Cell({ value, unit, cls = "" }: { value: string; unit?: string; cls?: string }) {
   return (
-    <div className="min-w-0 py-0.5">
-      <div className="hud-label">{label}</div>
-      <div className={`hud-value text-sm ${cls}`}>{value}<span className="hud-unit">{unit}</span></div>
-    </div>
+    <div className={`hud-value min-w-0 py-0.5 text-sm ${cls}`}>{value}<span className="hud-unit">{unit}</span></div>
   );
 }
 
@@ -24,14 +21,14 @@ export function FlightHUD({ d }: { d: HudData }) {
         <span className="text-muted-foreground">{d.clock}</span>
       </header>
       <div className="grid flex-1 grid-cols-2 content-between gap-x-2">
-        <Cell label="Höhe" value={d.alt.toFixed(0)} unit="m" />
-        <Cell label="Über Grund" value={d.agl.toFixed(0)} unit="m" />
-        <Cell label="Vario 1s" value={fmtVz(d.vz)} unit="m/s" cls={vzCls(d.vz)} />
-        <Cell label="Gleitzahl" value={d.vz < -0.1 ? `1:${(d.speed / -d.vz).toFixed(0)}` : "1:∞"} />
-        <Cell label="Speed" value={(d.speed * 3.6).toFixed(0)} unit="km/h" />
-        <Cell label="XC-Speed" value={d.xcSpeed.toFixed(1)} unit="km/h" />
-        <Cell label="XC" value={(d.xc / 1000).toFixed(1)} unit="km" />
-        <Cell label="Basis" value={d.cloudbase.toFixed(0)} unit="m" />
+        <Cell value={d.alt.toFixed(0)} unit="m" />
+        <Cell value={d.agl.toFixed(0)} unit="m" />
+        <Cell value={fmtVz(d.vz)} unit="m/s" cls={vzCls(d.vz)} />
+        <Cell value={d.vz < -0.1 ? `1:${(d.speed / -d.vz).toFixed(0)}` : "1:∞"} />
+        <Cell value={(d.speed * 3.6).toFixed(0)} unit="km/h" />
+        <Cell value={d.xcSpeed.toFixed(1)} unit="km/h" />
+        <Cell value={(d.xc / 1000).toFixed(1)} unit="km" />
+        <Cell value={d.cloudbase.toFixed(0)} unit="m" />
       </div>
     </section>
   );

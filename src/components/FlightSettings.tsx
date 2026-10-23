@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Settings2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Slider } from "./ui/slider";
+import { Switch } from "./ui/switch";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -12,9 +13,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function FlightSettings({ thermalOpacity, onThermalOpacity, open, onOpenChange }: {
+export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, open, onOpenChange }: {
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
+  showProfile: boolean;
+  onShowProfile: (v: boolean) => void;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
@@ -49,6 +52,12 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, open, onOpenC
                 aria-label="Thermikkarte-Transparenz"
               />
               <p className="text-[10px] leading-snug text-muted-foreground">Bei 0 % ist die Thermikkarte ausgeblendet.</p>
+            </Section>
+            <Section title="Anzeige">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Seitenprofil</span>
+                <Switch checked={showProfile} onCheckedChange={onShowProfile} aria-label="Seitenprofil anzeigen" />
+              </div>
             </Section>
             <Section title="Copyright & Quellen">
               <div className="space-y-2 text-[11px] leading-snug">
