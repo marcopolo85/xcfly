@@ -43,6 +43,9 @@ export function FlightGame() {
   const [showProfile, setShowProfile] = useState(false);
   const showProfileRef = useRef(false);
   showProfileRef.current = showProfile;
+  const [showAirspaces, setShowAirspaces] = useState(false);
+  const showAirspacesRef = useRef(false);
+  showAirspacesRef.current = showAirspaces;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const vario = useRef<AudioVario | null>(null);
 
@@ -118,7 +121,7 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces: showAirspacesRef.current ? airspaces : null }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = sim.xcDist;
@@ -212,7 +215,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} open={settingsOpen} onOpenChange={setSettingsOpen} />
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
