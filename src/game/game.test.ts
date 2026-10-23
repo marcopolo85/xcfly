@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { timeScale, steer, stepPhysics, TURN_RATE, type Sim } from "./physicsEngine";
+import { timeScale, steer, stepPhysics, TURN_RATE, holdBoost, HOLD_BOOST_FACTOR, type Sim } from "./physicsEngine";
 import { cloudbaseFromPeak, N } from "./terrain";
 import { mulberry32 } from "./rng";
 import { slopeTrigger } from "./thermals";
