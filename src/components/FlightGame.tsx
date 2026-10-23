@@ -55,13 +55,16 @@ export function FlightGame() {
       let terrain, thermalMap;
       try {
         [terrain, thermalMap] = await Promise.all([
-          loadRealTerrain(config.site).catch(() => generateTerrain(config.site)),
+          loadRealTerrain(config.site).catch((error: unknown) => {
+            if (config.site.id.startsWith("map-")) throw error;
+            return generateTerrain(config.site);
+          }),
           loadThermalRaster(config.site),
         ]);
       } catch {
         if (cancelled) return;
         vario.current?.update(0);
-        setLoadError("Die KK7-Thermikkarte für Juli / All day konnte nicht geladen werden.");
+        setLoadError("Geländehöhen oder die KK7-Thermikkarte für Juli / All day konnten nicht geladen werden.");
         setPhase("error");
         return;
       }
