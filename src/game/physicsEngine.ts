@@ -6,7 +6,7 @@ export const POLAR = {
 };
 export const TURN_RATE = (64 * Math.PI) / 180; // rad per simulated second
 /** Slide steering on the speed button turns at a fraction of the full turn rate. */
-export const STEER_ANALOG_FACTOR = 0.5;
+export const STEER_ANALOG_FACTOR = 0.125;
 export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 20;
 
