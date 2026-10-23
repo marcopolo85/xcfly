@@ -1,6 +1,7 @@
 import { EXTENT, N, RES, finalizeTerrain, type Terrain } from "./terrain";
 import { mapOrigin, MERCATOR_EXTENT } from "./swissMap";
 import type { Site } from "./sites";
+import { loadRasterTile } from "./rasterTileCache";
 
 /** Open Terrarium elevation tiles (AWS Open Data, CORS-enabled). */
 export const DEM_ZOOM = 12;
@@ -32,16 +33,7 @@ export function buildHeightGrid(site: Pick<Site, "lat" | "lon">, sample: (px: nu
   return h;
 }
 
-function loadImage(url: string) {
-  return new Promise<HTMLImageElement>((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    const timeout = setTimeout(() => rej(new Error("DEM tile timeout")), 20000);
-    img.onload = () => { clearTimeout(timeout); res(img); };
-    img.onerror = () => { clearTimeout(timeout); rej(new Error("DEM tile failed: " + url)); };
-    img.src = url;
-  });
-}
+const loadImage = loadRasterTile;
 
 /** Read only one DEM tile when choosing a launch, rather than the full flight grid. */
 export async function loadLaunchAltitude(point: Pick<Site, "lat" | "lon">) {
@@ -67,11 +59,18 @@ export async function loadRealTerrain(site: Site, centerX = 0, centerY = 0): Pro
   canvas.width = w; canvas.height = hgt;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Geländehöhen nicht lesbar");
-  const jobs: Promise<void>[] = [];
+  const jobs: { x: number; y: number }[] = [];
   for (let ty = ty0; ty <= ty1; ty++)
     for (let tx = tx0; tx <= tx1; tx++)
-      jobs.push(loadImage(demTileUrl(DEM_ZOOM, tx, ty)).then((img) => ctx.drawImage(img, (tx - tx0) * 256, (ty - ty0) * 256)));
-  await Promise.all(jobs);
+      jobs.push({ x: tx, y: ty });
+  let next = 0;
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (next < jobs.length) {
+      const job = jobs[next++];
+      const image = await loadImage(demTileUrl(DEM_ZOOM, job.x, job.y));
+      ctx.drawImage(image, (job.x - tx0) * 256, (job.y - ty0) * 256);
+    }
+  }));
   const data = ctx.getImageData(0, 0, w, hgt).data;
   const at = (x: number, y: number) => {
     const xi = Math.max(0, Math.min(w - 1, x)), yi = Math.max(0, Math.min(hgt - 1, y));

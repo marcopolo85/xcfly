@@ -2,20 +2,12 @@ import { EXTENT } from "./terrain";
 import { localToPixel } from "./realTerrain";
 import { thermalHeat, thermalTileUrl, THERMAL_ZOOM, type ThermalRaster } from "./thermalRaster";
 import type { Site } from "./sites";
+import { loadRasterTile } from "./rasterTileCache";
 
 export interface ThermalMap { raster: ThermalRaster; image: HTMLCanvasElement }
 const cache = new Map<string, ThermalMap>();
 
-function loadTile(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    const timeout = setTimeout(() => reject(new Error("KK7-Zeitüberschreitung")), 20000);
-    image.onload = () => { clearTimeout(timeout); resolve(image); };
-    image.onerror = () => { clearTimeout(timeout); reject(new Error("KK7-Kachel nicht erreichbar")); };
-    image.src = url;
-  });
-}
+const loadTile = loadRasterTile;
 
 /** Load the actual July / All day raster once; never invent missing sources. */
 export async function loadThermalRaster(site: Site, centerX = 0, centerY = 0): Promise<ThermalMap> {
