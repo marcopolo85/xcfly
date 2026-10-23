@@ -5,7 +5,7 @@ export interface HudData {
   clock: string; accel: boolean;
 }
 
-function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string; cls?: string }) {
+function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string | undefined; cls?: string | undefined }) {
   return (
     <div className={`min-w-0 ${cls}`}>
       <div className="hud-label truncate text-[8px] leading-none">{label}</div>

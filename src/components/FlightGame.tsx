@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
-import { generateTerrain, heightAt, gradientAt, cloudbaseAt } from "@/game/terrain";
+import { generateTerrain, heightAt, gradientAt } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
@@ -119,7 +119,7 @@ export function FlightGame() {
             flightTime: sim.flightTime,
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
             triMin: triangle?.minP ?? 0, triMax: triangle?.maxP ?? 0, triClose: triangle ? closingDistance(triangle) : 0,
-            clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
+            clock: fmtClock(sim.clock), accel: inp.accel,
           });
         }
         if (sim.landed) {
