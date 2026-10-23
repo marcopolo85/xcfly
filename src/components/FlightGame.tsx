@@ -5,7 +5,7 @@ import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster } from "@/game/loadThermalRaster";
-import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from "@/game/physicsEngine";
+import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { loadRealTerrain } from "@/game/realTerrain";
