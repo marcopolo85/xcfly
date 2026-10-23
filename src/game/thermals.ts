@@ -17,6 +17,22 @@ export interface ThermalField {
 
 const key = (cx: number, cy: number) => (cx + 100) * 1000 + (cy + 100);
 
+/** Deterministic smooth random field in -1..1 at ~500 m scale: thermal
+ * strength varies randomly by position but stays stable across frames. */
+function strengthNoise(x: number, y: number) {
+  const s = 500;
+  const i = Math.floor(x / s), j = Math.floor(y / s);
+  const u = x / s - i, v = y / s - j;
+  const h = (a: number, b: number) => {
+    let n = (Math.imul(a, 374761393) + Math.imul(b, 668265263)) >>> 0;
+    n = Math.imul(n ^ (n >>> 13), 1274126177) >>> 0;
+    return (n >>> 0) / 2147483648 - 1;
+  };
+  const su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
+  const a = h(i, j), b = h(i + 1, j), c = h(i, j + 1), d = h(i + 1, j + 1);
+  return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
+}
+
 export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
   const grid = new Map<number, Thermal[]>();
   let count = 0;
@@ -102,14 +118,17 @@ export function airLift(
   const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
   let lift = 0;
   if (f.raster) {
-    // KK7 color scale mapped to climb rates: blue 2 m/s … dark red 6 m/s.
+    // KK7 color scale mapped to climb rates with a deterministic random
+    // offset: blue 1–3 m/s, dark red 6–9 m/s, in between the same ratio.
     const heat = rasterHeatAt(f.raster, x, y);
     const local = slopeTrigger(normalAt(t, x, y), sun);
     const shadeSink = local < 0.05 ? -0.55 : -0.15;
     if (sun.z <= 0 || heat <= 0) return shadeSink;
     const t01 = Math.max(0, Math.min(1, (heat - 0.1) / 0.9));
     const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
-    return (2 + 4 * t01) * fade;
+    const mid = 2 + 5.5 * t01;
+    const spread = 1 + 0.5 * t01;
+    return Math.max(0, (mid + spread * strengthNoise(x, y)) * fade);
   }
   for (let dy = -1; dy <= 1; dy++)
     for (let dx = -1; dx <= 1; dx++) {

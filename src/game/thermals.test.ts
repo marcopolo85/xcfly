@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { SITES } from "./sites";
 import { generateTerrain, heightAt } from "./terrain";
-import { airLift, generateThermals } from "./thermals";
+import { airLift, generateThermals, type ThermalField } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 import { mulberry32 } from "./rng";
 import { POLAR } from "./physicsEngine";
+import { localToPixel } from "./realTerrain";
+import { THERMAL_ZOOM } from "./thermalRaster";
 
 describe("usable solar thermals", () => {
   for (const site of SITES) {
