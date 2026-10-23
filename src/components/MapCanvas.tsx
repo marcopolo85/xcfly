@@ -95,23 +95,70 @@ function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref
   const path = new Path2D();
   const L = Math.hypot(b.x - a.x, b.y - a.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
   const side = Math.sign((b.x - a.x) * (ref.y - a.y) - (b.y - a.y) * (ref.x - a.x)) || 1;
-  const G = 110, half = 1.4 * L, cell = (2 * half) / G;
+  const G = 110, half = 1.4 * L, cell = (2 * half) / G, x0 = mx - half, y0 = my - half;
   let minP = Infinity, maxP = 0, lx = mx, ly = my, far = 0;
+  // Inside/outside grid of cell centres that yield a valid FAI third vertex.
+  const grid = new Uint8Array(G * G);
   for (let gy = 0; gy < G; gy++) {
-    let run = -1;
-    for (let gx = 0; gx <= G; gx++) {
-      const c = { x: mx - half + (gx + 0.5) * cell, y: my - half + (gy + 0.5) * cell };
-      const ok = gx < G && Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) === side && isFai(a, b, c);
-      if (ok) {
-        const p = L + Math.hypot(c.x - a.x, c.y - a.y) + Math.hypot(c.x - b.x, c.y - b.y);
-        if (p < minP) minP = p;
-        if (p > maxP) maxP = p;
-        const dm = Math.hypot(c.x - mx, c.y - my);
-        if (dm > far) { far = dm; lx = c.x; ly = c.y; }
-      }
-      if (ok && run < 0) run = gx;
-      if (!ok && run >= 0) { path.rect(mx - half + run * cell, my - half + gy * cell, (gx - run) * cell, cell); run = -1; }
+    for (let gx = 0; gx < G; gx++) {
+      const cx = x0 + (gx + 0.5) * cell, cy = y0 + (gy + 0.5) * cell;
+      if (Math.sign((b.x - a.x) * (cy - a.y) - (b.y - a.y) * (cx - a.x)) !== side) continue;
+      const p = L + Math.hypot(cx - a.x, cy - a.y) + Math.hypot(cx - b.x, cy - b.y);
+      if (!isFai(a, b, { x: cx, y: cy })) continue;
+      grid[gy * G + gx] = 1;
+      if (p < minP) minP = p;
+      if (p > maxP) maxP = p;
+      const dm = Math.hypot(cx - mx, cy - my);
+      if (dm > far) { far = dm; lx = cx; ly = cy; }
     }
+  }
+  // Trace the crisp boundary: every edge between an inside and an outside cell, wound so the
+  // interior stays on one side, then stitched into closed loops.
+  const ok = (gx: number, gy: number) => gx >= 0 && gx < G && gy >= 0 && gy < G && grid[gy * G + gx] === 1;
+  const segs: { x1: number; y1: number; x2: number; y2: number; used: boolean }[] = [];
+  for (let gy = 0; gy < G; gy++) {
+    for (let gx = 0; gx < G; gx++) {
+      if (!ok(gx, gy)) continue;
+      const l = x0 + gx * cell, r = l + cell, t = y0 + gy * cell, btm = t + cell;
+      if (!ok(gx - 1, gy)) segs.push({ x1: l, y1: btm, x2: l, y2: t, used: false });
+      if (!ok(gx + 1, gy)) segs.push({ x1: r, y1: t, x2: r, y2: btm, used: false });
+      if (!ok(gx, gy - 1)) segs.push({ x1: l, y1: t, x2: r, y2: t, used: false });
+      if (!ok(gx, gy + 1)) segs.push({ x1: r, y1: btm, x2: l, y2: btm, used: false });
+    }
+  }
+  const pk = (x: number, y: number) => `${x.toFixed(4)},${y.toFixed(4)}`;
+  const byStart = new Map<string, number[]>();
+  segs.forEach((s, i) => {
+    const k = pk(s.x1, s.y1);
+    const arr = byStart.get(k);
+    if (arr) arr.push(i);
+    else byStart.set(k, [i]);
+  });
+  for (const first of segs) {
+    if (first.used) continue;
+    first.used = true;
+    path.moveTo(first.x1, first.y1);
+    let cx = first.x2, cy = first.y2;
+    let dx = cx - first.x1, dy = cy - first.y1;
+    for (;;) {
+      path.lineTo(cx, cy);
+      const arr = byStart.get(pk(cx, cy));
+      if (!arr) break;
+      let next = -1, bestDot = -Infinity, ndx = 0, ndy = 0;
+      for (const i of arr) {
+        const s = segs[i];
+        if (s.used) continue;
+        const sdx = s.x2 - s.x1, sdy = s.y2 - s.y1, len = Math.hypot(sdx, sdy) || 1;
+        const dot = (dx * sdx + dy * sdy) / len;
+        if (dot > bestDot) { bestDot = dot; next = i; ndx = sdx / len; ndy = sdy / len; }
+      }
+      if (next < 0) break;
+      const n = segs[next];
+      n.used = true;
+      cx = n.x2; cy = n.y2;
+      dx = ndx; dy = ndy;
+    }
+    path.closePath();
   }
   const sec = { path, minP, maxP, lx, ly };
   if (sectorCache.size > 12) sectorCache.clear();
@@ -120,6 +167,7 @@ function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref
 }
 
 const SECTOR_COLORS = ["rgba(90,200,120,0.35)", "rgba(60,120,240,0.35)", "rgba(140,110,240,0.35)"];
+const SECTOR_EDGE = ["rgba(30,150,80,0.95)", "rgba(30,90,220,0.95)", "rgba(100,80,210,0.95)"];
 
 function drawTriangle(ctx: CanvasRenderingContext2D, t: XcTriangle, sx: (x: number) => number, sy: (y: number) => number, z: number) {
   const sectors = [faiSector(t.b, t.c, t.a), faiSector(t.c, t.a, t.b), faiSector(t.a, t.b, t.c)];
@@ -129,6 +177,9 @@ function drawTriangle(ctx: CanvasRenderingContext2D, t: XcTriangle, sx: (x: numb
     ctx.scale(z, -z);
     ctx.fillStyle = SECTOR_COLORS[i];
     ctx.fill(sec.path);
+    ctx.lineWidth = 1.2 / z;
+    ctx.strokeStyle = SECTOR_EDGE[i];
+    ctx.stroke(sec.path);
     ctx.restore();
   });
   ctx.font = "bold 11px monospace";
