@@ -72,7 +72,7 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
   const style = MAP_STYLES.find((m) => m.v === activeStyle) ?? MAP_STYLES[0];
   const relief = style.v === "relief";
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr)) {
-    const tile = tileImage(style.url(Math.min(position.level, style.v === "topo" ? 17 : 18), position.x, position.y), relief ? reliefFilter : "none");
+    const tile = tileImage(style.url(position.level, position.x, position.y), relief ? reliefFilter : "none");
     if (tile.loaded) {
       ctx.drawImage(tile.surface ?? tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
       loaded++;
