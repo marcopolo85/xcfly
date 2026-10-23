@@ -28,6 +28,7 @@ export function FlightGame() {
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
+  const holdStart = useRef<HoldStarts>({ left: null, right: null });
   const [simSpeed, setSimSpeed] = useState(1);
   const [showThermals, setShowThermals] = useState(false);
   const simSpeedRef = useRef(1);
