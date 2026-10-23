@@ -1,6 +1,20 @@
 import { reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleReliefTiles } from "@/game/swissMap";
 import type { Site } from "@/game/sites";
 
+export type MapStyle = "relief" | "landeskarte" | "grau" | "luftbild" | "topo" | "osm" | "dunkel";
+export const MAP_STYLES: { v: MapStyle; label: string; credit: string; url: (z: number, x: number, y: number) => string }[] = [
+  { v: "relief", label: "Relief", credit: "© swisstopo", url: (z, x, y) => reliefTileUrl(x, y, z) },
+  { v: "landeskarte", label: "Landeskarte", credit: "© swisstopo", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/${z}/${x}/${y}.jpeg` },
+  { v: "grau", label: "Landeskarte grau", credit: "© swisstopo", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/${z}/${x}/${y}.jpeg` },
+  { v: "luftbild", label: "Luftbild", credit: "© swisstopo SWISSIMAGE", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/${z}/${x}/${y}.jpeg` },
+  { v: "topo", label: "Topo", credit: "© OpenTopoMap (CC-BY-SA)", url: (z, x, y) => `https://${"abc"[(x + y) % 3]}.tile.opentopomap.org/${z}/${x}/${y}.png` },
+  { v: "osm", label: "OSM Farbe", credit: "© OpenStreetMap", url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png` },
+  { v: "dunkel", label: "Dunkel", credit: "© OpenStreetMap © CARTO", url: (z, x, y) => `https://${"abcd"[(x + y) % 4]}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png` },
+];
+let activeStyle: MapStyle = "relief";
+/** Selected base map; read by the animation loops on every frame. */
+export function setMapStyle(v: MapStyle) { activeStyle = v; }
+
 type Tile = { image: HTMLImageElement; surface?: HTMLCanvasElement; loaded: boolean; failedAt: number };
 const cache = new Map<string, Tile>();
 
@@ -55,12 +69,15 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
   const reliefFilter = theme.getPropertyValue("--map-relief-filter").trim() || "none";
   const waterColor = theme.getPropertyValue("--map-water").trim();
   const forestColor = theme.getPropertyValue("--map-forest").trim();
+  const style = MAP_STYLES.find((m) => m.v === activeStyle) ?? MAP_STYLES[0];
+  const relief = style.v === "relief";
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr)) {
-    const tile = tileImage(reliefTileUrl(position.x, position.y, position.level), reliefFilter);
+    const tile = tileImage(style.url(Math.min(position.level, style.v === "topo" ? 17 : 18), position.x, position.y), relief ? reliefFilter : "none");
     if (tile.loaded) {
       ctx.drawImage(tile.surface ?? tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
       loaded++;
     } else if (tile.failedAt) failed++;
+    if (!relief) continue;
     const water = tileImage(waterTileUrl(position.x, position.y, position.level), "none", waterColor);
     if (tile.loaded && water.loaded) {
       ctx.drawImage(water.surface ?? water.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
