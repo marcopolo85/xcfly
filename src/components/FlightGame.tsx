@@ -155,7 +155,15 @@ export function FlightGame() {
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
         vario.current?.update(smoothVz);
         trailT += simDt;
-        if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 6000) { for (let i = 1; i < trail.length; i += 1) trail.splice(i, 1); } }
+        if (trailT > 2) {
+          trailT = 0;
+          trail.push({ x: sim.x, y: sim.y, vz: smoothVz });
+          if (trail.length > 6000) {
+            let write = 0;
+            for (let read = 0; read < trail.length; read += 2) trail[write++] = trail[read];
+            trail.length = write;
+          }
+        }
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));

@@ -22,18 +22,23 @@ function getWingImage() {
 
 export const ZOOM = 0.085; // px per metre (CSS px)
 
+interface ContourGeometry { minor: Path2D; major: Path2D; minHeight: number; maxHeight: number }
+const contourCache = new WeakMap<Terrain, Map<string, ContourGeometry>>();
+
 /** Subtle contour lines (100 m, major every 500 m) from the simulation terrain grid.
  * On top, one contour is traced at exactly the glider's current altitude, so the
  * pilot sees the terrain line he can currently fly through. */
 function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number) => number, sy: (y: number) => number, z: number, xMin: number, xMax: number, yMin: number, yMax: number, gliderAlt: number) {
   const step = Math.max(1, Math.round(4 / (RES * z))); // keep cells a few px apart at any zoom
   const centerX = t.centerX ?? 0, centerY = t.centerY ?? 0;
-  const i0 = Math.max(0, Math.floor((xMin - centerX + EXTENT) / RES));
-  const i1 = Math.min(N - 1, Math.ceil((xMax - centerX + EXTENT) / RES));
-  const j0 = Math.max(0, Math.floor((EXTENT - yMax + centerY) / RES));
-  const j1 = Math.min(N - 1, Math.ceil((EXTENT - yMin + centerY) / RES));
+  // Aligned padded windows allow world-space paths to survive movement and panning.
+  const block = Math.max(32, step * 8);
+  const i0 = Math.max(0, Math.floor((xMin - centerX + EXTENT) / RES / block) * block);
+  const i1 = Math.min(N - 1, Math.ceil((xMax - centerX + EXTENT) / RES / block) * block);
+  const j0 = Math.max(0, Math.floor((EXTENT - yMax + centerY) / RES / block) * block);
+  const j1 = Math.min(N - 1, Math.ceil((EXTENT - yMin + centerY) / RES / block) * block);
   if (i1 - i0 < step || j1 - j0 < step) return;
-  const minor = new Path2D(), major = new Path2D(), exact = new Path2D();
+  const exact = new Path2D();
   const h = t.h;
   /** Marching-squares pass: collect edge-crossing segments for one contour level. */
   const traceLevel = (level: number, path: Path2D) => {
@@ -50,21 +55,35 @@ function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number)
         if ((h01 - level) * (h11 - level) < 0) pts.push([x0 + ((level - h01) / (h11 - h01)) * (x1 - x0), y1]);
         if ((h00 - level) * (h01 - level) < 0) pts.push([x0, y0 + ((level - h00) / (h01 - h00)) * (y1 - y0)]);
         for (let p = 0; p + 1 < pts.length; p += 2) {
-          path.moveTo(sx(pts[p][0]), sy(pts[p][1]));
-          path.lineTo(sx(pts[p + 1][0]), sy(pts[p + 1][1]));
+          path.moveTo(pts[p][0], pts[p][1]);
+          path.lineTo(pts[p + 1][0], pts[p + 1][1]);
         }
       }
     }
   };
-  let minHeight = Infinity, maxHeight = -Infinity;
-  for (let j = j0; j <= j1; j += step) for (let i = i0; i <= i1; i += step) {
-    const value = h[j * N + i];
-    minHeight = Math.min(minHeight, value); maxHeight = Math.max(maxHeight, value);
+  let cache = contourCache.get(t);
+  if (!cache) { cache = new Map(); contourCache.set(t, cache); }
+  const key = `${step}:${i0}:${i1}:${j0}:${j1}`;
+  let geometry = cache.get(key);
+  if (!geometry) {
+    let minHeight = Infinity, maxHeight = -Infinity;
+    for (let j = j0; j <= j1; j += step) for (let i = i0; i <= i1; i += step) {
+      const value = h[j * N + i];
+      minHeight = Math.min(minHeight, value); maxHeight = Math.max(maxHeight, value);
+    }
+    const minor = new Path2D(), major = new Path2D();
+    for (let level = Math.ceil(minHeight / 100) * 100; level <= maxHeight; level += 100) {
+      traceLevel(level, level % 500 === 0 ? major : minor);
+    }
+    geometry = { minor, major, minHeight, maxHeight };
+    if (cache.size >= 6) { const oldest = cache.keys().next().value; if (oldest !== undefined) cache.delete(oldest); }
+    cache.set(key, geometry);
   }
-  for (let level = Math.ceil(minHeight / 100) * 100; level <= maxHeight; level += 100) {
-    traceLevel(level, level % 500 === 0 ? major : minor);
-  }
-  ctx.lineWidth = 1;
+  const { minor, major, minHeight, maxHeight } = geometry;
+  ctx.save();
+  ctx.translate(sx(0), sy(0));
+  ctx.scale(z, -z);
+  ctx.lineWidth = 1 / z;
   ctx.strokeStyle = "rgba(120,80,40,0.16)";
   ctx.stroke(minor);
   ctx.strokeStyle = "rgba(120,80,40,0.3)";
@@ -72,13 +91,14 @@ function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number)
   // contour at exactly the glider's altitude: dark under-stroke for contrast, then a bright orange core
   if (gliderAlt > minHeight && gliderAlt < maxHeight) {
     traceLevel(gliderAlt, exact);
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4 / z;
     ctx.strokeStyle = "rgba(20,30,60,0.6)";
     ctx.stroke(exact);
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 / z;
     ctx.strokeStyle = "rgba(255,120,20,0.95)";
     ctx.stroke(exact);
   }
+  ctx.restore();
 }
 
 export interface SceneData {
@@ -100,9 +120,10 @@ function airspacePath(a: Airspace) {
   let p = airspacePaths.get(a);
   if (!p) {
     p = new Path2D();
+    const path = p;
     for (const r of a.rings) {
-      r.forEach((pt, i) => (i ? p!.lineTo(pt.x, pt.y) : p!.moveTo(pt.x, pt.y)));
-      p.closePath();
+      r.forEach((pt, i) => (i ? path.lineTo(pt.x, pt.y) : path.moveTo(pt.x, pt.y)));
+      path.closePath();
     }
     airspacePaths.set(a, p);
   }
