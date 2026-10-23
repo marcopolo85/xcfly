@@ -18,7 +18,7 @@ export const HOLD_BOOST_FACTOR = 20;
 
 export type HoldStarts = { left: number | null; right: number | null };
 
-// ×10 simulation rate while a turn button has been held for HOLD_BOOST_MS or longer.
+// ×20 simulation rate while a turn button has been held for HOLD_BOOST_MS or longer.
 export function holdBoost(input: Input, holdStart: HoldStarts, nowReal: number) {
   const longHold = (key: "left" | "right") =>
     input[key] && holdStart[key] !== null && nowReal - (holdStart[key] as number) >= HOLD_BOOST_MS;
