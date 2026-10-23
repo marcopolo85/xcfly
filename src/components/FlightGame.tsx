@@ -12,6 +12,7 @@ import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
+import { FlightSettings } from "./FlightSettings";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
 
@@ -29,12 +30,10 @@ export function FlightGame() {
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
-  const [simSpeed, setSimSpeed] = useState(1);
-  const [showThermals, setShowThermals] = useState(false);
-  const simSpeedRef = useRef(1);
-  const showThermalsRef = useRef(false);
-  simSpeedRef.current = simSpeed;
-  showThermalsRef.current = showThermals;
+  const [thermalOpacity, setThermalOpacity] = useState(0);
+  const thermalOpacityRef = useRef(0);
+  thermalOpacityRef.current = thermalOpacity;
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const vario = useRef<AudioVario | null>(null);
 
   const start = (c: FlightConfig) => {
@@ -87,7 +86,7 @@ export function FlightGame() {
         last = now;
         const inp = input.current;
         const boost = holdBoost(inp, holdStart.current, now);
-        const effSimSpeed = simSpeedRef.current * boost;
+        const effSimSpeed = boost;
         steer(sim, inp, dtReal, effSimSpeed);
         const simDt = dtReal * timeScale(inp.accel, effSimSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
@@ -103,7 +102,7 @@ export function FlightGame() {
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: showThermalsRef.current ? thermalMap : null }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = sim.distance;
@@ -168,11 +167,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      <div className="absolute bottom-0 right-0 z-10 flex flex-wrap justify-end gap-x-2 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground">
-        <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · Relief</a>
-        <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer">Thermik: M. von Känel · KK7 · Juli / All day</a>
-        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0 · bearbeitet</a>
-      </div>
+      <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} open={settingsOpen} onOpenChange={setSettingsOpen} />
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
@@ -190,17 +185,6 @@ export function FlightGame() {
           <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>
         <FlightHUD d={hud} />
-        <div className="flex flex-col items-center justify-between gap-1 rounded-md border border-border bg-card/95 px-1.5 py-1 font-mono text-foreground backdrop-blur-md">
-          <label className="flex items-center gap-1 text-[9px]" title="Thermikkarte ein-/ausblenden">
-            <input type="checkbox" checked={showThermals} onChange={(e) => setShowThermals(e.target.checked)} className="accent-primary" />
-            Thermik
-          </label>
-          <input type="range" min={1} max={20} step={1} value={simSpeed} aria-label="Simulationsgeschwindigkeit"
-            title={`Sim ×${simSpeed} · Speed ×${simSpeed * 5}`}
-            onChange={(e) => setSimSpeed(Number(e.target.value))}
-            className="min-h-0 w-5 flex-1 accent-primary [direction:rtl] [writing-mode:vertical-rl]" />
-          <span className="text-[9px]">×{simSpeed}</span>
-        </div>
       </div>}
       <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
