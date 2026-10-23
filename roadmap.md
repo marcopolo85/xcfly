@@ -1,6 +1,6 @@
 # Aufgaben
-- [ ] Laufende Flugdarstellung optimieren und im echten Flug prüfen.
-- [ ] Seitlichen AGL-Balken im kompakten GPS ergänzen und prüfen.
+- [x] Flugdarstellung optimiert: statische Höhenlinien zwischengespeichert, Track-Ausdünnung linear; Vergleich mit ungecachter Berechnung 6,5 → 0,5 ms, echter Handyflug ohne Seitenfehler und 16 Tests bestanden.
+- [x] Seitlicher AGL-Balken im kompakten GPS ergänzt; aktueller Wert und Darstellung im echten Handyflug geprüft. Desktop-Screenshot nach Grössenwechsel nicht abgeschlossen.
 - [x] Höhenlinien, Gelände und KK7-Thermik als gemeinsam nachgeladene Flugfenster; 32 relevante Tests bestanden, echter Flugstart mit Steigen und reale DEM-/KK7-Daten samt Höhenlinien bei 50 km im Browser geprüft. Vollständiger Langstreckenflug über mehrere Fenster nicht durchgeflogen.
 - [x] Freien Startplatz auf der zoombaren Karte wählen, Geländehöhe übernehmen und Flug ab dort prüfen: Auswahl auf Handy/Desktop, 12 Tests bestanden, Flug ab 46.21300° N / 8.99881° E mit 1197 m Geländehöhe ohne Seitenfehler geprüft.
 - [x] Flächige KK7-Thermik für Juli / All day in Karte und Flug verwenden und prüfen: Original-Raster statt Hotspotkreise, kontinuierliche Abtastung für simuliertes Steigen; 23 Tests bestanden, 49 Juli-Kacheln im Flug geladen und Ein-/Ausblenden ohne Seitenfehler geprüft.
