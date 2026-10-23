@@ -1,5 +1,3 @@
-import type { XcTriangle } from "@/game/xcTriangle";
-
 export interface HudData {
   alt: number; agl: number; vz: number; speed: number;
   time: number;
@@ -20,15 +18,8 @@ function Cell({ label, value, unit, cls = "" }: { label: string; value: string; 
 const vzCls = (v: number) => (v > 0.1 ? "text-climb" : v < -1.5 ? "text-sink" : "");
 const fmtVz = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 const fmtTime = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-const triCls = (t: XcTriangle | null) =>
-  !t ? "" : t.fai ? "text-fai" : "text-climb";
 
-export function FlightHUD({
-  d, triangle,
-}: {
-  d: HudData;
-  triangle: XcTriangle | null;
-}) {
+export function FlightHUD({ d }: { d: HudData }) {
   return (
     <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[150px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
       <header className="flex items-center justify-between border-b border-border font-mono text-[10px]">
@@ -45,7 +36,7 @@ export function FlightHUD({
         <Cell label="XC KM" value={(d.xc / 1000).toFixed(1)} unit="km" />
         <Cell label="XC GESCHW." value={d.xcSpeed.toFixed(1)} unit="km/h" />
         <div className="col-span-2 grid grid-cols-3 gap-x-1.5">
-          <Cell label="TRIANGLE" value={(d.tri / 1000).toFixed(1)} unit="km" cls={d.tri > 0 ? triCls(triangle) : ""} />
+          <Cell label="TRIANGLE" value={(d.tri / 1000).toFixed(1)} unit="km" cls={d.tri > 0 ? (d.triFai ? "text-fai" : "text-climb") : ""} />
           <Cell label="MIN FAI" value={d.triMin > 0 && isFinite(d.triMin) ? (d.triMin / 1000).toFixed(1) : "–"} unit={d.triMin > 0 && isFinite(d.triMin) ? "km" : ""} />
           <Cell label="MAX FAI" value={d.triMax > 0 && isFinite(d.triMax) ? (d.triMax / 1000).toFixed(1) : "–"} unit={d.triMax > 0 && isFinite(d.triMax) ? "km" : ""} />
         </div>
