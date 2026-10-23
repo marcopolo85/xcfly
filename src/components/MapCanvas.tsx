@@ -104,7 +104,8 @@ function airspacePath(a: Airspace) {
 
 /** Point on the airspace boundary closest to the glider, with the edge tangent angle and an
  * inward-pointing normal so the label sits just inside the area.
- * Target is cached until the glider moves 300 m; the drawn label glides smoothly towards it. */
+ * Recomputed every frame so the label follows without delay; a light glide only softens
+ * the discontinuity when the closest edge segment changes (e.g. at corners). */
 interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number; nx: number; ny: number }
 const edgeLabelCache = new WeakMap<Airspace, EdgeLabel>();
 const LABEL_INSET = 45; // m inside the boundary (used to detect the inward direction)
@@ -121,42 +122,43 @@ function pointInAirspace(a: Airspace, x: number, y: number) {
   return inside;
 }
 function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
-  let e = edgeLabelCache.get(a);
-  if (!e || Math.hypot(e.gx - gx, e.gy - gy) >= 300) {
-    let bx = a.label.x, by = a.label.y, bdx = 1, bdy = 0, bestD = Infinity;
-    let bpx = bx, bpy = by, bt = 0;
-    for (const r of a.rings) {
-      for (let i = 0; i < r.length; i++) {
-        const p = r[i], q = r[(i + 1) % r.length];
-        const dx = q.x - p.x, dy = q.y - p.y;
-        const len2 = dx * dx + dy * dy;
-        const t = len2 > 0 ? Math.max(0, Math.min(1, ((gx - p.x) * dx + (gy - p.y) * dy) / len2)) : 0;
-        const x = p.x + t * dx, y = p.y + t * dy;
-        const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
-        if (d < bestD) { bestD = d; bx = x; by = y; bdx = dx; bdy = dy; bpx = p.x; bpy = p.y; bt = t; }
-      }
+  let bx = a.label.x, by = a.label.y, bdx = 1, bdy = 0, bestD = Infinity;
+  let bpx = bx, bpy = by, bt = 0;
+  for (const r of a.rings) {
+    for (let i = 0; i < r.length; i++) {
+      const p = r[i], q = r[(i + 1) % r.length];
+      const dx = q.x - p.x, dy = q.y - p.y;
+      const len2 = dx * dx + dy * dy;
+      const t = len2 > 0 ? Math.max(0, Math.min(1, ((gx - p.x) * dx + (gy - p.y) * dy) / len2)) : 0;
+      const x = p.x + t * dx, y = p.y + t * dy;
+      const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
+      if (d < bestD) { bestD = d; bx = x; by = y; bdx = dx; bdy = dy; bpx = p.x; bpy = p.y; bt = t; }
     }
-    // keep the anchor away from corners: clamp it at least CORNER_MARGIN along the edge
-    const segLen = Math.hypot(bdx, bdy);
-    if (segLen > 2 * CORNER_MARGIN) {
-      const t = Math.min(Math.max(bt, CORNER_MARGIN / segLen), 1 - CORNER_MARGIN / segLen);
-      bx = bpx + t * bdx;
-      by = bpy + t * bdy;
-    }
-    // screen-space tangent angle (world y points up, screen y down), kept readable (not upside down)
-    let ang = Math.atan2(-bdy, bdx);
-    if (ang > Math.PI / 2) ang -= Math.PI;
-    if (ang < -Math.PI / 2) ang += Math.PI;
-    // inward normal: perpendicular to the edge, flipped until it points into the area
-    const bl = Math.hypot(bdx, bdy) || 1;
-    let nx = -bdy / bl, ny = bdx / bl;
-    if (!pointInAirspace(a, bx + nx * LABEL_INSET, by + ny * LABEL_INSET)) { nx = -nx; ny = -ny; }
-    if (!e) e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang, nx, ny };
-    else { e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; e.nx = nx; e.ny = ny; }
-    edgeLabelCache.set(a, e);
   }
-  // smooth glide towards the target so the label never jumps
-  const k = 0.12;
+  // keep the anchor away from corners: clamp it at least CORNER_MARGIN along the edge
+  const segLen = Math.hypot(bdx, bdy);
+  if (segLen > 2 * CORNER_MARGIN) {
+    const t = Math.min(Math.max(bt, CORNER_MARGIN / segLen), 1 - CORNER_MARGIN / segLen);
+    bx = bpx + t * bdx;
+    by = bpy + t * bdy;
+  }
+  // screen-space tangent angle (world y points up, screen y down), kept readable (not upside down)
+  let ang = Math.atan2(-bdy, bdx);
+  if (ang > Math.PI / 2) ang -= Math.PI;
+  if (ang < -Math.PI / 2) ang += Math.PI;
+  // inward normal: perpendicular to the edge, flipped until it points into the area
+  const bl = Math.hypot(bdx, bdy) || 1;
+  let nx = -bdy / bl, ny = bdx / bl;
+  if (!pointInAirspace(a, bx + nx * LABEL_INSET, by + ny * LABEL_INSET)) { nx = -nx; ny = -ny; }
+  let e = edgeLabelCache.get(a);
+  if (!e) {
+    e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang, nx, ny };
+    edgeLabelCache.set(a, e);
+    return e;
+  }
+  e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; e.nx = nx; e.ny = ny;
+  // light glide: softens segment switches without noticeable delay
+  const k = 0.35;
   e.dx += (e.x - e.dx) * k;
   e.dy += (e.y - e.dy) * k;
   let da = e.ang - e.dang;
