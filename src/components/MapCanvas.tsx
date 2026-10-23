@@ -191,13 +191,30 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
     const edge = edgeLabelPoint(a, gx, gy);
-    const insetM = 16 / z; // constant ~16 px visual gap from the boundary line
-    const lx = sx(edge.dx + edge.nx * insetM), ly = sy(edge.dy + edge.ny * insetM);
-    if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
-    const [r, g, b] = AIRSPACE_COLORS[a.kind];
     if (z < 0.02 && a.kind === "AD") continue;
+    const [r, g, b] = AIRSPACE_COLORS[a.kind];
     const name = a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`;
     const text = `${name}  ${formatLimitM(a.lower)} – ${formatLimitM(a.upper)}`;
+    // push the label inwards until the whole text box lies inside the airspace; skip if it never fits
+    const hw = (ctx.measureText(text).width / 2 + 3) / z; // half text width in m
+    const hh = 9 / z; // half text height in m
+    const tx = edge.ny, ty = -edge.nx; // unit tangent along the edge (world coords)
+    let cx = 0, cy = 0, fits = false;
+    for (let inset = 16 / z, tries = 0; tries < 12; tries++, inset += hh) {
+      cx = edge.dx + edge.nx * inset;
+      cy = edge.dy + edge.ny * inset;
+      fits = true;
+      for (const st of [-1, 1]) {
+        for (const sn of [-1, 1]) {
+          if (!pointInAirspace(a, cx + tx * hw * st + edge.nx * hh * sn, cy + ty * hw * st + edge.ny * hh * sn)) { fits = false; break; }
+        }
+        if (!fits) break;
+      }
+      if (fits) break;
+    }
+    if (!fits) continue;
+    const lx = sx(cx), ly = sy(cy);
+    if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
     ctx.save();
     ctx.translate(lx, ly);
     ctx.rotate(edge.dang);
