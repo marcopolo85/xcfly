@@ -37,6 +37,7 @@ async function build(site: Site): Promise<Airspace[]> {
   await Promise.all(Object.entries(AIRSPACE_LAYERS).map(async ([kind, layer]) => {
     for (const f of await fetchLayer(layer, bbox)) {
       const pr = f.properties;
+      if (kind === "CTR" && /emmen.*\b2\s*$/i.test(String(pr.name ?? pr.label ?? ""))) continue;
       const polys = (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates) as number[][][][];
       const rings = polys.flatMap((poly) => poly.map((ring) => ring.map(([lon, lat]) => proj(lon, lat))));
       if (!rings.length) continue;

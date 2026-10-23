@@ -113,7 +113,7 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
     ctx.save();
     ctx.translate(sx(0), sy(0));
     ctx.scale(z, -z);
-    ctx.fillStyle = `rgba(${r},${g},${b},0.2)`;
+    ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
     ctx.fill(path, "evenodd");
     ctx.lineWidth = (active ? 3 : 0.8) / z;
     ctx.strokeStyle = active ? `rgba(${r},${g},${b},0.95)` : `rgba(${r},${g},${b},0.35)`;
