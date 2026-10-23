@@ -29,7 +29,33 @@ export interface Sim {
   x: number; y: number; alt: number; heading: number;
   vz: number; airLift: number; speed: number;
   distance: number; flightTime: number; clock: number; // clock in hours
+  trackX: number[]; trackY: number[]; // downsampled path for XC optimization
+  xcDist: number; // XContest-style optimized free distance
   landed: boolean;
+}
+
+/** Meters between track points used for the XC distance optimization. */
+export const XC_TRACK_STEP = 100;
+
+/**
+ * XContest-style free distance with one turnpoint: the largest value of
+ * d(launch, p) + d(p, current position) over all track points p.
+ * The launch is always at (0, 0) in simulation coordinates.
+ */
+function updateXc(sim: Sim) {
+  const n = sim.trackX.length;
+  const lx = n ? sim.trackX[n - 1] : 0;
+  const ly = n ? sim.trackY[n - 1] : 0;
+  if (Math.hypot(sim.x - lx, sim.y - ly) < XC_TRACK_STEP) return;
+  sim.trackX.push(sim.x);
+  sim.trackY.push(sim.y);
+  const ex = sim.x, ey = sim.y;
+  for (let i = 0; i <= n; i++) {
+    const px = i < n ? sim.trackX[i] : 0;
+    const py = i < n ? sim.trackY[i] : 0;
+    const d = Math.hypot(px, py) + Math.hypot(ex - px, ey - py);
+    if (d > sim.xcDist) sim.xcDist = d;
+  }
 }
 
 export interface Input { left: boolean; right: boolean; accel: boolean }
@@ -55,6 +81,7 @@ export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift
   const dy = Math.cos(sim.heading) * sim.speed * dt;
   sim.x += dx; sim.y += dy;
   sim.distance += Math.hypot(dx, dy);
+  updateXc(sim);
   sim.alt += sim.vz * dt;
   const cb = cloudbaseAt(t, sim.x, sim.y);
   if (sim.alt > cb) { sim.alt = cb; sim.vz = Math.min(0, sim.vz); }

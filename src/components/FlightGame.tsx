@@ -74,7 +74,8 @@ export function FlightGame() {
       const g = gradientAt(terrain, 0, 0);
       const sim: Sim = {
         x: 0, y: 0, alt: heightAt(terrain, 0, 0) + 40, heading: Math.atan2(-g.gx, -g.gy),
-        vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour, landed: false,
+        vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour,
+        trackX: [], trackY: [], xcDist: 0, landed: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
@@ -105,7 +106,7 @@ export function FlightGame() {
         if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
-        const xc = sim.distance;
+        const xc = sim.xcDist;
         if (now - lastHud > 100) {
           lastHud = now;
           setHud({
