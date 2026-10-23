@@ -198,7 +198,9 @@ export function FlightGame() {
   }, [runId]);
 
   useEffect(() => {
+    if (phase !== "flying") return;
     const set = (e: KeyboardEvent, v: boolean) => {
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable='true']")) return;
       if (e.code === "ArrowLeft") {
         input.current.left = v;
         holdStart.current.left = v ? performance.now() : null;
@@ -212,8 +214,12 @@ export function FlightGame() {
     const down = (e: KeyboardEvent) => set(e, true), up = (e: KeyboardEvent) => set(e, false);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
-    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
-  }, []);
+    return () => {
+      window.removeEventListener("keydown", down); window.removeEventListener("keyup", up);
+      input.current = { left: false, right: false, accel: false, steer: 0 };
+      holdStart.current = { left: null, right: null };
+    };
+  }, [phase]);
 
   if (phase === "config") return <StartScreen onStart={start} />;
 
