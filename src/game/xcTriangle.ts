@@ -6,15 +6,6 @@ export interface XcTriangle {
   fai: boolean;
   /** Distance still missing to close the triangle (current position → a). */
   closing: number;
-  /** Smallest FAI-valid perimeter reachable through the closing sector at `a`. */
-  minP: number;
-  /** Largest FAI-valid perimeter reachable through the closing sector at `a`. */
-  maxP: number;
-}
-
-/** Distance to the closing cylinder around the first vertex (0 once inside). */
-export function closingDistance(t: XcTriangle) {
-  return Math.max(0, t.closing - CLOSING_RATIO * t.perimeter);
 }
 
 /** FAI triangle: every leg is at least 28 % of the perimeter. */
@@ -48,8 +39,7 @@ export function bestTriangle(xs: number[], ys: number[], cur: Pt): XcTriangle | 
       const score = p * (fai ? 1.4 : 1.2);
       if (score > bestScore) {
         bestScore = score;
-        const lbc = d(pts[j], pts[k]);
-        best = { a: pts[i], b: pts[j], c: pts[k], perimeter: p, fai, closing: d(cur, pts[i]), minP: (25 / 11) * lbc, maxP: (25 / 7) * lbc };
+        best = { a: pts[i], b: pts[j], c: pts[k], perimeter: p, fai, closing: d(cur, pts[i]) };
       }
     }
   }
