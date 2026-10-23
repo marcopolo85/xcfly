@@ -12,8 +12,21 @@ describe("KK7 July / All day thermal areas", () => {
   it("retains full colored areas and never invents heat in transparent pixels", () => {
     expect(thermalHeat(255, 0, 0, 0)).toBe(0);
     expect(thermalHeat(255, 0, 0, 255)).toBe(1);
-    expect(thermalHeat(0, 0, 255, 255)).toBeCloseTo(0.05);
+    expect(thermalHeat(0, 0, 255, 255)).toBeCloseTo(0.1);
     expect(thermalHeat(255, 255, 0, 255)).toBeGreaterThan(thermalHeat(0, 255, 255, 255));
+  });
+  it("lift strength rises monotonically from blue to dark red", () => {
+    const blue = thermalHeat(0, 0, 255, 255);
+    const cyan = thermalHeat(0, 255, 255, 255);
+    const green = thermalHeat(0, 255, 0, 255);
+    const yellow = thermalHeat(255, 255, 0, 255);
+    const red = thermalHeat(255, 0, 0, 255);
+    const darkRed = thermalHeat(128, 0, 0, 255);
+    expect(blue).toBeLessThan(cyan);
+    expect(cyan).toBeLessThan(green);
+    expect(green).toBeLessThan(yellow);
+    expect(yellow).toBeLessThan(red);
+    expect(darkRed).toBe(1);
   });
   it("samples a continuous area between pixels, rather than isolated sources", () => {
     const site = SITES[0], pixel = localToPixel(site, 0, 0);

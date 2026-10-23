@@ -18,14 +18,17 @@ export function thermalTileUrl(x: number, y: number, source: string, z = THERMAL
 }
 
 /** Relative heat from KK7's rainbow palette, not a calibrated m/s forecast.
- * Transparent pixels mean no provider data; blue is cool, red is hot. */
+ * Transparent pixels mean no provider data. Lift strength follows the color
+ * scale: blue is weak climb, rising through cyan/green/yellow to dark red,
+ * which gives full strength. */
 export function thermalHeat(r: number, g: number, b: number, alpha: number) {
-  if (alpha === 0) return 0;
+  if (alpha < 40) return 0;
   const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
   if (delta === 0) return 0;
   let hue = max === r ? ((g - b) / delta) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
   hue = (hue * 60 + 360) % 360;
-  return (0.05 + 0.95 * Math.max(0, Math.min(1, (240 - hue) / 240))) * alpha / 255;
+  const t = Math.max(0, Math.min(1, (240 - hue) / 240)); // blue 0 → dark red 1
+  return 0.1 + 0.9 * t;
 }
 
 /** Bilinear sampling keeps broad thermal areas continuous, without hotspots. */
