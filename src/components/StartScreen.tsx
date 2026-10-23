@@ -16,12 +16,6 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [choosing, setChoosing] = useState(false);
   const st = sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst);
 
-export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
-  const [site, setSite] = useState<Site>(SITES[0]);
-  const [choosing, setChoosing] = useState(false);
-  const [season, setSeason] = useState<Season>("summer");
-  const [hour, setHour] = useState(11);
-  const st = sunTimes(site.lat, SEASONS[season].doy, SEASONS[season].dst);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
