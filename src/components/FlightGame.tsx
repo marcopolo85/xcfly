@@ -1,9 +1,9 @@
-import { bestTriangle, type XcTriangle } from "@/game/xcTriangle";
+import { bestTriangle, closingDistance, type XcTriangle } from "@/game/xcTriangle";
 import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
-import { generateTerrain, heightAt, gradientAt, cloudbaseAt } from "@/game/terrain";
+import { generateTerrain, heightAt, gradientAt } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
@@ -116,8 +116,10 @@ export function FlightGame() {
           setHud({
             alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, speed: sim.speed,
             xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
+            flightTime: sim.flightTime,
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
-            clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
+            triMin: triangle?.minP ?? 0, triMax: triangle?.maxP ?? 0, triClose: triangle ? closingDistance(triangle) : 0,
+            clock: fmtClock(sim.clock), accel: inp.accel,
           });
         }
         if (sim.landed) {
