@@ -1,4 +1,5 @@
 import { EXTENT, cloudbaseAt, normalAt, heightAt, gradientAt, type Terrain } from "./terrain";
+import { rasterHeatAt, type ThermalRaster } from "./thermalRaster";
 
 export interface Thermal {
   x: number; y: number;
@@ -11,6 +12,7 @@ const CELL = 1000;
 export interface ThermalField {
   grid: Map<number, Thermal[]>;
   count: number;
+  raster?: ThermalRaster;
 }
 
 const key = (cx: number, cy: number) => (cx + 100) * 1000 + (cy + 100);
@@ -99,6 +101,12 @@ export function airLift(
   const sunAmp = maxLift * Math.sqrt(Math.max(0, sun.z) / 0.87);
   const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
   let lift = 0;
+  if (f.raster) {
+    const local = slopeTrigger(normalAt(t, x, y), sun);
+    const pulse = 0.9 + 0.1 * Math.sin(simTime / 300);
+    const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
+    return sunAmp * rasterHeatAt(f.raster, x, y) * (0.8 + 0.2 * local) * pulse * fade + (local < 0.05 ? -0.55 : -0.15);
+  }
   for (let dy = -1; dy <= 1; dy++)
     for (let dx = -1; dx <= 1; dx++) {
       const arr = f.grid.get(key(cx + dx, cy + dy));

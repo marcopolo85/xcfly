@@ -4,7 +4,9 @@ import { drawSwissRelief } from "./SwissRelief";
 import { POLAR, type Sim } from "@/game/physicsEngine";
 import { EXTENT, N, RES, heightAt, type Terrain } from "@/game/terrain";
 import type { ZoomTransform } from "d3-zoom";
-import type { ThermalField } from "@/game/thermals";
+import type { ThermalMap } from "@/game/loadThermalRaster";
+import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
+import { THERMAL_ZOOM } from "@/game/thermalRaster";
 import wingUrl from "@/assets/glider-wing.png";
 
 let wingImage: HTMLImageElement | null = null;
@@ -62,7 +64,7 @@ export interface SceneData {
   sim: Sim;
   trail: { x: number; y: number; vz: number }[];
   dusk: number; // 0..1 darkness
-  thermals?: ThermalField | null;
+  thermalMap?: ThermalMap | null;
 }
 
 export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTransform) {
@@ -95,16 +97,13 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   drawContours(ctx, s.terrain, sx, sy, z, sim.x - cx / z, sim.x + (W - cx) / z, sim.y - (H - cy) / z, sim.y + cy / z);
 
   // thermal map
-  if (s.thermals) {
-    for (const arr of s.thermals.grid.values()) for (const th of arr) {
-      const px = sx(th.x), py = sy(th.y), r = Math.max(3, th.r * z);
-      if (px < -r || py < -r || px > W + r || py > H + r) continue;
-      const g = ctx.createRadialGradient(px, py, 0, px, py, r);
-      g.addColorStop(0, `rgba(255,120,30,${0.25 + th.power * 0.35})`);
-      g.addColorStop(1, "rgba(255,120,30,0)");
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill();
-    }
+  if (s.thermalMap) {
+    const { raster, image } = s.thermalMap;
+    const origin = mapOrigin(s.site);
+    const metresPerPixel = 2 * MERCATOR_EXTENT / (256 * 2 ** THERMAL_ZOOM);
+    const left = (raster.left * metresPerPixel - MERCATOR_EXTENT - origin.x) * origin.scale;
+    const top = (MERCATOR_EXTENT - raster.top * metresPerPixel - origin.y) * origin.scale;
+    ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
   }
 
   // trail coloured by climb

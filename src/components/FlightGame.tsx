@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
-import { generateTerrain, heightAt, gradientAt, cloudbaseAt, normalAt } from "@/game/terrain";
-import { airLift, slopeTrigger } from "@/game/thermals";
-import { generateHotspotThermals, loadThermalHotspots } from "@/game/thermalHotspots";
+import { generateTerrain, heightAt, gradientAt, cloudbaseAt } from "@/game/terrain";
+import { airLift, type ThermalField } from "@/game/thermals";
+import { loadThermalRaster } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, glideRatio, type Sim, type Input } from "@/game/physicsEngine";
-import { mulberry32 } from "@/game/rng";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { loadRealTerrain } from "@/game/realTerrain";
@@ -53,22 +52,21 @@ export function FlightGame() {
     if (runId === 0 || !config) return;
     let raf = 0, cancelled = false;
     const timer = setTimeout(async () => {
-      let terrain, hotspots;
+      let terrain, thermalMap;
       try {
-        [terrain, hotspots] = await Promise.all([
+        [terrain, thermalMap] = await Promise.all([
           loadRealTerrain(config.site).catch(() => generateTerrain(config.site)),
-          loadThermalHotspots(config.site),
+          loadThermalRaster(config.site),
         ]);
       } catch {
         if (cancelled) return;
         vario.current?.update(0);
-        setLoadError("Thermikpunkte von KK7 konnten nicht geladen werden.");
+        setLoadError("Die KK7-Thermikkarte für Juli / All day konnte nicht geladen werden.");
         setPhase("error");
         return;
       }
       if (cancelled) return;
-      const rnd = mulberry32((Math.random() * 1e9) | 0);
-      const thermals = generateHotspotThermals(terrain, hotspots, rnd);
+      const thermals: ThermalField = { grid: new Map(), count: 0, raster: thermalMap.raster };
       const season = SEASONS[config.season];
       const g = gradientAt(terrain, 0, 0);
       const sim: Sim = {
@@ -99,7 +97,7 @@ export function FlightGame() {
         if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
 
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermals: showThermalsRef.current ? thermals : null }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: showThermalsRef.current ? thermalMap : null }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = sim.distance;
@@ -153,12 +151,12 @@ export function FlightGame() {
       <MapCanvas ref={canvasRef} />
       <div className="absolute bottom-0 right-0 z-10 flex flex-wrap justify-end gap-x-2 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground">
         <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · Relief</a>
-        <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer">Thermik: M. von Känel · KK7</a>
+        <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer">Thermik: M. von Känel · KK7 · Juli / All day</a>
         <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC-SA 4.0 · bearbeitet</a>
       </div>
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
-          <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikpunkte…</p>
+          <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
         </div>
       )}
       <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
