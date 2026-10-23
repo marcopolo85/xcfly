@@ -5,6 +5,8 @@ import { mulberry32 } from "./rng";
 import { slopeTrigger } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 
+const newSim = (alt = 2000, vz = -1): Sim => ({ x: 0, y: 0, alt, heading: 0, vz, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false, maxAlt: alt, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false });
+
 describe("game rules", () => {
   it("speedbar runs game time 5x faster", () => {
     expect(timeScale(true)).toBe(20);
@@ -24,7 +26,7 @@ describe("game rules", () => {
   });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {
-      const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
+      const sim = newSim();
       const input = { left: false, right: true, accel: false };
       const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
       // Simulate the same real-time span a full turn would need at ×1.
@@ -45,7 +47,7 @@ describe("game rules", () => {
     expect(turnAt(8)).toBeCloseTo(r1, 0);
   });
   it("sliding on the speed button steers slowly, at a quarter of the full turn rate", () => {
-    const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
+    const sim = newSim();
     steer(sim, { left: false, right: false, accel: false, steer: 1 }, 1, 1);
     expect(sim.heading).toBeCloseTo(TURN_RATE * STEER_ANALOG_FACTOR, 6);
     steer(sim, { left: false, right: false, accel: false, steer: -0.5 }, 1, 1);
@@ -56,7 +58,7 @@ describe("game rules", () => {
   });
   it("XC distance is the XContest-style optimized free distance, not the distance flown", () => {
     const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
-    const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: 0, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
+    const sim = newSim(2000, 0);
     const fly = (seconds: number) => {
       for (let i = 0; i < seconds * 20; i++) stepPhysics(sim, { left: false, right: false, accel: false }, 0.05, flat, 0);
     };
@@ -78,5 +80,29 @@ describe("game rules", () => {
     const pm = sunVector(sunPosition(46.7, 172, 18, true));
     expect(slopeTrigger(east, am)).toBeGreaterThan(slopeTrigger(west, am));
     expect(slopeTrigger(west, pm)).toBeGreaterThan(slopeTrigger(east, pm));
+  });
+  it("counts thermals, thermalling circles and cumulative climb", () => {
+    const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
+    const sim = newSim();
+    // Entering core lift counts one thermal and accumulates climb.
+    stepPhysics(sim, { left: false, right: false, accel: false }, 0.05, flat, 2);
+    expect(sim.thermals).toBe(1);
+    expect(sim.climbTotal).toBeGreaterThan(0);
+    expect(sim.maxAlt).toBeGreaterThan(2000);
+    // A full 360° rotation while climbing counts one thermalling circle.
+    const input = { left: false, right: true, accel: false };
+    const fullTurn = (2 * Math.PI) / TURN_RATE;
+    for (let i = 0; i < 120; i++) {
+      steer(sim, input, fullTurn / 120, 1);
+      stepPhysics(sim, input, fullTurn / 120, flat, 2);
+    }
+    expect(sim.circles).toBe(1);
+    // A full rotation without lift does not count as a thermalling circle.
+    for (let i = 0; i < 120; i++) {
+      steer(sim, input, fullTurn / 120, 1);
+      stepPhysics(sim, input, fullTurn / 120, flat, 0);
+    }
+    expect(sim.circles).toBe(1);
+    expect(sim.thermals).toBe(1);
   });
 });
