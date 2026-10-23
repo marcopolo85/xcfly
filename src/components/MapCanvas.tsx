@@ -102,10 +102,23 @@ function airspacePath(a: Airspace) {
   return p;
 }
 
-/** Point on the airspace boundary closest to the glider, with the edge tangent angle.
+/** Point on the airspace boundary closest to the glider, with the edge tangent angle and an
+ * inward-pointing normal so the label sits just inside the area.
  * Target is cached until the glider moves 300 m; the drawn label glides smoothly towards it. */
-interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number }
+interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number; nx: number; ny: number }
 const edgeLabelCache = new WeakMap<Airspace, EdgeLabel>();
+const LABEL_INSET = 45; // m inside the boundary
+/** Even-odd point-in-polygon over all rings (matches the fill rule). */
+function pointInAirspace(a: Airspace, x: number, y: number) {
+  let inside = false;
+  for (const r of a.rings) {
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const p = r[i], q = r[j];
+      if (p.y > y !== q.y > y && x < ((q.x - p.x) * (y - p.y)) / (q.y - p.y) + p.x) inside = !inside;
+    }
+  }
+  return inside;
+}
 function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
   let e = edgeLabelCache.get(a);
   if (!e || Math.hypot(e.gx - gx, e.gy - gy) >= 300) {
@@ -125,8 +138,12 @@ function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
     let ang = Math.atan2(-bdy, bdx);
     if (ang > Math.PI / 2) ang -= Math.PI;
     if (ang < -Math.PI / 2) ang += Math.PI;
-    if (!e) e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang };
-    else { e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; }
+    // inward normal: perpendicular to the edge, flipped until it points into the area
+    const bl = Math.hypot(bdx, bdy) || 1;
+    let nx = -bdy / bl, ny = bdx / bl;
+    if (!pointInAirspace(a, bx + nx * LABEL_INSET, by + ny * LABEL_INSET)) { nx = -nx; ny = -ny; }
+    if (!e) e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang, nx, ny };
+    else { e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; e.nx = nx; e.ny = ny; }
     edgeLabelCache.set(a, e);
   }
   // smooth glide towards the target so the label never jumps
@@ -163,22 +180,17 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
     const edge = edgeLabelPoint(a, gx, gy);
-    const lx = sx(edge.dx), ly = sy(edge.dy);
+    const lx = sx(edge.dx + edge.nx * LABEL_INSET), ly = sy(edge.dy + edge.ny * LABEL_INSET);
     if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
     if (z < 0.02 && a.kind === "AD") continue;
     const name = a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`;
     const text = `${name}  ${formatLimitM(a.lower)} – ${formatLimitM(a.upper)}`;
-    const w = ctx.measureText(text).width + 8;
     ctx.save();
     ctx.translate(lx, ly);
     ctx.rotate(edge.dang);
-    ctx.fillStyle = "rgba(255,255,255,0.8)";
-    ctx.fillRect(-w / 2, -8, w, 15);
-    ctx.strokeStyle = `rgba(${r},${g},${b},${active ? 1 : 0.6})`;
-    ctx.lineWidth = active ? 2 : 1;
-    ctx.strokeRect(-w / 2, -8, w, 15);
-    ctx.fillStyle = `rgb(${r * 0.6},${g * 0.6},${b * 0.6})`;
+    // plain text inside the area — no frame, no background
+    ctx.fillStyle = active ? `rgb(${r},${g},${b})` : `rgb(${r * 0.55},${g * 0.55},${b * 0.55})`;
     ctx.fillText(text, 0, 3);
     ctx.restore();
   }
