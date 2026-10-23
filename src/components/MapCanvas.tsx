@@ -186,7 +186,8 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   ctx.fillStyle = theme.getPropertyValue("--background").trim();
   ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true;
-  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * anchorF) / z, W, H, z, dpr);
+  // relief tiles are laid out around screen point (W/2, 0.55·H): pass the world position under that point
+  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * 0.55) / z, W, H, z, dpr);
   if (!map.loaded) {
     ctx.fillStyle = theme.getPropertyValue("--foreground").trim();
     ctx.font = "12px monospace";
