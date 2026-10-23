@@ -180,22 +180,17 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
     const edge = edgeLabelPoint(a, gx, gy);
-    const lx = sx(edge.dx), ly = sy(edge.dy);
+    const lx = sx(edge.dx + edge.nx * LABEL_INSET), ly = sy(edge.dy + edge.ny * LABEL_INSET);
     if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
     if (z < 0.02 && a.kind === "AD") continue;
     const name = a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`;
     const text = `${name}  ${formatLimitM(a.lower)} – ${formatLimitM(a.upper)}`;
-    const w = ctx.measureText(text).width + 8;
     ctx.save();
     ctx.translate(lx, ly);
     ctx.rotate(edge.dang);
-    ctx.fillStyle = "rgba(255,255,255,0.8)";
-    ctx.fillRect(-w / 2, -8, w, 15);
-    ctx.strokeStyle = `rgba(${r},${g},${b},${active ? 1 : 0.6})`;
-    ctx.lineWidth = active ? 2 : 1;
-    ctx.strokeRect(-w / 2, -8, w, 15);
-    ctx.fillStyle = `rgb(${r * 0.6},${g * 0.6},${b * 0.6})`;
+    // plain text inside the area — no frame, no background
+    ctx.fillStyle = active ? `rgb(${r},${g},${b})` : `rgb(${r * 0.55},${g * 0.55},${b * 0.55})`;
     ctx.fillText(text, 0, 3);
     ctx.restore();
   }
