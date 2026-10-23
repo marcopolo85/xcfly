@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
 import { StartScreen, type FlightConfig } from "./StartScreen";
-import { generateTerrain, heightAt, gradientAt, cloudbaseAt } from "@/game/terrain";
+import { generateTerrain, heightAt, gradientAt, cloudbaseAt, type Terrain } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
-import { loadThermalRaster } from "@/game/loadThermalRaster";
+import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
@@ -72,7 +72,7 @@ export function FlightGame() {
     if (runId === 0 || !config) return;
     let raf = 0, cancelled = false;
     const timer = setTimeout(async () => {
-      let terrain, thermalMap;
+      let terrain: Terrain, thermalMap: ThermalMap;
       try {
         [terrain, thermalMap] = await Promise.all([
           loadRealTerrain(config.site).catch((error: unknown) => {
