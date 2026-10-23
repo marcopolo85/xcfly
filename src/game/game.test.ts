@@ -24,7 +24,7 @@ describe("game rules", () => {
   });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {
-      const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, landed: false };
+      const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
       const input = { left: false, right: true, accel: false };
       const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
       // Simulate the same real-time span a full turn would need at ×1.
