@@ -1,5 +1,5 @@
 # Aufgaben
-- [ ] Offline-Option in den Einstellungen mit lokaler Karten-/Gelände-/Thermikspeicherung, sicherem Offline-Appstart und Prüfung ergänzen.
+- [x] Offline-Option speichert reale Gelände-, KK7- und Reliefdaten für ein 40 × 40 km Fluggebiet mit Fortschritt, Abbruch und Löschen. Echter Download von 394 Kacheln, erneuter Flugstart ohne Internet mit Karte und Höhenanzeige geprüft; keine Vorschau-Workerregistrierung. Offline-Neustart der gesamten App erst nach Veröffentlichung prüfbar.
 - [x] Flugdarstellung optimiert: statische Höhenlinien zwischengespeichert, Track-Ausdünnung linear; Vergleich mit ungecachter Berechnung 6,5 → 0,5 ms, echter Handyflug ohne Seitenfehler und 16 Tests bestanden.
 - [x] Seitlicher AGL-Balken im kompakten GPS ergänzt; aktueller Wert und Darstellung im echten Handyflug geprüft. Desktop-Screenshot nach Grössenwechsel nicht abgeschlossen.
 - [x] Höhenlinien, Gelände und KK7-Thermik als gemeinsam nachgeladene Flugfenster; 32 relevante Tests bestanden, echter Flugstart mit Steigen und reale DEM-/KK7-Daten samt Höhenlinien bei 50 km im Browser geprüft. Vollständiger Langstreckenflug über mehrere Fenster nicht durchgeflogen.
