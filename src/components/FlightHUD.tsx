@@ -35,7 +35,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         <Cell label="FLUGDAUER" value={fmtTime(d.time)} />
         <Cell label="XC KM" value={(d.xc / 1000).toFixed(1)} unit="km" />
         <Cell label="XC GESCHW." value={d.xcSpeed.toFixed(1)} unit="km/h" />
-        <div className="col-span-2 grid grid-cols-3 gap-x-1.5">
+        <div className="col-span-2 grid grid-cols-3 gap-x-1.5 [&_.hud-label]:text-[8px] [&_.hud-label]:tracking-tight">
           <Cell label="TRIANGLE" value={(d.tri / 1000).toFixed(1)} unit="km" cls={d.tri > 0 ? (d.triFai ? "text-fai" : "text-climb") : ""} />
           <Cell label="MIN FAI" value={d.triMin > 0 && isFinite(d.triMin) ? (d.triMin / 1000).toFixed(1) : "–"} unit={d.triMin > 0 && isFinite(d.triMin) ? "km" : ""} />
           <Cell label="MAX FAI" value={d.triMax > 0 && isFinite(d.triMax) ? (d.triMax / 1000).toFixed(1) : "–"} unit={d.triMax > 0 && isFinite(d.triMax) ? "km" : ""} />
