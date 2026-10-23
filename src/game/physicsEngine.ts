@@ -81,6 +81,7 @@ export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift
   const dy = Math.cos(sim.heading) * sim.speed * dt;
   sim.x += dx; sim.y += dy;
   sim.distance += Math.hypot(dx, dy);
+  updateXc(sim);
   sim.alt += sim.vz * dt;
   const cb = cloudbaseAt(t, sim.x, sim.y);
   if (sim.alt > cb) { sim.alt = cb; sim.vz = Math.min(0, sim.vz); }
