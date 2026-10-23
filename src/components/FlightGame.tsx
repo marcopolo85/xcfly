@@ -131,9 +131,13 @@ export function FlightGame() {
 
   useEffect(() => {
     const set = (e: KeyboardEvent, v: boolean) => {
-      if (e.code === "ArrowLeft") input.current.left = v;
-      else if (e.code === "ArrowRight") input.current.right = v;
-      else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
+      if (e.code === "ArrowLeft") {
+        input.current.left = v;
+        holdStart.current.left = v ? performance.now() : null;
+      } else if (e.code === "ArrowRight") {
+        input.current.right = v;
+        holdStart.current.right = v ? performance.now() : null;
+      } else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
       else return;
       e.preventDefault();
     };
