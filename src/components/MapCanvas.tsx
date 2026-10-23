@@ -94,86 +94,51 @@ function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref
   if (hit) return hit;
   const path = new Path2D();
   const L = Math.hypot(b.x - a.x, b.y - a.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-  const side = Math.sign((b.x - a.x) * (ref.y - a.y) - (b.y - a.y) * (ref.x - a.x)) || 1;
-  const G = 110, half = 1.4 * L, cell = (2 * half) / G, x0 = mx - half, y0 = my - half;
-  let minP = Infinity, maxP = 0, lx = mx, ly = my, far = 0;
-  // Inside/outside grid of cell centres that yield a valid FAI third vertex.
-  const grid = new Uint8Array(G * G);
-  for (let gy = 0; gy < G; gy++) {
-    for (let gx = 0; gx < G; gx++) {
-      const cx = x0 + (gx + 0.5) * cell, cy = y0 + (gy + 0.5) * cell;
-      if (Math.sign((b.x - a.x) * (cy - a.y) - (b.y - a.y) * (cx - a.x)) !== side) continue;
-      const p = L + Math.hypot(cx - a.x, cy - a.y) + Math.hypot(cx - b.x, cy - b.y);
-      if (!isFai(a, b, { x: cx, y: cy })) continue;
-      grid[gy * G + gx] = 1;
-      if (p < minP) minP = p;
-      if (p > maxP) maxP = p;
-      const dm = Math.hypot(cx - mx, cy - my);
-      if (dm > far) { far = dm; lx = cx; ly = cy; }
+  let minP = Infinity, maxP = 0, lx = mx, ly = my;
+  if (L > 1) {
+    const ux = (b.x - a.x) / L, uy = (b.y - a.y) / L;
+    let vx = -uy, vy = ux; // unit normal, flipped so it points at `ref`
+    if ((b.x - a.x) * (ref.y - a.y) - (b.y - a.y) * (ref.x - a.x) < 0) { vx = uy; vy = -ux; }
+    const px = (s: number, t: number) => mx + s * ux + t * vx;
+    const py = (s: number, t: number) => my + s * uy + t * vy;
+    const K = 7 / 18; // on the FAI boundary of one leg: d1 = K * (L + d2)
+    const H = 1.4 * L; // sector truncation half-size in the leg frame
+    // Boundary oval around leg end a: r(θ), θ measured from a towards b.
+    const rAt = (th: number) => (2 * K * L * (1 - K * Math.cos(th))) / (1 - K * K);
+    const xAt = (th: number) => -L / 2 + rAt(th) * Math.cos(th);
+    const th1 = Math.acos(11 / 14); // notch apex where the two leg-boundary ovals cross
+    let thExit = Math.PI;
+    for (let i = 1; i <= 64; i++) {
+      const th = th1 + ((Math.PI - th1) * i) / 64;
+      if (xAt(th) <= -H) { thExit = th; break; }
     }
-  }
-  // Trace the crisp boundary: every edge between an inside and an outside cell, wound so the
-  // interior stays on one side, then stitched into closed loops.
-  const ok = (gx: number, gy: number) => gx >= 0 && gx < G && gy >= 0 && gy < G && grid[gy * G + gx] === 1;
-  const segs: { x1: number; y1: number; x2: number; y2: number; used: boolean }[] = [];
-  for (let gy = 0; gy < G; gy++) {
-    for (let gx = 0; gx < G; gx++) {
-      if (!ok(gx, gy)) continue;
-      const l = x0 + gx * cell, r = l + cell, t = y0 + gy * cell, btm = t + cell;
-      if (!ok(gx - 1, gy)) segs.push({ x1: l, y1: btm, x2: l, y2: t, used: false });
-      if (!ok(gx + 1, gy)) segs.push({ x1: r, y1: t, x2: r, y2: btm, used: false });
-      if (!ok(gx, gy - 1)) segs.push({ x1: l, y1: t, x2: r, y2: t, used: false });
-      if (!ok(gx, gy + 1)) segs.push({ x1: r, y1: btm, x2: l, y2: btm, used: false });
-    }
-  }
-  const pk = (x: number, y: number) => `${x.toFixed(4)},${y.toFixed(4)}`;
-  const byStart = new Map<string, number[]>();
-  segs.forEach((s, i) => {
-    const k = pk(s.x1, s.y1);
-    const arr = byStart.get(k);
-    if (arr) arr.push(i);
-    else byStart.set(k, [i]);
-  });
-  for (const first of segs) {
-    if (first.used) continue;
-    first.used = true;
-    const pts: { x: number; y: number }[] = [{ x: first.x1, y: first.y1 }];
-    let cx = first.x2, cy = first.y2;
-    let dx = cx - first.x1, dy = cy - first.y1;
-    for (;;) {
-      pts.push({ x: cx, y: cy });
-      const arr = byStart.get(pk(cx, cy));
-      if (!arr) break;
-      let next = -1, bestDot = -Infinity, ndx = 0, ndy = 0;
-      for (const i of arr) {
-        const s = segs[i];
-        if (s.used) continue;
-        const sdx = s.x2 - s.x1, sdy = s.y2 - s.y1, len = Math.hypot(sdx, sdy) || 1;
-        const dot = (dx * sdx + dy * sdy) / len;
-        if (dot > bestDot) { bestDot = dot; next = i; ndx = sdx / len; ndy = sdy / len; }
+    if (thExit < Math.PI) { // refine so the arc ends exactly on the box edge
+      const step = (Math.PI - th1) / 64;
+      let lo = thExit - step, hi = thExit;
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        if (xAt(mid) <= -H) hi = mid; else lo = mid;
       }
-      if (next < 0) break;
-      const n = segs[next];
-      n.used = true;
-      cx = n.x2; cy = n.y2;
-      dx = ndx; dy = ndy;
+      thExit = hi;
     }
-    // Drop the closing duplicate of the start point, then smooth the staircase
-    // with quadratic curves through the junctions so the sector edges render smooth.
-    const nP = pts.length;
-    if (nP > 1 && pts[nP - 1].x === pts[0].x && pts[nP - 1].y === pts[0].y) pts.pop();
-    const m = pts.length;
-    if (m < 3) {
-      path.moveTo(pts[0].x, pts[0].y);
-      if (m === 2) path.lineTo(pts[1].x, pts[1].y);
-    } else {
-      path.moveTo((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
-      for (let i = 1; i <= m; i++) {
-        const cur = pts[i % m], nxt = pts[(i + 1) % m];
-        path.quadraticCurveTo(cur.x, cur.y, (cur.x + nxt.x) / 2, (cur.y + nxt.y) / 2);
-      }
+    const N = 128;
+    const arc: { x: number; y: number }[] = [];
+    for (let i = 0; i <= N; i++) {
+      const th = th1 + (thExit - th1) * (i / N);
+      const r = rAt(th);
+      arc.push({ x: -L / 2 + r * Math.cos(th), y: r * Math.sin(th) });
     }
+    const n = arc.length - 1;
+    path.moveTo(px(-arc[0].x, arc[0].y), py(-arc[0].x, arc[0].y)); // notch apex
+    for (let i = 1; i <= n; i++) path.lineTo(px(-arc[i].x, arc[i].y), py(-arc[i].x, arc[i].y)); // mirrored arc
+    path.lineTo(px(H, H), py(H, H)); // right box edge
+    path.lineTo(px(-H, H), py(-H, H)); // top box edge
+    for (let i = n; i >= 1; i--) path.lineTo(px(arc[i].x, arc[i].y), py(arc[i].x, arc[i].y)); // arc back to apex
     path.closePath();
+    minP = (25 / 11) * L; // smallest valid perimeter, at the notch apex
+    maxP = L * (1 + Math.sqrt(1.9 * 1.9 + 1.4 * 1.4) + Math.sqrt(0.9 * 0.9 + 1.4 * 1.4));
+    lx = px(0, H);
+    ly = py(0, H);
   }
   const sec = { path, minP, maxP, lx, ly };
   if (sectorCache.size > 12) sectorCache.clear();
