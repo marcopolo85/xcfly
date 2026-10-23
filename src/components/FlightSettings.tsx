@@ -3,8 +3,13 @@ import { Settings2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
+import { MAP_STYLES, setMapStyle, type MapStyle } from "./SwissRelief";
+import { useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
+  const [mapStyle, setStyle] = useState<MapStyle>(() => (typeof localStorage !== "undefined" && (localStorage.getItem("mapStyle") as MapStyle)) || "relief");
+  useEffect(() => { setMapStyle(mapStyle); localStorage.setItem("mapStyle", mapStyle); }, [mapStyle]);
+  const credit = MAP_STYLES.find((m) => m.v === mapStyle)?.credit ?? "© swisstopo";
   return (
     <div className="space-y-2">
       <div className="font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
@@ -21,6 +26,10 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const [mapStyle, setStyle] = useState<MapStyle>("relief");
+  useEffect(() => { const s = localStorage.getItem("mapStyle") as MapStyle | null; if (s) setStyle(s); }, []);
+  useEffect(() => { setMapStyle(mapStyle); localStorage.setItem("mapStyle", mapStyle); }, [mapStyle]);
+  const credit = MAP_STYLES.find((m) => m.v === mapStyle)?.credit ?? "© swisstopo";
   return (
     <>
       <button
@@ -38,6 +47,16 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
             <SheetTitle className="font-mono text-sm">Einstellungen</SheetTitle>
           </SheetHeader>
           <div className="flex-1 space-y-6 overflow-y-auto px-5 py-4 font-mono text-foreground">
+            <Section title="Karte">
+              <div className="grid grid-cols-2 gap-1.5">
+                {MAP_STYLES.map((m) => (
+                  <button key={m.v} type="button" onClick={() => setStyle(m.v)}
+                    className={`rounded-md border px-2 py-1.5 text-[11px] ${mapStyle === m.v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground"}`}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </Section>
             <Section title="Thermikkarte">
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>Transparenz</span>
@@ -63,7 +82,7 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
               <div className="space-y-2 text-[11px] leading-snug">
                 <div>
                   <span className="text-muted-foreground">Karte: </span>
-                  <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="underline">© swisstopo · Relief</a>
+                  <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="underline">{credit}</a>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Thermik: </span>
