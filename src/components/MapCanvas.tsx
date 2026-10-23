@@ -9,6 +9,7 @@ import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 import { THERMAL_ZOOM } from "@/game/thermalRaster";
 import { CLOSING_RATIO, type XcTriangle } from "@/game/xcTriangle";
 import wingUrl from "@/assets/glider-wing.png";
+import { AIRSPACE_COLORS, formatLimit, insideVertical, type Airspace } from "@/game/airspace";
 
 let wingImage: HTMLImageElement | null = null;
 function getWingImage() {
@@ -84,6 +85,63 @@ export interface SceneData {
   thermalAlpha?: number; // 0..1 opacity of the thermal overlay
   triangle?: XcTriangle | null;
   showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
+  airspaces?: Airspace[] | null;
+}
+
+const airspacePaths = new WeakMap<Airspace, Path2D>();
+function airspacePath(a: Airspace) {
+  let p = airspacePaths.get(a);
+  if (!p) {
+    p = new Path2D();
+    for (const r of a.rings) {
+      r.forEach((pt, i) => (i ? p!.lineTo(pt.x, pt.y) : p!.moveTo(pt.x, pt.y)));
+      p.closePath();
+    }
+    airspacePaths.set(a, p);
+  }
+  return p;
+}
+
+/** Airspaces at 20 % opacity, labelled with lower/upper limit; spaces whose vertical band
+ * contains the glider altitude get a solid coloured border. */
+function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: number, gy: number, alt: number, ground: number, sx: (x: number) => number, sy: (y: number) => number, z: number, W: number, H: number) {
+  const labels: { a: Airspace; active: boolean }[] = [];
+  for (const a of list) {
+    const [r, g, b] = AIRSPACE_COLORS[a.kind];
+    const active = insideVertical(a, alt, ground);
+    const path = airspacePath(a);
+    ctx.save();
+    ctx.translate(sx(0), sy(0));
+    ctx.scale(z, -z);
+    ctx.fillStyle = `rgba(${r},${g},${b},0.2)`;
+    ctx.fill(path, "evenodd");
+    ctx.lineWidth = (active ? 3 : 0.8) / z;
+    ctx.strokeStyle = active ? `rgba(${r},${g},${b},0.95)` : `rgba(${r},${g},${b},0.35)`;
+    ctx.stroke(path);
+    ctx.restore();
+    labels.push({ a, active });
+  }
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "center";
+  for (const { a, active } of labels) {
+    const lx = sx(a.label.x), ly = sy(a.label.y);
+    if (lx < -60 || lx > W + 60 || ly < -30 || ly > H + 30) continue;
+    const [r, g, b] = AIRSPACE_COLORS[a.kind];
+    const lines = [a.kind === "AD" ? a.name : `${a.kind} ${a.name.replace(/^(CTR|TMA|CTA|FIZ)\s*/, "")}`, formatLimit(a.upper), formatLimit(a.lower)];
+    if (z < 0.02 && a.kind === "AD") continue;
+    const w = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 8;
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.fillRect(lx - w / 2, ly - 16, w, 36);
+    ctx.strokeStyle = `rgba(${r},${g},${b},${active ? 1 : 0.6})`;
+    ctx.lineWidth = active ? 2 : 1;
+    ctx.strokeRect(lx - w / 2, ly - 16, w, 36);
+    ctx.fillStyle = `rgb(${r * 0.6},${g * 0.6},${b * 0.6})`;
+    ctx.fillText(lines[0], lx, ly - 6);
+    ctx.fillText(lines[1], lx, ly + 5);
+    ctx.fillRect(lx - w / 2 + 4, ly + 7, w - 8, 1);
+    ctx.fillText(lines[2], lx, ly + 17);
+  }
+  void gx; void gy;
 }
 
 interface Sector { path: Path2D; minP: number; maxP: number; lx: number; ly: number }
@@ -207,6 +265,8 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
     ctx.globalAlpha = 1;
   }
+
+  if (s.airspaces?.length) drawAirspaces(ctx, s.airspaces, sim.x, sim.y, sim.alt, heightAt(s.terrain, sim.x, sim.y), sx, sy, z, W, H);
 
   if (s.triangle) drawTriangle(ctx, s.triangle, sx, sy, z);
 

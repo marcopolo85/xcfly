@@ -89,6 +89,10 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
                   <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer" className="underline">M. von Känel · KK7 · Juli / All day</a>
                 </div>
                 <div>
+                  <span className="text-muted-foreground">Lufträume: </span>
+                  <a href="https://www.bazl.admin.ch/" target="_blank" rel="noopener noreferrer" className="underline">© BAZL · geo.admin.ch</a> (nicht für Navigation)
+                </div>
+                <div>
                   <span className="text-muted-foreground">Lizenz: </span>
                   <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline">CC BY-NC-SA 4.0 · bearbeitet</a>
                 </div>
