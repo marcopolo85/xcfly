@@ -14,6 +14,14 @@ describe("game rules", () => {
     expect(timeScale(false, 3)).toBe(3);
     expect(timeScale(true, 3)).toBe(15);
   });
+  it("holding a turn button for 2s boosts the simulation rate 10x until release", () => {
+    const input = { left: false, right: true, accel: false };
+    const starts = { left: null, right: 1000 };
+    expect(holdBoost(input, starts, 1000 + 1999)).toBe(1);
+    expect(holdBoost(input, starts, 1000 + 2000)).toBe(HOLD_BOOST_FACTOR);
+    expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
+    expect(holdBoost(input, { left: null, right: null }, 5000)).toBe(1);
+  });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {
       const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, landed: false };
