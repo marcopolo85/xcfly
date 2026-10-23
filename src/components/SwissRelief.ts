@@ -1,5 +1,6 @@
 import { reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleReliefTiles } from "@/game/swissMap";
 import type { Site } from "@/game/sites";
+import { offlineEnabled, tileResponse } from "@/lib/offline-data";
 
 export type MapStyle = "relief" | "landeskarte" | "grau" | "luftbild" | "topo" | "osm" | "dunkel";
 export const MAP_STYLES: { v: MapStyle; label: string; credit: string; url: (z: number, x: number, y: number) => string }[] = [
@@ -30,7 +31,9 @@ function tileImage(url: string, filter = "none", tint = ""): Tile {
   const image = new Image();
   image.crossOrigin = "anonymous";
   const tile: Tile = { image, loaded: false, failedAt: 0 };
+  let objectUrl: string | undefined;
   image.onload = () => {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
     if (tint || filter !== "none") {
       const surface = document.createElement("canvas");
       surface.width = image.naturalWidth;
@@ -52,8 +55,10 @@ function tileImage(url: string, filter = "none", tint = ""): Tile {
     }
     tile.loaded = true;
   };
-  image.onerror = () => { tile.failedAt = Date.now(); };
-  image.src = url;
+  image.onerror = () => { if (objectUrl) URL.revokeObjectURL(objectUrl); tile.failedAt = Date.now(); };
+  if (offlineEnabled()) {
+    tileResponse(url).then((r) => r.blob()).then((blob) => { objectUrl = URL.createObjectURL(blob); image.src = objectUrl; }).catch(() => { tile.failedAt = Date.now(); });
+  } else image.src = url;
   cache.set(key, tile);
   if (cache.size > 256) {
     const oldest = cache.keys().next().value;
@@ -69,9 +74,10 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: nu
   const reliefFilter = theme.getPropertyValue("--map-relief-filter").trim() || "none";
   const waterColor = theme.getPropertyValue("--map-water").trim();
   const forestColor = theme.getPropertyValue("--map-forest").trim();
-  const style = MAP_STYLES.find((m) => m.v === activeStyle) ?? MAP_STYLES[0];
+  const offline = offlineEnabled() && !navigator.onLine;
+  const style = MAP_STYLES.find((m) => m.v === (offline ? "relief" : activeStyle)) ?? MAP_STYLES[0];
   const relief = style.v === "relief";
-  for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr)) {
+  for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr, offline ? 12 : 17)) {
     const tile = tileImage(style.url(position.level, position.x, position.y), relief ? reliefFilter : "none");
     if (tile.loaded) {
       ctx.drawImage(tile.surface ?? tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);

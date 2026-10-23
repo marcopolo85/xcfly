@@ -19,6 +19,7 @@ import { FlightSettings } from "./FlightSettings";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
 import { needsFlightCoverage, flightCoverageReady, nextCoverageCenter } from "@/game/flightCoverage";
+import { offlineEnabled } from "@/lib/offline-data";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
@@ -76,7 +77,7 @@ export function FlightGame() {
       try {
         [terrain, thermalMap] = await Promise.all([
           loadRealTerrain(config.site).catch((error: unknown) => {
-            if (config.site.id.startsWith("map-")) throw error;
+            if (config.site.id.startsWith("map-") || (offlineEnabled() && !navigator.onLine)) throw error;
             return generateTerrain(config.site);
           }),
           loadThermalRaster(config.site),
@@ -267,7 +268,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {config && <FlightSettings site={config.site} thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />}
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>

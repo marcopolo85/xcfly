@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Offline support is opt-in: generate the app-shell worker with vite-plugin-pwa, register only through offline-worker with preview guards, and persist CORS-readable regional tiles in a bounded Cache Storage cache; missing offline terrain/thermal coverage must fail or pause rather than fabricate data.
 - Cache static contour paths in bounded, terrain-keyed world-space windows; transform them at draw time and recompute the exact flight-altitude contour each frame so performance improvements do not delay altitude feedback.
 - Free launch selection uses the same inverse Mercator projection as the flight map and a single DEM tile to preview ground altitude; coordinate-specific site IDs isolate terrain/thermal caches. Flight terrain and KK7 coverage are prefetched as moving windows and swapped together, always using original launch-relative coordinates; pause before exhausting loaded coverage and retry failed loads to avoid fabricated terrain or lift on long flights.
 - Simulation logic lives in src/game/* as pure TS (terrain, thermals, physics, sun, audio); React components only render and wire input — keeps the engine testable. No turnpoint/task feature: flights end on landing. The HUD "XC" distance is the XContest-style optimized free distance (max over downsampled track points of launch→point→current position, sim.xcDist), and XC speed is that distance divided by flight time.
