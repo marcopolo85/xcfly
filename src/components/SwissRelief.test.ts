@@ -69,7 +69,8 @@ it("fills transparent swisstopo tiles beyond the Swiss border from a global unde
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "none" }));
   const context = { canvas: {}, drawImage: vi.fn(), filter: "none" };
   const site = SITES[0];
-  drawSwissRelief(context as unknown as CanvasRenderingContext2D, site, 0, 0, 426, 791, 0.085, 2.25);
+  // Offset coordinates keep this test clear of the tile cache warmed by the first test.
+  drawSwissRelief(context as unknown as CanvasRenderingContext2D, site, 12345, 12345, 426, 791, 0.085, 2.25);
   const baseTiles = images.filter((image) => image.src.includes("reliefschattierung"));
   expect(baseTiles.length).toBeGreaterThan(0);
   for (const base of baseTiles) base.onload?.();
@@ -82,6 +83,6 @@ it("fills transparent swisstopo tiles beyond the Swiss border from a global unde
   for (const surface of merged) expect(surface.filter).toBe("none");
   // A second frame reuses the cached tiles without new requests.
   const before = images.length;
-  drawSwissRelief(context as unknown as CanvasRenderingContext2D, site, 0, 0, 426, 791, 0.085, 2.25);
+  drawSwissRelief(context as unknown as CanvasRenderingContext2D, site, 12345, 12345, 426, 791, 0.085, 2.25);
   expect(images).toHaveLength(before);
 });
