@@ -86,8 +86,10 @@ export function FlightGame() {
         const dtReal = Math.min(0.05, (now - last) / 1000);
         last = now;
         const inp = input.current;
-        steer(sim, inp, dtReal, simSpeedRef.current);
-        const simDt = dtReal * timeScale(inp.accel, simSpeedRef.current);
+        const boost = holdBoost(inp, holdStart.current, now);
+        const effSimSpeed = simSpeedRef.current * boost;
+        steer(sim, inp, dtReal, effSimSpeed);
+        const simDt = dtReal * timeScale(inp.accel, effSimSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
         const sv = sunVector(sp);
         const steps = Math.ceil(simDt / 0.05);
