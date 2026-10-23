@@ -21,7 +21,8 @@ function getWingImage() {
 export const ZOOM = 0.085; // px per metre (CSS px)
 
 /** Subtle contour lines (100 m, major every 500 m) from the simulation terrain grid.
- * The 100 m level closest to the glider's current altitude is highlighted in orange. */
+ * On top, one contour is traced at exactly the glider's current altitude, so the
+ * pilot sees the terrain line he can currently fly through. */
 function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number) => number, sy: (y: number) => number, z: number, xMin: number, xMax: number, yMin: number, yMax: number, gliderAlt: number) {
   const step = Math.max(1, Math.round(4 / (RES * z))); // keep cells a few px apart at any zoom
   const i0 = Math.max(0, Math.floor((xMin + EXTENT) / RES));
@@ -29,11 +30,10 @@ function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number)
   const j0 = Math.max(0, Math.floor((EXTENT - yMax) / RES));
   const j1 = Math.min(N - 1, Math.ceil((EXTENT - yMin) / RES));
   if (i1 - i0 < step || j1 - j0 < step) return;
-  const minor = new Path2D(), major = new Path2D(), highlight = new Path2D();
-  const highlightLevel = Math.round(gliderAlt / 100) * 100;
+  const minor = new Path2D(), major = new Path2D(), exact = new Path2D();
   const h = t.h;
-  for (let level = Math.ceil(t.site.valley / 100) * 100; level <= t.site.peak; level += 100) {
-    const path = level === highlightLevel ? highlight : level % 500 === 0 ? major : minor;
+  /** Marching-squares pass: collect edge-crossing segments for one contour level. */
+  const traceLevel = (level: number, path: Path2D) => {
     for (let j = j0; j < j1; j += step) {
       const j2 = Math.min(j + step, N - 1);
       for (let i = i0; i < i1; i += step) {
@@ -52,20 +52,24 @@ function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number)
         }
       }
     }
+  };
+  for (let level = Math.ceil(t.site.valley / 100) * 100; level <= t.site.peak; level += 100) {
+    traceLevel(level, level % 500 === 0 ? major : minor);
   }
   ctx.lineWidth = 1;
   ctx.strokeStyle = "rgba(120,80,40,0.16)";
   ctx.stroke(minor);
   ctx.strokeStyle = "rgba(120,80,40,0.3)";
   ctx.stroke(major);
-  // highlighted altitude band: dark under-stroke for contrast, then a bright orange core
-  if (highlightLevel >= t.site.valley - 50 && highlightLevel <= t.site.peak + 50) {
+  // contour at exactly the glider's altitude: dark under-stroke for contrast, then a bright orange core
+  if (gliderAlt > t.site.valley && gliderAlt < t.site.peak) {
+    traceLevel(gliderAlt, exact);
     ctx.lineWidth = 4;
     ctx.strokeStyle = "rgba(20,30,60,0.6)";
-    ctx.stroke(highlight);
+    ctx.stroke(exact);
     ctx.lineWidth = 2;
     ctx.strokeStyle = "rgba(255,120,20,0.95)";
-    ctx.stroke(highlight);
+    ctx.stroke(exact);
   }
 }
 
