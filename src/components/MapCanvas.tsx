@@ -137,11 +137,11 @@ function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref
   for (const first of segs) {
     if (first.used) continue;
     first.used = true;
-    path.moveTo(first.x1, first.y1);
+    const pts: { x: number; y: number }[] = [{ x: first.x1, y: first.y1 }];
     let cx = first.x2, cy = first.y2;
     let dx = cx - first.x1, dy = cy - first.y1;
     for (;;) {
-      path.lineTo(cx, cy);
+      pts.push({ x: cx, y: cy });
       const arr = byStart.get(pk(cx, cy));
       if (!arr) break;
       let next = -1, bestDot = -Infinity, ndx = 0, ndy = 0;
@@ -157,6 +157,21 @@ function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref
       n.used = true;
       cx = n.x2; cy = n.y2;
       dx = ndx; dy = ndy;
+    }
+    // Drop the closing duplicate of the start point, then smooth the staircase
+    // with quadratic curves through the junctions so the sector edges render smooth.
+    const nP = pts.length;
+    if (nP > 1 && pts[nP - 1].x === pts[0].x && pts[nP - 1].y === pts[0].y) pts.pop();
+    const m = pts.length;
+    if (m < 3) {
+      path.moveTo(pts[0].x, pts[0].y);
+      if (m === 2) path.lineTo(pts[1].x, pts[1].y);
+    } else {
+      path.moveTo((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
+      for (let i = 1; i <= m; i++) {
+        const cur = pts[i % m], nxt = pts[(i + 1) % m];
+        path.quadraticCurveTo(cur.x, cur.y, (cur.x + nxt.x) / 2, (cur.y + nxt.y) / 2);
+      }
     }
     path.closePath();
   }
