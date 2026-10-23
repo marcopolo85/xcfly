@@ -65,6 +65,7 @@ export interface SceneData {
   trail: { x: number; y: number; vz: number }[];
   dusk: number; // 0..1 darkness
   thermalMap?: ThermalMap | null;
+  thermalAlpha?: number; // 0..1 opacity of the thermal overlay
 }
 
 export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTransform) {
@@ -97,13 +98,15 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   drawContours(ctx, s.terrain, sx, sy, z, sim.x - cx / z, sim.x + (W - cx) / z, sim.y - (H - cy) / z, sim.y + cy / z);
 
   // thermal map
-  if (s.thermalMap) {
+  if (s.thermalMap && (s.thermalAlpha ?? 1) > 0) {
     const { raster, image } = s.thermalMap;
     const origin = mapOrigin(s.site);
     const metresPerPixel = 2 * MERCATOR_EXTENT / (256 * 2 ** THERMAL_ZOOM);
     const left = (raster.left * metresPerPixel - MERCATOR_EXTENT - origin.x) * origin.scale;
     const top = (MERCATOR_EXTENT - raster.top * metresPerPixel - origin.y) * origin.scale;
+    ctx.globalAlpha = s.thermalAlpha ?? 1;
     ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
+    ctx.globalAlpha = 1;
   }
 
   // trail coloured by climb
