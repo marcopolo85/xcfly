@@ -22,9 +22,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       <img src={heroImg} alt="Gleitschirm über Schweizer Alpen" className="absolute inset-0 h-full w-full object-cover opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
       <div className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col justify-end px-5 pb-6 pt-20">
-        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary">XC · Schweiz</p>
-        <h1 className="mt-1 font-display text-4xl font-bold leading-none text-foreground sm:text-6xl">XCFly</h1>
-        <p className="mt-2 max-w-md text-xs text-muted-foreground">Finde unsichtbare Thermik nur mit dem Vario-Ton und fliege eine Strecke über drei Wegpunkte.</p>
+        <h1 className="mt-1 font-display text-6xl font-bold leading-none text-foreground sm:text-8xl">XCFly</h1>
 
         <div className="mt-4 space-y-3 rounded-xl border border-border bg-card/85 p-4 backdrop-blur">
           <section>
