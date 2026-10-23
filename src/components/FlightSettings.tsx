@@ -18,11 +18,13 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, open, onOpenChange }: {
+export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, open, onOpenChange }: {
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
   showProfile: boolean;
   onShowProfile: (v: boolean) => void;
+  showAirspaces: boolean;
+  onShowAirspaces: (v: boolean) => void;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
@@ -76,6 +78,10 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>Seitenprofil</span>
                 <Switch checked={showProfile} onCheckedChange={onShowProfile} aria-label="Seitenprofil anzeigen" />
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Lufträume</span>
+                <Switch checked={showAirspaces} onCheckedChange={onShowAirspaces} aria-label="Lufträume anzeigen" />
               </div>
             </Section>
             <Section title="Copyright & Quellen">
