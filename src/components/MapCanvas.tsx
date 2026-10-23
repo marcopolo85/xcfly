@@ -86,6 +86,7 @@ export interface SceneData {
   triangle?: XcTriangle | null;
   showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
   airspaces?: Airspace[] | null;
+  airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
 }
 
 const airspacePaths = new WeakMap<Airspace, Path2D>();
@@ -170,7 +171,7 @@ function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
 
 /** Airspaces at 15 % opacity, labelled along the edge nearest the glider with lower/upper
  * limit; spaces whose vertical band contains the glider altitude get a solid coloured border. */
-function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: number, gy: number, alt: number, ground: number, sx: (x: number) => number, sy: (y: number) => number, z: number, W: number, H: number) {
+function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: number, gy: number, alt: number, ground: number, sx: (x: number) => number, sy: (y: number) => number, z: number, W: number, H: number, showLabels: boolean) {
   const labels: { a: Airspace; active: boolean }[] = [];
   for (const a of list) {
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
@@ -187,6 +188,7 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
     ctx.restore();
     labels.push({ a, active });
   }
+  if (!showLabels) return;
   ctx.font = "bold 10px monospace";
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
@@ -347,7 +349,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.globalAlpha = 1;
   }
 
-  if (s.airspaces?.length) drawAirspaces(ctx, s.airspaces, sim.x, sim.y, sim.alt, heightAt(s.terrain, sim.x, sim.y), sx, sy, z, W, H);
+  if (s.airspaces?.length) drawAirspaces(ctx, s.airspaces, sim.x, sim.y, sim.alt, heightAt(s.terrain, sim.x, sim.y), sx, sy, z, W, H, s.airspaceLabels !== false);
 
   if (s.triangle) drawTriangle(ctx, s.triangle, sx, sy, z);
 
