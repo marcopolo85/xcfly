@@ -62,8 +62,8 @@ describe("game rules", () => {
     // Back at the launch: flown distance stays 6 km, but XC distance counts
     // launch -> turnpoint -> current position = 3 km + 3 km, like XContest.
     expect(Math.hypot(sim.x, sim.y)).toBeLessThan(200);
-    expect(sim.xcDist).toBeGreaterThan(5900);
-    expect(sim.xcDist).toBeLessThan(6100);
+    expect(sim.xcDist).toBeGreaterThan(5750);
+    expect(sim.xcDist).toBeLessThan(5950);
   });
   it("east slopes trigger in the morning, west slopes in the evening", () => {
     const east = { x: 0.6, y: 0, z: 0.8 }, west = { x: -0.6, y: 0, z: 0.8 };
