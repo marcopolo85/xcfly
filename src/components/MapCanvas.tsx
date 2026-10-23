@@ -9,7 +9,7 @@ import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 import { THERMAL_ZOOM } from "@/game/thermalRaster";
 import { CLOSING_RATIO, type XcTriangle } from "@/game/xcTriangle";
 import wingUrl from "@/assets/glider-wing.png";
-import { AIRSPACE_COLORS, formatLimit, insideVertical, type Airspace } from "@/game/airspace";
+import { AIRSPACE_COLORS, formatLimitM, insideVertical, type Airspace } from "@/game/airspace";
 
 let wingImage: HTMLImageElement | null = null;
 function getWingImage() {
