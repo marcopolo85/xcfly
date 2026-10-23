@@ -83,6 +83,7 @@ export interface SceneData {
   thermalMap?: ThermalMap | null;
   thermalAlpha?: number; // 0..1 opacity of the thermal overlay
   triangle?: XcTriangle | null;
+  showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
 }
 
 interface Sector { path: Path2D; minP: number; maxP: number; lx: number; ly: number }
@@ -186,7 +187,8 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const z = ZOOM * view.k;
   const { sim } = s;
-  const cx = view.applyX(W / 2), cy = view.applyY(H * 0.55);
+  const anchorF = s.showProfile ? 1 / 3 : 1 / 2; // glider in upper third when the profile is shown, centered otherwise
+  const cx = view.applyX(W / 2), cy = view.applyY(H * anchorF);
   const sx = (x: number) => cx + (x - sim.x) * z;
   const sy = (y: number) => cy - (y - sim.y) * z;
 
@@ -194,7 +196,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   ctx.fillStyle = theme.getPropertyValue("--background").trim();
   ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true;
-  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * 0.55) / z, W, H, z, dpr);
+  const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * anchorF) / z, W, H, z, dpr);
   if (!map.loaded) {
     ctx.fillStyle = theme.getPropertyValue("--foreground").trim();
     ctx.font = "12px monospace";
