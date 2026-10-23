@@ -85,34 +85,62 @@ export interface SceneData {
   triangle?: XcTriangle | null;
 }
 
-let sectorCache: { key: string; path: Path2D } | null = null;
-/** World-space region where a third vertex makes triangle a-b-C FAI (XCTrack sectors). */
-function faiSector(a: { x: number; y: number }, b: { x: number; y: number }) {
-  const key = `${a.x | 0},${a.y | 0},${b.x | 0},${b.y | 0}`;
-  if (sectorCache?.key === key) return sectorCache.path;
+interface Sector { path: Path2D; minP: number; maxP: number; lx: number; ly: number }
+const sectorCache = new Map<string, Sector>();
+/** World-space region (on the side of `ref`) where a third vertex makes a-b-C a FAI triangle. */
+function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref: { x: number; y: number }): Sector {
+  const key = `${a.x | 0},${a.y | 0},${b.x | 0},${b.y | 0},${ref.x | 0},${ref.y | 0}`;
+  const hit = sectorCache.get(key);
+  if (hit) return hit;
   const path = new Path2D();
   const L = Math.hypot(b.x - a.x, b.y - a.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-  const G = 90, half = 1.3 * L, cell = (2 * half) / G;
+  const side = Math.sign((b.x - a.x) * (ref.y - a.y) - (b.y - a.y) * (ref.x - a.x)) || 1;
+  const G = 110, half = 1.4 * L, cell = (2 * half) / G;
+  let minP = Infinity, maxP = 0, lx = mx, ly = my, far = 0;
   for (let gy = 0; gy < G; gy++) {
     let run = -1;
     for (let gx = 0; gx <= G; gx++) {
       const c = { x: mx - half + (gx + 0.5) * cell, y: my - half + (gy + 0.5) * cell };
-      const ok = gx < G && isFai(a, b, c);
+      const ok = gx < G && Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) === side && isFai(a, b, c);
+      if (ok) {
+        const p = L + Math.hypot(c.x - a.x, c.y - a.y) + Math.hypot(c.x - b.x, c.y - b.y);
+        if (p < minP) minP = p;
+        if (p > maxP) maxP = p;
+        const dm = Math.hypot(c.x - mx, c.y - my);
+        if (dm > far) { far = dm; lx = c.x; ly = c.y; }
+      }
       if (ok && run < 0) run = gx;
       if (!ok && run >= 0) { path.rect(mx - half + run * cell, my - half + gy * cell, (gx - run) * cell, cell); run = -1; }
     }
   }
-  sectorCache = { key, path };
-  return path;
+  const sec = { path, minP, maxP, lx, ly };
+  if (sectorCache.size > 12) sectorCache.clear();
+  sectorCache.set(key, sec);
+  return sec;
 }
 
+const SECTOR_COLORS = ["rgba(90,200,120,0.35)", "rgba(60,120,240,0.35)", "rgba(140,110,240,0.35)"];
+
 function drawTriangle(ctx: CanvasRenderingContext2D, t: XcTriangle, sx: (x: number) => number, sy: (y: number) => number, z: number) {
-  ctx.save();
-  ctx.translate(sx(0), sy(0));
-  ctx.scale(z, -z);
-  ctx.fillStyle = "rgba(40,110,255,0.16)";
-  ctx.fill(faiSector(t.a, t.b));
-  ctx.restore();
+  const sectors = [faiSector(t.b, t.c, t.a), faiSector(t.c, t.a, t.b), faiSector(t.a, t.b, t.c)];
+  sectors.forEach((sec, i) => {
+    ctx.save();
+    ctx.translate(sx(0), sy(0));
+    ctx.scale(z, -z);
+    ctx.fillStyle = SECTOR_COLORS[i];
+    ctx.fill(sec.path);
+    ctx.restore();
+  });
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  for (const sec of sectors) {
+    if (!isFinite(sec.minP)) continue;
+    const tx = sx(sec.lx), ty = sy(sec.ly);
+    const l1 = `min ${(sec.minP / 1000).toFixed(1)} km`, l2 = `max ${(sec.maxP / 1000).toFixed(1)} km`;
+    ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.fillStyle = "rgba(20,30,60,0.95)";
+    ctx.strokeText(l1, tx, ty); ctx.fillText(l1, tx, ty);
+    ctx.strokeText(l2, tx, ty + 13); ctx.fillText(l2, tx, ty + 13);
+  }
   const col = t.fai ? "rgba(40,110,255,0.95)" : "rgba(30,170,60,0.95)";
   ctx.strokeStyle = col; ctx.lineWidth = 2;
   ctx.beginPath();
