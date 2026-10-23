@@ -42,6 +42,20 @@ function loadImage(url: string) {
   });
 }
 
+/** Read only one DEM tile when choosing a launch, rather than the full flight grid. */
+export async function loadLaunchAltitude(point: Pick<Site, "lat" | "lon">) {
+  const { px, py } = localToPixel(point, 0, 0);
+  const tx = Math.floor(px / 256), ty = Math.floor(py / 256);
+  const image = await loadImage(demTileUrl(DEM_ZOOM, tx, ty));
+  const canvas = document.createElement("canvas");
+  canvas.width = 256; canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Geländehöhe nicht lesbar");
+  ctx.drawImage(image, 0, 0);
+  const pixel = ctx.getImageData(Math.floor(px) - tx * 256, Math.floor(py) - ty * 256, 1, 1).data;
+  return Math.max(0, Math.round(decodeTerrarium(pixel[0], pixel[1], pixel[2])));
+}
+
 /** Loads real elevation around the launch (browser only). */
 export async function loadRealTerrain(site: Site): Promise<Terrain> {
   const a = localToPixel(site, -EXTENT, EXTENT), b = localToPixel(site, EXTENT, -EXTENT);
@@ -50,7 +64,8 @@ export async function loadRealTerrain(site: Site): Promise<Terrain> {
   const w = (tx1 - tx0 + 1) * 256, hgt = (ty1 - ty0 + 1) * 256;
   const canvas = document.createElement("canvas");
   canvas.width = w; canvas.height = hgt;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Geländehöhen nicht lesbar");
   const jobs: Promise<void>[] = [];
   for (let ty = ty0; ty <= ty1; ty++)
     for (let tx = tx0; tx <= tx1; tx++)

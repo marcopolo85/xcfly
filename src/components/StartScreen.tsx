@@ -2,14 +2,17 @@ import { useState } from "react";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
 import { fmtClock, sunTimes } from "@/game/sun";
 import heroImg from "@/assets/hero-alps.jpg";
+import { MapPin } from "lucide-react";
+import { Button } from "./ui/button";
+import { LaunchMapPicker } from "./LaunchMapPicker";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number }
 
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
-  const [siteId, setSiteId] = useState(SITES[0].id);
+  const [site, setSite] = useState<Site>(SITES[0]);
+  const [choosing, setChoosing] = useState(false);
   const [season, setSeason] = useState<Season>("summer");
   const [hour, setHour] = useState(11);
-  const site = SITES.find((s) => s.id === siteId)!;
   const st = sunTimes(site.lat, SEASONS[season].doy, SEASONS[season].dst);
 
   return (
@@ -26,12 +29,14 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <h2 className="hud-label mb-2">Startplatz</h2>
             <div className="grid grid-cols-2 gap-2">
               {SITES.map((s) => (
-                <button key={s.id} onClick={() => setSiteId(s.id)} data-active={s.id === siteId} className="choice">
+                <Button variant="outline" key={s.id} onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto flex-col items-start gap-0 whitespace-normal">
                   <span className="block font-semibold">{s.name}</span>
                   <span className="block text-[11px] text-muted-foreground">{s.region} · {s.launchAlt} m</span>
-                </button>
+                </Button>
               ))}
             </div>
+            <Button variant="outline" className="mt-3 h-11 w-full" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
+            {site.id.startsWith("map-") && <div className="mt-2 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
           <section>
             <h2 className="hud-label mb-2">Jahreszeit</h2>
@@ -61,6 +66,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
           <p className="text-center text-[11px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger (Zeit ×5) · Ton an!</p>
         </div>
       </div>
+      {choosing && <LaunchMapPicker initial={site} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
     </div>
   );
 }
