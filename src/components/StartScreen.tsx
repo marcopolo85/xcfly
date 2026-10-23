@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
-import { fmtClock, sunTimes } from "@/game/sun";
+import { sunTimes } from "@/game/sun";
 import heroImg from "@/assets/hero-alps.jpg";
 import { MapPin } from "lucide-react";
 import { Button } from "./ui/button";
@@ -8,12 +8,14 @@ import { LaunchMapPicker } from "./LaunchMapPicker";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number }
 
+const FIXED_SEASON: Season = "summer";
+const FIXED_START_HOUR = 11;
+
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
   const [site, setSite] = useState<Site>(SITES[0]);
   const [choosing, setChoosing] = useState(false);
-  const [season, setSeason] = useState<Season>("summer");
-  const [hour, setHour] = useState(11);
-  const st = sunTimes(site.lat, SEASONS[season].doy, SEASONS[season].dst);
+  const st = sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst);
+
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -38,29 +40,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <Button variant="outline" className="mt-3 h-11 w-full" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
             {site.id.startsWith("map-") && <div className="mt-2 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
-          <section>
-            <h2 className="hud-label mb-2">Jahreszeit</h2>
-            <div className="grid grid-cols-4 gap-2">
-              {(Object.keys(SEASONS) as Season[]).map((k) => (
-                <button key={k} onClick={() => setSeason(k)} data-active={k === season} className="choice text-center text-sm font-semibold">
-                  {SEASONS[k].label}
-                </button>
-              ))}
-            </div>
-          </section>
-          <section>
-            <div className="mb-2 flex items-baseline justify-between">
-              <h2 className="hud-label">Startzeit</h2>
-              <span className="font-mono text-2xl text-foreground">{fmtClock(hour)}</span>
-            </div>
-            <input type="range" min={Math.ceil(st.sunrise * 4) / 4} max={Math.floor((st.sunset - 1) * 4) / 4} step={0.25}
-              value={hour} onChange={(e) => setHour(Number(e.target.value))} className="w-full accent-primary" />
-            <div className="mt-1 flex justify-between font-mono text-[11px] text-muted-foreground">
-              <span>☀ Aufgang {fmtClock(st.sunrise)}</span>
-              <span>Untergang {fmtClock(st.sunset)}</span>
-            </div>
-          </section>
-          <button onClick={() => onStart({ site, season, startHour: Math.min(Math.max(hour, st.sunrise), st.sunset - 1) })} className="w-full rounded-lg bg-primary py-4 font-display text-lg font-bold text-primary-foreground shadow-glow transition hover:brightness-110">
+          <button onClick={() => onStart({ site, season: FIXED_SEASON, startHour: Math.min(Math.max(FIXED_START_HOUR, st.sunrise), st.sunset - 1) })} className="w-full rounded-lg bg-primary py-4 font-display text-lg font-bold text-primary-foreground shadow-glow transition hover:brightness-110">
             Starten
           </button>
           <p className="text-center text-[11px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger (Zeit ×5) · Ton an!</p>
