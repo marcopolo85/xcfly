@@ -81,4 +81,28 @@ describe("game rules", () => {
     expect(slopeTrigger(east, am)).toBeGreaterThan(slopeTrigger(west, am));
     expect(slopeTrigger(west, pm)).toBeGreaterThan(slopeTrigger(east, pm));
   });
+  it("counts thermals, thermalling circles and cumulative climb", () => {
+    const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
+    const sim = newSim();
+    // Entering core lift counts one thermal and accumulates climb.
+    stepPhysics(sim, { left: false, right: false, accel: false }, 0.05, flat, 2);
+    expect(sim.thermals).toBe(1);
+    expect(sim.climbTotal).toBeGreaterThan(0);
+    expect(sim.maxAlt).toBeGreaterThan(2000);
+    // A full 360° rotation while climbing counts one thermalling circle.
+    const input = { left: false, right: true, accel: false };
+    const fullTurn = (2 * Math.PI) / TURN_RATE;
+    for (let i = 0; i < 120; i++) {
+      steer(sim, input, fullTurn / 120, 1);
+      stepPhysics(sim, input, fullTurn / 120, flat, 2);
+    }
+    expect(sim.circles).toBe(1);
+    // A full rotation without lift does not count as a thermalling circle.
+    for (let i = 0; i < 120; i++) {
+      steer(sim, input, fullTurn / 120, 1);
+      stepPhysics(sim, input, fullTurn / 120, flat, 0);
+    }
+    expect(sim.circles).toBe(1);
+    expect(sim.thermals).toBe(1);
+  });
 });
