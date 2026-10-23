@@ -4,7 +4,7 @@ import type { Site } from "./sites";
 const cache = new Map<string, Promise<Airspace[]>>();
 const API = "https://api3.geo.admin.ch/rest/services/api/MapServer/identify";
 
-interface Feature { geometry: { type: string; coordinates: unknown }; properties: Record<string, unknown> }
+interface Feature { geometry: { type: string; coordinates: unknown }; properties: { name?: string; label?: string; loli_value?: number; loli_type?: string; upli_value?: number; upli_type?: string; icao?: string } }
 
 async function fetchLayer(layer: string, bbox: string) {
   const out: Feature[] = [];
