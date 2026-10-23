@@ -84,6 +84,7 @@ export interface SceneData {
   thermalAlpha?: number; // 0..1 opacity of the thermal overlay
   triangle?: XcTriangle | null;
   showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
+}
 
 interface Sector { path: Path2D; minP: number; maxP: number; lx: number; ly: number }
 const sectorCache = new Map<string, Sector>();
