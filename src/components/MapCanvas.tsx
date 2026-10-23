@@ -189,7 +189,8 @@ function drawAirspaces(ctx: CanvasRenderingContext2D, list: Airspace[], gx: numb
   ctx.textAlign = "center";
   for (const { a, active } of labels) {
     const edge = edgeLabelPoint(a, gx, gy);
-    const lx = sx(edge.dx + edge.nx * LABEL_INSET), ly = sy(edge.dy + edge.ny * LABEL_INSET);
+    const insetM = 16 / z; // constant ~16 px visual gap from the boundary line
+    const lx = sx(edge.dx + edge.nx * insetM), ly = sy(edge.dy + edge.ny * insetM);
     if (lx < -120 || lx > W + 120 || ly < -30 || ly > H + 30) continue;
     const [r, g, b] = AIRSPACE_COLORS[a.kind];
     if (z < 0.02 && a.kind === "AD") continue;
