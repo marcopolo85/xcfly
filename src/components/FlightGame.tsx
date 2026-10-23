@@ -1,3 +1,4 @@
+import { bestTriangle, type XcTriangle } from "@/game/xcTriangle";
 import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
@@ -79,6 +80,7 @@ export function FlightGame() {
         trackX: [], trackY: [], xcDist: 0, landed: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
+      let triangle: XcTriangle | null = null, lastTri = 0;
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       if (cancelled) return;
       setPhase("flying");
@@ -101,10 +103,11 @@ export function FlightGame() {
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
         vario.current?.update(smoothVz);
         trailT += simDt;
-        if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 1500) trail.shift(); }
+        if (trailT > 2) { trailT = 0; trail.push({ x: sim.x, y: sim.y, vz: smoothVz }); if (trail.length > 6000) { for (let i = 1; i < trail.length; i += 1) trail.splice(i, 1); } }
 
+        if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current);
 
         const xc = sim.xcDist;
@@ -113,6 +116,7 @@ export function FlightGame() {
           setHud({
             alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, speed: sim.speed,
             xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
+            tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
         }
