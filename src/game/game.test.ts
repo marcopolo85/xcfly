@@ -58,7 +58,7 @@ describe("game rules", () => {
   });
   it("XC distance is the XContest-style optimized free distance, not the distance flown", () => {
     const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
-    const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: 0, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
+    const sim = newSim(2000, 0);
     const fly = (seconds: number) => {
       for (let i = 0; i < seconds * 20; i++) stepPhysics(sim, { left: false, right: false, accel: false }, 0.05, flat, 0);
     };
