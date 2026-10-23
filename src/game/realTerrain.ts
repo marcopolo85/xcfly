@@ -1,6 +1,7 @@
 import { EXTENT, N, RES, finalizeTerrain, type Terrain } from "./terrain";
 import { mapOrigin, MERCATOR_EXTENT } from "./swissMap";
 import type { Site } from "./sites";
+import { loadRasterTile } from "./rasterTileCache";
 
 /** Open Terrarium elevation tiles (AWS Open Data, CORS-enabled). */
 export const DEM_ZOOM = 12;
@@ -20,27 +21,19 @@ export function localToPixel(site: Pick<Site, "lat" | "lon">, x: number, y: numb
 }
 
 /** Fill the simulation height grid from a pixel sampler (pure, testable). */
-export function buildHeightGrid(site: Pick<Site, "lat" | "lon">, sample: (px: number, py: number) => number) {
+export function buildHeightGrid(site: Pick<Site, "lat" | "lon">, sample: (px: number, py: number) => number, centerX = 0, centerY = 0) {
   const h = new Float32Array(N * N);
   for (let j = 0; j < N; j++) {
-    const y = EXTENT - j * RES;
+    const y = centerY + EXTENT - j * RES;
     for (let i = 0; i < N; i++) {
-      const { px, py } = localToPixel(site, i * RES - EXTENT, y);
+      const { px, py } = localToPixel(site, centerX + i * RES - EXTENT, y);
       h[j * N + i] = Math.max(0, sample(px, py));
     }
   }
   return h;
 }
 
-function loadImage(url: string) {
-  return new Promise<HTMLImageElement>((res, rej) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => res(img);
-    img.onerror = () => rej(new Error("DEM tile failed: " + url));
-    img.src = url;
-  });
-}
+const loadImage = loadRasterTile;
 
 /** Read only one DEM tile when choosing a launch, rather than the full flight grid. */
 export async function loadLaunchAltitude(point: Pick<Site, "lat" | "lon">) {
@@ -57,8 +50,8 @@ export async function loadLaunchAltitude(point: Pick<Site, "lat" | "lon">) {
 }
 
 /** Loads real elevation around the launch (browser only). */
-export async function loadRealTerrain(site: Site): Promise<Terrain> {
-  const a = localToPixel(site, -EXTENT, EXTENT), b = localToPixel(site, EXTENT, -EXTENT);
+export async function loadRealTerrain(site: Site, centerX = 0, centerY = 0): Promise<Terrain> {
+  const a = localToPixel(site, centerX - EXTENT, centerY + EXTENT), b = localToPixel(site, centerX + EXTENT, centerY - EXTENT);
   const tx0 = Math.floor(a.px / 256), ty0 = Math.floor(a.py / 256);
   const tx1 = Math.floor(b.px / 256), ty1 = Math.floor(b.py / 256);
   const w = (tx1 - tx0 + 1) * 256, hgt = (ty1 - ty0 + 1) * 256;
@@ -66,11 +59,18 @@ export async function loadRealTerrain(site: Site): Promise<Terrain> {
   canvas.width = w; canvas.height = hgt;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Geländehöhen nicht lesbar");
-  const jobs: Promise<void>[] = [];
+  const jobs: { x: number; y: number }[] = [];
   for (let ty = ty0; ty <= ty1; ty++)
     for (let tx = tx0; tx <= tx1; tx++)
-      jobs.push(loadImage(demTileUrl(DEM_ZOOM, tx, ty)).then((img) => ctx.drawImage(img, (tx - tx0) * 256, (ty - ty0) * 256)));
-  await Promise.all(jobs);
+      jobs.push({ x: tx, y: ty });
+  let next = 0;
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (next < jobs.length) {
+      const job = jobs[next++];
+      const image = await loadImage(demTileUrl(DEM_ZOOM, job.x, job.y));
+      ctx.drawImage(image, (job.x - tx0) * 256, (job.y - ty0) * 256);
+    }
+  }));
   const data = ctx.getImageData(0, 0, w, hgt).data;
   const at = (x: number, y: number) => {
     const xi = Math.max(0, Math.min(w - 1, x)), yi = Math.max(0, Math.min(hgt - 1, y));
@@ -83,6 +83,6 @@ export async function loadRealTerrain(site: Site): Promise<Terrain> {
     const i = Math.floor(fx), j = Math.floor(fy), u = fx - i, v = fy - j;
     const p = at(i, j), q = at(i + 1, j), r = at(i, j + 1), s = at(i + 1, j + 1);
     return p + (q - p) * u + (r - p) * v + (p - q - r + s) * u * v;
-  });
-  return finalizeTerrain(site, h);
+  }, centerX, centerY);
+  return finalizeTerrain(site, h, centerX, centerY);
 }
