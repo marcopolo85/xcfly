@@ -39,6 +39,8 @@ export function FlightGame() {
   const thermalOpacityRef = useRef(0.3);
   thermalOpacityRef.current = thermalOpacity;
   const [showProfile, setShowProfile] = useState(true);
+  const showProfileRef = useRef(true);
+  showProfileRef.current = showProfile;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const vario = useRef<AudioVario | null>(null);
 
