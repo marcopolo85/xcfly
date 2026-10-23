@@ -31,7 +31,7 @@ export function FlightGame() {
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [runId, setRunId] = useState(0);
-  const mapZoom = useCanvasZoom(0.3, 8, phase !== "config");
+  const mapZoom = useCanvasZoom(0.01, 8, phase !== "config");
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
