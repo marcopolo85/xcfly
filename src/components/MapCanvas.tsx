@@ -7,7 +7,7 @@ import type { ZoomTransform } from "d3-zoom";
 import type { ThermalMap } from "@/game/loadThermalRaster";
 import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 import { THERMAL_ZOOM } from "@/game/thermalRaster";
-import { CLOSING_RATIO, isFai, type XcTriangle } from "@/game/xcTriangle";
+import { CLOSING_RATIO, type XcTriangle } from "@/game/xcTriangle";
 import wingUrl from "@/assets/glider-wing.png";
 
 let wingImage: HTMLImageElement | null = null;
