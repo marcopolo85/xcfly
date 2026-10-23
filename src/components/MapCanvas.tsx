@@ -107,7 +107,8 @@ function airspacePath(a: Airspace) {
  * Target is cached until the glider moves 300 m; the drawn label glides smoothly towards it. */
 interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number; nx: number; ny: number }
 const edgeLabelCache = new WeakMap<Airspace, EdgeLabel>();
-const LABEL_INSET = 45; // m inside the boundary
+const LABEL_INSET = 45; // m inside the boundary (used to detect the inward direction)
+const CORNER_MARGIN = 250; // m kept along the edge away from vertices/corners
 /** Even-odd point-in-polygon over all rings (matches the fill rule). */
 function pointInAirspace(a: Airspace, x: number, y: number) {
   let inside = false;
@@ -123,6 +124,7 @@ function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
   let e = edgeLabelCache.get(a);
   if (!e || Math.hypot(e.gx - gx, e.gy - gy) >= 300) {
     let bx = a.label.x, by = a.label.y, bdx = 1, bdy = 0, bestD = Infinity;
+    let bpx = bx, bpy = by, bt = 0;
     for (const r of a.rings) {
       for (let i = 0; i < r.length; i++) {
         const p = r[i], q = r[(i + 1) % r.length];
@@ -131,8 +133,15 @@ function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
         const t = len2 > 0 ? Math.max(0, Math.min(1, ((gx - p.x) * dx + (gy - p.y) * dy) / len2)) : 0;
         const x = p.x + t * dx, y = p.y + t * dy;
         const d = (x - gx) * (x - gx) + (y - gy) * (y - gy);
-        if (d < bestD) { bestD = d; bx = x; by = y; bdx = dx; bdy = dy; }
+        if (d < bestD) { bestD = d; bx = x; by = y; bdx = dx; bdy = dy; bpx = p.x; bpy = p.y; bt = t; }
       }
+    }
+    // keep the anchor away from corners: clamp it at least CORNER_MARGIN along the edge
+    const segLen = Math.hypot(bdx, bdy);
+    if (segLen > 2 * CORNER_MARGIN) {
+      const t = Math.min(Math.max(bt, CORNER_MARGIN / segLen), 1 - CORNER_MARGIN / segLen);
+      bx = bpx + t * bdx;
+      by = bpy + t * bdy;
     }
     // screen-space tangent angle (world y points up, screen y down), kept readable (not upside down)
     let ang = Math.atan2(-bdy, bdx);
