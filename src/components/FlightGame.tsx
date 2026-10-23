@@ -1,4 +1,4 @@
-import { bestTriangle, type XcTriangle } from "@/game/xcTriangle";
+import { bestTriangle, closingGap, faiRange, type XcTriangle } from "@/game/xcTriangle";
 import { useEffect, useRef, useState } from "react";
 import { MapCanvas, drawScene } from "./MapCanvas";
 import { FlightHUD, type HudData } from "./FlightHUD";
@@ -115,8 +115,11 @@ export function FlightGame() {
           lastHud = now;
           setHud({
             alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, speed: sim.speed,
+            time: sim.flightTime,
             xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
+            triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
+            close: triangle ? closingGap(triangle) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
         }
