@@ -70,9 +70,9 @@ function tileImage(url: string, filter = "none", tint = "", underlayUrl?: string
     cache.set(key, existing);
     return existing;
   }
-  const image = new Image();
-  const tile: Tile = { image, loaded: false, failedAt: 0 };
-  loadImageElement(url, (loadedImage) => {
+  const tile: Tile = { image: null as unknown as HTMLImageElement, loaded: false, failedAt: 0 };
+  loadImageElement(url, (image) => {
+    tile.image = image;
     if (tint || filter !== "none" || underlayUrl) {
       const surface = document.createElement("canvas");
       surface.width = loadedImage.naturalWidth;
