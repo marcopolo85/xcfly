@@ -92,12 +92,18 @@ export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift
   const sink = p.sink + (turning ? TURN_SINK : 0);
   sim.airLift = lift;
   sim.vz = lift - sink;
+  // A thermal is entered when the core lift rises above 0.5 m/s.
+  const lifting = lift > 0.5;
+  if (lifting && !sim.inLift) sim.thermals++;
+  sim.inLift = lifting;
   const dx = Math.sin(sim.heading) * sim.speed * dt;
   const dy = Math.cos(sim.heading) * sim.speed * dt;
   sim.x += dx; sim.y += dy;
   sim.distance += Math.hypot(dx, dy);
   updateXc(sim);
   sim.alt += sim.vz * dt;
+  if (sim.alt > sim.maxAlt) sim.maxAlt = sim.alt;
+  if (sim.vz > 0) sim.climbTotal += sim.vz * dt;
   const cb = cloudbaseAt(t, sim.x, sim.y);
   if (sim.alt > cb) { sim.alt = cb; sim.vz = Math.min(0, sim.vz); }
   sim.flightTime += dt;
