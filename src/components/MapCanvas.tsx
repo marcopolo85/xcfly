@@ -101,45 +101,35 @@ function faiSector(a: { x: number; y: number }, b: { x: number; y: number }, ref
     if ((b.x - a.x) * (ref.y - a.y) - (b.y - a.y) * (ref.x - a.x) < 0) { vx = uy; vy = -ux; }
     const px = (s: number, t: number) => mx + s * ux + t * vx;
     const py = (s: number, t: number) => my + s * uy + t * vy;
-    const K = 7 / 18; // on the FAI boundary of one leg: d1 = K * (L + d2)
-    const H = 1.4 * L; // sector truncation half-size in the leg frame
-    // Boundary oval around leg end a: r(θ), θ measured from a towards b.
-    const rAt = (th: number) => (2 * K * L * (1 - K * Math.cos(th))) / (1 - K * K);
-    const xAt = (th: number) => -L / 2 + rAt(th) * Math.cos(th);
-    const th1 = Math.acos(11 / 14); // notch apex where the two leg-boundary ovals cross
-    let thExit = Math.PI;
-    for (let i = 1; i <= 64; i++) {
-      const th = th1 + ((Math.PI - th1) * i) / 64;
-      if (xAt(th) <= -H) { thExit = th; break; }
-    }
-    if (thExit < Math.PI) { // refine so the arc ends exactly on the box edge
-      const step = (Math.PI - th1) / 64;
-      let lo = thExit - step, hi = thExit;
-      for (let i = 0; i < 24; i++) {
+    // FAI region for third vertex C (leg frame, s along leg, t towards ref):
+    // d1 ≥ 0.28P, d2 ≥ 0.28P and this leg L ≥ 0.28P  ⇒ bounded by three curved edges.
+    const inside = (s: number, t: number) => {
+      if (t <= 0) return false;
+      const d1 = Math.hypot(s + L / 2, t), d2 = Math.hypot(s - L / 2, t);
+      const P = L + d1 + d2;
+      return d1 >= 0.28 * P && d2 >= 0.28 * P && L >= 0.28 * P;
+    };
+    const cs = 0, ct = (L * Math.sqrt(3)) / 2; // equilateral apex, inside and central
+    const N = 360, maxR = 2 * L, step = L / 40;
+    for (let i = 0; i < N; i++) {
+      const a2 = (i / N) * Math.PI * 2, ca = Math.cos(a2), sa = Math.sin(a2);
+      let lo = 0, hi = step;
+      while (hi < maxR && inside(cs + hi * ca, ct + hi * sa)) { lo = hi; hi += step; }
+      for (let k = 0; k < 20; k++) {
         const mid = (lo + hi) / 2;
-        if (xAt(mid) <= -H) hi = mid; else lo = mid;
+        if (inside(cs + mid * ca, ct + mid * sa)) lo = mid; else hi = mid;
       }
-      thExit = hi;
+      const s = cs + lo * ca, t = ct + lo * sa;
+      if (i === 0) path.moveTo(px(s, t), py(s, t)); else path.lineTo(px(s, t), py(s, t));
     }
-    const N = 128;
-    const arc: { x: number; y: number }[] = [];
-    for (let i = 0; i <= N; i++) {
-      const th = th1 + (thExit - th1) * (i / N);
-      const r = rAt(th);
-      arc.push({ x: -L / 2 + r * Math.cos(th), y: r * Math.sin(th) });
-    }
-    const n = arc.length - 1;
-    path.moveTo(px(-arc[0].x, arc[0].y), py(-arc[0].x, arc[0].y)); // notch apex
-    for (let i = 1; i <= n; i++) path.lineTo(px(-arc[i].x, arc[i].y), py(-arc[i].x, arc[i].y)); // mirrored arc
-    path.lineTo(px(H, H), py(H, H)); // right box edge
-    path.lineTo(px(-H, H), py(-H, H)); // top box edge
-    for (let i = n; i >= 1; i--) path.lineTo(px(arc[i].x, arc[i].y), py(arc[i].x, arc[i].y)); // arc back to apex
     path.closePath();
     minP = (25 / 11) * L; // smallest valid perimeter, at the notch apex
-    maxP = L * (1 + Math.sqrt(1.9 * 1.9 + 1.4 * 1.4) + Math.sqrt(0.9 * 0.9 + 1.4 * 1.4));
-    lx = px(0, H);
-    ly = py(0, H);
+    maxP = (25 / 7) * L; // this leg exactly 28 % of perimeter (outer edge)
+    const tTop = Math.sqrt(Math.max(0, (9 / 7) ** 2 - 0.25)) * L;
+    lx = px(0, tTop);
+    ly = py(0, tTop);
   }
+
   const sec = { path, minP, maxP, lx, ly };
   if (sectorCache.size > 12) sectorCache.clear();
   sectorCache.set(key, sec);
