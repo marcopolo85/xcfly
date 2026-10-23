@@ -102,10 +102,23 @@ function airspacePath(a: Airspace) {
   return p;
 }
 
-/** Point on the airspace boundary closest to the glider, with the edge tangent angle.
+/** Point on the airspace boundary closest to the glider, with the edge tangent angle and an
+ * inward-pointing normal so the label sits just inside the area.
  * Target is cached until the glider moves 300 m; the drawn label glides smoothly towards it. */
-interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number }
+interface EdgeLabel { gx: number; gy: number; x: number; y: number; ang: number; dx: number; dy: number; dang: number; nx: number; ny: number }
 const edgeLabelCache = new WeakMap<Airspace, EdgeLabel>();
+const LABEL_INSET = 45; // m inside the boundary
+/** Even-odd point-in-polygon over all rings (matches the fill rule). */
+function pointInAirspace(a: Airspace, x: number, y: number) {
+  let inside = false;
+  for (const r of a.rings) {
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const p = r[i], q = r[j];
+      if (p.y > y !== q.y > y && x < ((q.x - p.x) * (y - p.y)) / (q.y - p.y) + p.x) inside = !inside;
+    }
+  }
+  return inside;
+}
 function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
   let e = edgeLabelCache.get(a);
   if (!e || Math.hypot(e.gx - gx, e.gy - gy) >= 300) {
@@ -125,8 +138,12 @@ function edgeLabelPoint(a: Airspace, gx: number, gy: number): EdgeLabel {
     let ang = Math.atan2(-bdy, bdx);
     if (ang > Math.PI / 2) ang -= Math.PI;
     if (ang < -Math.PI / 2) ang += Math.PI;
-    if (!e) e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang };
-    else { e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; }
+    // inward normal: perpendicular to the edge, flipped until it points into the area
+    const bl = Math.hypot(bdx, bdy) || 1;
+    let nx = -bdy / bl, ny = bdx / bl;
+    if (!pointInAirspace(a, bx + nx * LABEL_INSET, by + ny * LABEL_INSET)) { nx = -nx; ny = -ny; }
+    if (!e) e = { gx, gy, x: bx, y: by, ang, dx: bx, dy: by, dang: ang, nx, ny };
+    else { e.gx = gx; e.gy = gy; e.x = bx; e.y = by; e.ang = ang; e.nx = nx; e.ny = ny; }
     edgeLabelCache.set(a, e);
   }
   // smooth glide towards the target so the label never jumps
