@@ -13,6 +13,18 @@ export function timeScale(accel: boolean, simSpeed = 1) {
   return simSpeed * (accel ? ACCEL_TIME_FACTOR : 1);
 }
 
+export const HOLD_BOOST_MS = 2000;
+export const HOLD_BOOST_FACTOR = 10;
+
+export type HoldStarts = { left: number | null; right: number | null };
+
+// ×10 simulation rate while a turn button has been held for HOLD_BOOST_MS or longer.
+export function holdBoost(input: Input, holdStart: HoldStarts, nowReal: number) {
+  const longHold = (key: "left" | "right") =>
+    input[key] && holdStart[key] !== null && nowReal - (holdStart[key] as number) >= HOLD_BOOST_MS;
+  return longHold("left") || longHold("right") ? HOLD_BOOST_FACTOR : 1;
+}
+
 export interface Sim {
   x: number; y: number; alt: number; heading: number;
   vz: number; airLift: number; speed: number;
