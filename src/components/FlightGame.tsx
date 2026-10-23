@@ -18,6 +18,7 @@ import { ZoomControls } from "./ZoomControls";
 import { FlightSettings } from "./FlightSettings";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
+import { needsFlightCoverage, flightCoverageReady, nextCoverageCenter } from "@/game/flightCoverage";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
@@ -30,6 +31,8 @@ export function FlightGame() {
   const [hud, setHud] = useState<HudData | null>(null);
   const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [coverageStatus, setCoverageStatus] = useState<"ready" | "loading" | "error">("ready");
+  const coverageRetry = useRef(false);
   const [runId, setRunId] = useState(0);
   const mapZoom = useCanvasZoom(0.01, 8, phase !== "config");
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
@@ -58,6 +61,7 @@ export function FlightGame() {
     setConfig(c);
     setHud(null);
     setLoadError(null);
+    setCoverageStatus("ready");
     mapZoom.reset(); profileZoom.reset();
     setResult(null);
     setPhase("loading");
@@ -88,6 +92,31 @@ export function FlightGame() {
       let airspaces: Airspace[] | null = null;
       loadAirspace(config.site).then((a) => { airspaces = a; }).catch(() => {});
       const thermals: ThermalField = { grid: new Map(), count: 0, raster: thermalMap.raster };
+      let coveragePending = false, retryAfter = 0;
+      const updateCoverage = (x: number, y: number, now: number) => {
+        if (coveragePending || !needsFlightCoverage(terrain, x, y)) return;
+        if (!coverageRetry.current && now < retryAfter) return;
+        coverageRetry.current = false;
+        coveragePending = true;
+        setCoverageStatus("loading");
+        const center = nextCoverageCenter(x, y);
+        Promise.all([loadRealTerrain(config.site, center.x, center.y), loadThermalRaster(config.site, center.x, center.y)])
+          .then(([nextTerrain, nextThermalMap]) => {
+            if (cancelled) return;
+            // Keep every position relative to the original launch; swap coverage atomically.
+            terrain = nextTerrain;
+            thermalMap = nextThermalMap;
+            thermals.raster = nextThermalMap.raster;
+            retryAfter = 0;
+            setCoverageStatus("ready");
+          })
+          .catch(() => {
+            if (cancelled) return;
+            retryAfter = performance.now() + 10000;
+            setCoverageStatus("error");
+          })
+          .finally(() => { coveragePending = false; });
+      };
       const season = SEASONS[config.season];
       const g = gradientAt(terrain, 0, 0);
       const sim: Sim = {
@@ -105,6 +134,12 @@ export function FlightGame() {
       const loop = (now: number) => {
         const dtReal = Math.min(0.05, (now - last) / 1000);
         last = now;
+        updateCoverage(sim.x, sim.y, now);
+        if (!flightCoverageReady(terrain, sim.x, sim.y)) {
+          vario.current?.update(0);
+          raf = requestAnimationFrame(loop);
+          return;
+        }
         const inp = input.current;
         const boost = holdBoost(inp, holdStart.current, now);
         const effSimSpeed = boost;
@@ -224,6 +259,9 @@ export function FlightGame() {
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
         </div>
       )}
+      {phase === "flying" && coverageStatus !== "ready" && <div role="status" className="absolute left-3 top-16 max-w-[calc(100%-24px)] rounded-md border border-border bg-card/95 p-2 text-xs text-foreground">
+        {coverageStatus === "loading" ? "Lade Gelände & Thermik entlang der Flugstrecke…" : <div className="flex flex-wrap items-center gap-2"><span>Gelände oder KK7-Thermik nicht erreichbar.</span><Button size="sm" variant="outline" onClick={() => { coverageRetry.current = true; }}>Erneut versuchen</Button></div>}
+      </div>}
       <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
