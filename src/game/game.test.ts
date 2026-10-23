@@ -47,7 +47,7 @@ describe("game rules", () => {
     expect(turnAt(8)).toBeCloseTo(r1, 0);
   });
   it("sliding on the speed button steers slowly, at a quarter of the full turn rate", () => {
-    const sim: Sim = { x: 0, y: 0, alt: 2000, heading: 0, vz: -1, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false };
+    const sim = newSim();
     steer(sim, { left: false, right: false, accel: false, steer: 1 }, 1, 1);
     expect(sim.heading).toBeCloseTo(TURN_RATE * STEER_ANALOG_FACTOR, 6);
     steer(sim, { left: false, right: false, accel: false, steer: -0.5 }, 1, 1);
