@@ -5,8 +5,6 @@ import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 import { MAP_STYLES, setMapStyle, type MapStyle } from "./SwissRelief";
 import { useEffect, useState } from "react";
-import type { Site } from "@/game/sites";
-import { OfflineSettings } from "./OfflineSettings";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -17,8 +15,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function FlightSettings({ site, thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
-  site: Site;
+export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
   showProfile: boolean;
@@ -33,7 +30,6 @@ export function FlightSettings({ site, thermalOpacity, onThermalOpacity, showPro
   const [mapStyle, setStyle] = useState<MapStyle>("relief");
   useEffect(() => { const s = localStorage.getItem("mapStyle") as MapStyle | null; if (s) setStyle(s); }, []);
   useEffect(() => { setMapStyle(mapStyle); localStorage.setItem("mapStyle", mapStyle); }, [mapStyle]);
-  const credit = MAP_STYLES.find((m) => m.v === mapStyle)?.credit ?? "© swisstopo";
   return (
     <>
       <button
@@ -88,27 +84,6 @@ export function FlightSettings({ site, thermalOpacity, onThermalOpacity, showPro
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>Luftraum-Beschriftung</span>
                 <Switch checked={showAirspaceLabels} onCheckedChange={onShowAirspaceLabels} aria-label="Luftraum-Beschriftung anzeigen" />
-              </div>
-            </Section>
-            <Section title="Offline"><OfflineSettings site={site} /></Section>
-            <Section title="Copyright & Quellen">
-              <div className="space-y-2 text-[11px] leading-snug">
-                <div>
-                  <span className="text-muted-foreground">Karte: </span>
-                  <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="underline">{credit}</a>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Thermik: </span>
-                  <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer" className="underline">M. von Känel · KK7 · Juli / All day</a>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Lufträume: </span>
-                  <a href="https://www.bazl.admin.ch/" target="_blank" rel="noopener noreferrer" className="underline">© BAZL · geo.admin.ch</a> (nicht für Navigation)
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Lizenz: </span>
-                  <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline">CC BY-NC-SA 4.0 · bearbeitet</a>
-                </div>
               </div>
             </Section>
           </div>

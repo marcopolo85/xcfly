@@ -281,7 +281,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      {config && <FlightSettings site={config.site} thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />}
+      {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />}
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
