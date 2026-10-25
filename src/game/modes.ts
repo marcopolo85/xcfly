@@ -4,8 +4,8 @@ export const MODE_TIME_LIMIT_S = 4 * 3600;
 export const RETURN_RADIUS_M = 400;
 
 export const MODES: { v: FlightMode; label: string; desc: string }[] = [
-  { v: "out_return", label: "Out & Return", desc: "4 h: weit weg und wieder zurück (Radius 400 m)" },
-  { v: "one_way", label: "One-Way", desc: "4 h: möglichst weit weg vom Startplatz" },
+  { v: "out_return", label: "Out & Return", desc: "Flieg möglichst weit weg und schaffe es wieder zurück an den Startplatz in 4 h" },
+  { v: "one_way", label: "One-Way", desc: "Flieg möglichst weit weg in 4 h" },
   { v: "free", label: "Freeflight", desc: "Kein Zeitlimit, Startzeit frei wählbar" },
 ];
 

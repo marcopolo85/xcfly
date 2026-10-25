@@ -29,6 +29,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const st = sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst);
   const earliest = Math.ceil(st.sunrise), latest = Math.floor(st.sunset - 1);
   const effectiveHour = mode === "free" ? Math.min(Math.max(startHour, earliest), latest) : Math.min(Math.max(11, earliest), latest);
+  const sortedSites = [...SITES].sort((a, b) => a.name.localeCompare(b.name, "de"));
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
@@ -63,7 +64,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => setRanking(true)}><Trophy className="h-3.5 w-3.5" />Rangliste</Button>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
-              {SITES.map((s) => (
+              {sortedSites.map((s) => (
                 <Button variant="outline" key={s.id} onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="block text-sm font-semibold leading-tight">{s.name}</span>
                   <span className="block text-[10px] text-muted-foreground">{s.region} · {s.launchAlt} m</span>
@@ -80,7 +81,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
         </div>
       </div>
       {choosing && <LaunchMapPicker initial={site} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
-      {ranking && <Leaderboard onClose={() => setRanking(false)} />}
+      {ranking && <Leaderboard initialSite={site.name} onClose={() => setRanking(false)} />}
     </div>
   );
 }
