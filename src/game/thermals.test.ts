@@ -33,7 +33,7 @@ describe("usable solar thermals", () => {
       const { px, py } = localToPixel(site, 0, 0, THERMAL_ZOOM);
       return {
         grid: new Map(), count: 0,
-        raster: { site, left: Math.floor(px), top: Math.floor(py), width: 8, height: 8, strength: new Float32Array(64).fill(heat) },
+        raster: { site, left: Math.floor(px) - 1, top: Math.floor(py) - 1, width: 8, height: 8, strength: new Float32Array(64).fill(heat) },
       };
     };
     const alt = 1000; // well below cloudbase, so fade = 1
