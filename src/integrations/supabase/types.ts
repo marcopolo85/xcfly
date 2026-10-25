@@ -23,6 +23,7 @@ export type Database = {
           mode: string
           pilot_name: string
           site_name: string
+          track: Json | null
         }
         Insert: {
           created_at?: string
@@ -32,6 +33,7 @@ export type Database = {
           mode: string
           pilot_name: string
           site_name: string
+          track?: Json | null
         }
         Update: {
           created_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           mode?: string
           pilot_name?: string
           site_name?: string
+          track?: Json | null
         }
         Relationships: []
       }

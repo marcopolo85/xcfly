@@ -69,3 +69,26 @@ export function visibleReliefTiles(site: Pick<Site, "lat" | "lon">, x: number, y
   }
   return tiles;
 }
+
+/** Convert launch-relative metres into [lat, lng] pairs for a stored flight track. */
+export function trackToLatLng(site: Pick<Site, "lat" | "lon">, trackX: number[], trackY: number[], maxPoints = 400): [number, number][] {
+  const origin = mapOrigin(site);
+  const n = trackX.length;
+  const step = Math.max(1, Math.ceil(n / maxPoints));
+  const pts: [number, number][] = [];
+  for (let i = 0; i < n; i += step) {
+    const mx = origin.x + trackX[i] / origin.scale;
+    const my = origin.y + trackY[i] / origin.scale;
+    const lng = Math.round(((mx / EARTH_RADIUS) * 180 / Math.PI) * 1e5) / 1e5;
+    const lat = Math.round(((2 * Math.atan(Math.exp(my / EARTH_RADIUS)) - Math.PI / 2) * 180 / Math.PI) * 1e5) / 1e5;
+    pts.push([lat, lng]);
+  }
+  if (n > 0 && (n - 1) % step !== 0) {
+    const mx = origin.x + trackX[n - 1] / origin.scale;
+    const my = origin.y + trackY[n - 1] / origin.scale;
+    const lng = Math.round(((mx / EARTH_RADIUS) * 180 / Math.PI) * 1e5) / 1e5;
+    const lat = Math.round(((2 * Math.atan(Math.exp(my / EARTH_RADIUS)) - Math.PI / 2) * 180 / Math.PI) * 1e5) / 1e5;
+    pts.push([lat, lng]);
+  }
+  return pts;
+}

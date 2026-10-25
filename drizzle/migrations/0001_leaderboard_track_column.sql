@@ -1,0 +1,1 @@
+ALTER TABLE public.leaderboard_entries ADD COLUMN IF NOT EXISTS track jsonb;

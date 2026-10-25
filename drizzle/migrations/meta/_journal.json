@@ -8,6 +8,13 @@
       "when": 1792960839181,
       "tag": "0000_create_leaderboard_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792963751545,
+      "tag": "0001_leaderboard_track_column",
+      "breakpoints": true
     }
   ]
 }
