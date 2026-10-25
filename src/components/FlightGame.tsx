@@ -11,6 +11,8 @@ import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
+import { MODE_TIME_LIMIT_S, modeLabel, modeScore, RETURN_RADIUS_M, type FlightMode } from "@/game/modes";
+import { submitFlight } from "./Leaderboard";
 import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
@@ -30,7 +32,9 @@ export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
   const [config, setConfig] = useState<FlightConfig | null>(null);
   const [hud, setHud] = useState<HudData | null>(null);
-  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number } | null>(null);
+  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number; score: number; mode: FlightMode } | null>(null);
+  const [pilotName, setPilotName] = useState("");
+  const [submitState, setSubmitState] = useState<"idle" | "sending" | "saved" | "skipped" | "failed">("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [coverageStatus, setCoverageStatus] = useState<"ready" | "loading" | "error">("ready");
   const coverageRetry = useRef(false);
@@ -129,6 +133,14 @@ export function FlightGame() {
       const trail: { x: number; y: number; vz: number }[] = [];
       let triangle: XcTriangle | null = null, lastTri = 0;
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
+      let maxOutDist = 0;
+      const finish = (reason: string) => {
+        vario.current?.update(0);
+        const endOutDist = Math.hypot(sim.x, sim.y);
+        const { score, goal } = modeScore(config.mode, maxOutDist, endOutDist, sim.xcDist);
+        setResult({ goal, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, score, mode: config.mode });
+        setPhase("done");
+      };
       if (cancelled) return;
       setPhase("flying");
 
@@ -182,14 +194,14 @@ export function FlightGame() {
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
+            remain: config.mode === "free" ? undefined : Math.max(0, MODE_TIME_LIMIT_S - sim.flightTime),
+            outDist: Math.hypot(sim.x, sim.y), returnRadius: config.mode === "out_return" ? RETURN_RADIUS_M : undefined,
           });
         }
-        if (sim.landed) {
-          vario.current?.update(0);
-          setResult({ goal: false, xc, time: sim.flightTime, reason: "Gelandet", maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles });
-          setPhase("done");
-          return;
-        }
+        const outDist = Math.hypot(sim.x, sim.y);
+        if (outDist > maxOutDist) maxOutDist = outDist;
+        if (sim.landed) { finish("Gelandet"); return; }
+        if (config.mode !== "free" && sim.flightTime >= MODE_TIME_LIMIT_S) { finish("Zeitlimit (4 h)"); return; }
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
