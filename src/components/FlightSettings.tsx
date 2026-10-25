@@ -5,8 +5,6 @@ import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 import { MAP_STYLES, setMapStyle, type MapStyle } from "./SwissRelief";
 import { useEffect, useState } from "react";
-import type { Site } from "@/game/sites";
-import { OfflineSettings } from "./OfflineSettings";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
