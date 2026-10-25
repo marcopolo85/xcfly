@@ -1,5 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { mapOrigin, reliefLevel, reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleReliefTiles } from "./swissMap";
+import { mapOrigin, reliefLevel, reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleReliefTiles, trackToLatLng } from "./swissMap";
+
+describe("trackToLatLng", () => {
+  it("maps the launch-relative origin back to the site coordinates", () => {
+    const site = { lat: 46.71, lon: 7.77 };
+    const [lat, lng] = trackToLatLng(site, [0], [0])[0];
+    expect(lat).toBeCloseTo(site.lat, 4);
+    expect(lng).toBeCloseTo(site.lon, 4);
+  });
+  it("keeps the last track point even when thinning", () => {
+    const site = { lat: 46.71, lon: 7.77 };
+    const xs = [0, 1000, 2000, 3000, 4000], ys = [0, 500, 1000, 1500, 2000];
+    const track = trackToLatLng(site, xs, ys, 3);
+    expect(track.length).toBe(3);
+    const [lastLat, lastLng] = track[track.length - 1];
+    const origin = mapOrigin(site);
+    expect(lastLng).toBeGreaterThan(track[0][1]);
+    expect(lastLat).toBeGreaterThan(46.7);
+    expect(track[0][0]).toBeCloseTo(site.lat, 4);
+    expect(lastLat).toBeLessThan(90);
+    expect(Math.abs(lastLng - site.lon)).toBeLessThan(1);
+  });
+});
+
 
 describe("Swiss relief map", () => {
   it("uses real water geometry in the same projection as the relief", () => {
