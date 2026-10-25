@@ -4,11 +4,14 @@ import { thermalRegionBounds } from "./thermalRegion";
 import { thermalHeat, thermalTileUrl } from "./thermalRaster";
 import { tileResponse } from "@/lib/offline-data";
 
-export interface RegionalTile { x: number; y: number; blob: Blob; image?: ImageBitmap; pending?: boolean }
+export interface RegionalTile { x: number; y: number; blob: Blob; image?: ImageBitmap | undefined; pending?: boolean }
 export interface ThermalProgress { loaded: number; total: number }
 const tiles = new Map<string, RegionalTile>();
 const heat = new Map<string, Uint8Array>();
 const decoded = new Map<string, RegionalTile>();
+let loading: Promise<void> | undefined;
+const listeners = new Set<(p: ThermalProgress) => void>();
+let progress: ThermalProgress = { loaded: 0, total: 0 };
 
 /** Decode only visible tiles; keep the full region as compressed PNGs and sparse heat bytes. */
 export function regionalTileImage(tile: RegionalTile) {
@@ -36,15 +39,18 @@ export function regionalTileImage(tile: RegionalTile) {
 }
 
 /** Fetch the complete rectangle once per session, retaining successful tiles for retries. */
-export async function loadThermalRegion(site: Site, onProgress: (p: ThermalProgress) => void): Promise<ThermalMap> {
+async function fetchRegion() {
   const bounds = thermalRegionBounds();
   const jobs: { x: number; y: number }[] = [];
   for (let y = bounds.y0; y <= bounds.y1; y++) for (let x = bounds.x0; x <= bounds.x1; x++) jobs.push({ x, y });
   let loaded = jobs.filter(({ x, y }) => tiles.has(`${x},${y}`)).length;
-  const report = () => onProgress({ loaded, total: jobs.length });
+  const report = () => {
+    progress = { loaded, total: jobs.length };
+    for (const listener of listeners) listener(progress);
+  };
   report();
   let next = 0, failed = false;
-  await Promise.all(Array.from({ length: 6 }, async () => {
+  const outcomes = await Promise.allSettled(Array.from({ length: 6 }, async () => {
     const canvas = document.createElement("canvas");
     canvas.width = 256; canvas.height = 256;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -75,6 +81,18 @@ export async function loadThermalRegion(site: Site, onProgress: (p: ThermalProgr
       } catch (error) { failed = true; throw error; }
     }
   }));
+  const failure = outcomes.find((outcome) => outcome.status === "rejected");
+  if (failure?.status === "rejected") throw failure.reason;
+}
+
+export async function loadThermalRegion(site: Site, onProgress: (p: ThermalProgress) => void): Promise<ThermalMap> {
+  listeners.add(onProgress);
+  onProgress(progress);
+  try {
+    if (!loading) loading = fetchRegion().finally(() => { loading = undefined; });
+    await loading;
+  } finally { listeners.delete(onProgress); }
+  const bounds = thermalRegionBounds();
   return {
     regionalTiles: tiles,
     raster: { site, left: bounds.x0 * 256, top: bounds.y0 * 256,
