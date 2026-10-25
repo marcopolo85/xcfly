@@ -16,7 +16,6 @@ interface Entry {
 
 const RANKED_MODES = ["out_return", "one_way"] as const;
 
-const fmtDur = (s: number) => `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")} h`;
 
 export async function submitFlight(pilot: string, site: string, mode: FlightMode, distanceKm: number, durationS: number): Promise<string | null> {
   const { error } = await supabase.from("leaderboard_entries").insert({
