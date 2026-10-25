@@ -77,19 +77,15 @@ export function Leaderboard({ initialSite, onClose }: { initialSite?: string; on
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="hud-label text-left">
-                        <th className="py-1 pr-1">#</th>
                         <th className="py-1 pr-1">Pilot</th>
-                        <th className="py-1 pr-1 text-right">Km</th>
-                        <th className="py-1 text-right">Zeit</th>
+                        <th className="py-1 text-right">Km</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {list.map((e, i) => (
+                      {list.map((e) => (
                         <tr key={e.id} className="border-t border-border/50 text-foreground">
-                          <td className="py-1 pr-1 font-mono text-muted-foreground">{i + 1}</td>
                           <td className="max-w-0 truncate py-1 pr-1 font-semibold">{e.pilot_name}</td>
-                          <td className="py-1 pr-1 text-right font-mono font-bold">{e.distance_km.toFixed(1)}</td>
-                          <td className="py-1 text-right font-mono text-muted-foreground">{fmtDur(e.duration_s)}</td>
+                          <td className="py-1 text-right font-mono font-bold">{e.distance_km.toFixed(1)}</td>
                         </tr>
                       ))}
                     </tbody>
