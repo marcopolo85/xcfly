@@ -14,4 +14,5 @@
 - [x] Ursache für fehlendes Thermiksteigen reproduzieren und beheben.
 - [x] Varioton zuverlässig aktivieren und prüfen.
 - [x] Thermik und Ton mit Regressionstests und laufendem Flug überprüfen.
-- [x] Plastische Reliefkarte nach Bildvorlage einsetzen und im Flug prüfen (swisstopo Relief, 6 Tests, Handy/Desktop ohne Seitenfehler).
+- [x] Plastische Reliefkarte nach Bildvorlage einsetzen und im Flug prüfen (swisstopo Relief, 6 Tests, Handy/Desktop ohne Seitenfehler).- [ ] Track-Übersicht auch in der Flugauswertung anzeigen.
+- [ ] Empfindlichkeit der Steuerung im beschleunigten Flug halbieren (Slide-Steuerung: voller Ausschlag bei 140 px statt 70 px).
