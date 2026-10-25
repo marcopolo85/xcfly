@@ -68,15 +68,23 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <h2 className="hud-label mb-1.5">Startplatz</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {sortedSites.map((s) => (
-                <div key={s.id} className="flex items-stretch gap-1">
-                  <Button variant="outline" onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
+                <Button key={s.id} variant="outline" onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
+                  <span className="flex w-full items-center justify-between gap-2">
                     <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
-                    <span className="block text-[10px] text-muted-foreground">{s.launchAlt} m</span>
-                  </Button>
-                  <Button variant="outline" size="icon" aria-label={`Rangliste ${s.name}`} title={`Rangliste ${s.name}`} onClick={() => setRankingSite(s.name)} className="choice shrink-0 self-stretch px-1.5">
-                    <Trophy className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Rangliste ${s.name}`}
+                      title={`Rangliste ${s.name}`}
+                      onClick={(e) => { e.stopPropagation(); setRankingSite(s.name); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setRankingSite(s.name); } }}
+                      className="grid shrink-0 place-items-center rounded-md p-1 text-muted-foreground active:bg-accent"
+                    >
+                      <Trophy className="h-3.5 w-3.5" />
+                    </span>
+                  </span>
+                  <span className="block text-[10px] text-muted-foreground">{s.launchAlt} m</span>
+                </Button>
               ))}
             </div>
             <Button variant="outline" className="mt-2 h-9 w-full text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
