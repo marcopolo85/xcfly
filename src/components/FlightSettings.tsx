@@ -15,8 +15,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function FlightSettings({ site, thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
-  site: Site;
+export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
   showProfile: boolean;
