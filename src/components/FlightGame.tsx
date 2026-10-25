@@ -24,6 +24,9 @@ import { Button } from "./ui/button";
 import { TrackOverview } from "./TrackOverview";
 import { needsFlightCoverage, flightCoverageReady, nextCoverageCenter } from "@/game/flightCoverage";
 import { offlineEnabled } from "@/lib/offline-data";
+import { loadThermalRegion, type ThermalProgress } from "@/game/loadThermalRegion";
+import { inThermalRegion } from "@/game/thermalRegion";
+import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
@@ -38,6 +41,7 @@ export function FlightGame() {
   const [pilotName, setPilotName] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "saved" | "skipped" | "failed">("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [thermalProgress, setThermalProgress] = useState<ThermalProgress | null>(null);
   const [coverageStatus, setCoverageStatus] = useState<"ready" | "loading" | "error">("ready");
   const coverageRetry = useRef(false);
   const finishedTrack = useRef<[number, number][]>([]);
@@ -69,6 +73,7 @@ export function FlightGame() {
     setConfig(c);
     setHud(null);
     setLoadError(null);
+    setThermalProgress(null);
     setCoverageStatus("ready");
     mapZoom.reset(); profileZoom.reset();
     setResult(null);
@@ -88,7 +93,9 @@ export function FlightGame() {
             if (config.site.id.startsWith("map-") || (offlineEnabled() && !navigator.onLine)) throw error;
             return generateTerrain(config.site);
           }),
-          loadThermalRaster(config.site),
+          inThermalRegion(config.site.lat, config.site.lon) && navigator.onLine
+            ? loadThermalRegion(config.site, (progress) => { if (!cancelled) setThermalProgress(progress); })
+            : loadThermalRaster(config.site),
         ]);
       } catch {
         if (cancelled) return;
@@ -109,7 +116,10 @@ export function FlightGame() {
         coveragePending = true;
         setCoverageStatus("loading");
         const center = nextCoverageCenter(x, y);
-        Promise.all([loadRealTerrain(config.site, center.x, center.y), loadThermalRaster(config.site, center.x, center.y)])
+        const origin = mapOrigin(config.site);
+        const lon = (origin.x + center.x / origin.scale) / MERCATOR_EXTENT * 180;
+        const lat = (2 * Math.atan(Math.exp((origin.y + center.y / origin.scale) * Math.PI / MERCATOR_EXTENT)) - Math.PI / 2) * 180 / Math.PI;
+        Promise.all([loadRealTerrain(config.site, center.x, center.y), thermalMap.regionalTiles && inThermalRegion(lat, lon) ? Promise.resolve(thermalMap) : loadThermalRaster(config.site, center.x, center.y)])
           .then(([nextTerrain, nextThermalMap]) => {
             if (cancelled) return;
             // Keep every position relative to the original launch; swap coverage atomically.
@@ -288,7 +298,10 @@ export function FlightGame() {
       {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />}
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
-          <p className="animate-pulse font-mono text-sm text-muted-foreground">Lade Geländehöhen & KK7-Thermikkarte…</p>
+          <div role="status" className="space-y-3 px-6 text-center font-mono text-sm text-muted-foreground">
+            <p>Lade Geländehöhen & KK7-Thermikkarte…</p>
+            {thermalProgress && <><p>Schweiz & Nachbarregionen · July / All day</p><progress aria-label="Thermikkarte laden" value={thermalProgress.loaded} max={thermalProgress.total} className="h-2 w-full accent-primary" /><p>{thermalProgress.loaded} / {thermalProgress.total} Kacheln · {Math.round(thermalProgress.loaded / thermalProgress.total * 100)} %</p></>}
+          </div>
         </div>
       )}
       {phase === "flying" && coverageStatus !== "ready" && <div role="status" className="absolute left-3 top-16 max-w-[calc(100%-24px)] rounded-md border border-border bg-card/95 p-2 text-xs text-foreground">

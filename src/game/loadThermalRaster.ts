@@ -3,8 +3,9 @@ import { localToPixel } from "./realTerrain";
 import { thermalHeat, thermalTileUrl, THERMAL_ZOOM, type ThermalRaster } from "./thermalRaster";
 import type { Site } from "./sites";
 import { loadRasterTile } from "./rasterTileCache";
+import type { RegionalTile } from "./loadThermalRegion";
 
-export interface ThermalMap { raster: ThermalRaster; image: HTMLCanvasElement }
+export interface ThermalMap { raster: ThermalRaster; image?: HTMLCanvasElement; regionalTiles?: Map<string, RegionalTile> }
 const cache = new Map<string, ThermalMap>();
 
 const loadTile = loadRasterTile;

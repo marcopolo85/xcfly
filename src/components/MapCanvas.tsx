@@ -7,6 +7,7 @@ import type { ZoomTransform } from "d3-zoom";
 import type { ThermalMap } from "@/game/loadThermalRaster";
 import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 import { THERMAL_ZOOM } from "@/game/thermalRaster";
+import { regionalTileImage } from "@/game/loadThermalRegion";
 import { CLOSING_RATIO, type XcTriangle } from "@/game/xcTriangle";
 import wingUrl from "@/assets/glider-wing.png";
 import { AIRSPACE_COLORS, formatLimitM, insideVertical, type Airspace } from "@/game/airspace";
@@ -372,7 +373,17 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     const left = (raster.left * metresPerPixel - MERCATOR_EXTENT - origin.x) * origin.scale;
     const top = (MERCATOR_EXTENT - raster.top * metresPerPixel - origin.y) * origin.scale;
     ctx.globalAlpha = s.thermalAlpha ?? 1;
-    ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
+    if (image) ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
+    if (s.thermalMap.regionalTiles) {
+      const size = 256 * metresPerPixel * origin.scale * z;
+      for (const tile of s.thermalMap.regionalTiles.values()) {
+        const tx = sx((tile.x * 256 * metresPerPixel - MERCATOR_EXTENT - origin.x) * origin.scale);
+        const ty = sy((MERCATOR_EXTENT - tile.y * 256 * metresPerPixel - origin.y) * origin.scale);
+        if (tx + size < 0 || ty + size < 0 || tx > W || ty > H) continue;
+        const surface = regionalTileImage(tile);
+        if (surface) ctx.drawImage(surface, tx, ty, size + 0.5, size + 0.5);
+      }
+    }
     ctx.globalAlpha = 1;
   }
 
