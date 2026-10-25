@@ -79,7 +79,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
-            <p className="text-xs text-muted-foreground">{entry.site_name} · {modeLabel(entry.mode)}</p>
+            <p className="text-xs text-muted-foreground">{entry.site_name} · {modeLabel(entry.mode as FlightMode)}</p>
           </div>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
