@@ -16,6 +16,10 @@ export const MAP_STYLES: { v: MapStyle; label: string; credit: string; url: (z: 
 let activeStyle: MapStyle = "relief";
 /** Selected base map; read by the animation loops on every frame. */
 export function setMapStyle(v: MapStyle) { activeStyle = v; }
+export function getMapStyle(): MapStyle {
+  const saved = typeof window === "undefined" ? null : window.localStorage.getItem("mapStyle");
+  return MAP_STYLES.find((style) => style.v === saved)?.v ?? activeStyle;
+}
 
 type Tile = { image: HTMLImageElement; surface?: HTMLCanvasElement; loaded: boolean; failedAt: number };
 const cache = new Map<string, Tile>();
@@ -104,14 +108,14 @@ function tileImage(url: string, filter = "none", tint = "", underlayUrl?: string
 }
 
 /** Browser-only tile rendering; the flight engine remains independent of the map. */
-export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Site, x: number, y: number, width: number, height: number, zoom: number, dpr = 1) {
+export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number, dpr = 1, mapStyle = activeStyle) {
   let loaded = 0, failed = 0;
   const theme = getComputedStyle(ctx.canvas);
   const reliefFilter = theme.getPropertyValue("--map-relief-filter").trim() || "none";
   const waterColor = theme.getPropertyValue("--map-water").trim();
   const forestColor = theme.getPropertyValue("--map-forest").trim();
   const offline = offlineEnabled() && !navigator.onLine;
-  const style = MAP_STYLES.find((m) => m.v === (offline ? "relief" : activeStyle)) ?? MAP_STYLES[0];
+  const style = MAP_STYLES.find((m) => m.v === (offline ? "relief" : mapStyle)) ?? MAP_STYLES[0];
   const relief = style.v === "relief";
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr, offline ? 12 : 17)) {
     const tile = tileImage(style.url(position.level, position.x, position.y), relief ? reliefFilter : "none", "", style.fallback?.(position.level, position.x, position.y));

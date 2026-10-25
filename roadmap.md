@@ -1,4 +1,5 @@
 # Aufgaben
+- [ ] Trackübersicht in Auswertung und Rangliste auf der ausgewählten Karte anzeigen und prüfen.
 - [x] Offline-Option speichert reale Gelände-, KK7- und Reliefdaten für ein 40 × 40 km Fluggebiet mit Fortschritt, Abbruch und Löschen. Echter Download von 394 Kacheln, erneuter Flugstart ohne Internet mit Karte und Höhenanzeige geprüft; keine Vorschau-Workerregistrierung. Offline-Neustart der gesamten App erst nach Veröffentlichung prüfbar.
 - [x] Flugdarstellung optimiert: statische Höhenlinien zwischengespeichert, Track-Ausdünnung linear; Vergleich mit ungecachter Berechnung 6,5 → 0,5 ms, echter Handyflug ohne Seitenfehler und 16 Tests bestanden.
 - [x] Seitlicher AGL-Balken im kompakten GPS ergänzt; aktueller Wert und Darstellung im echten Handyflug geprüft. Desktop-Screenshot nach Grössenwechsel nicht abgeschlossen.
