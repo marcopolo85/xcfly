@@ -36,23 +36,6 @@ function fmtTime(s: number) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-const W = 320, H = 220, P = 20;
-
-function trackPath(track: [number, number][]) {
-  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-  for (const [lat, lng] of track) {
-    if (lat < minLat) minLat = lat;
-    if (lat > maxLat) maxLat = lat;
-    if (lng < minLng) minLng = lng;
-    if (lng > maxLng) maxLng = lng;
-  }
-  const dLat = Math.max(1e-4, maxLat - minLat);
-  const dLng = Math.max(1e-4, maxLng - minLng);
-  const scale = Math.min((W - 2 * P) / dLng, (H - 2 * P) / dLat);
-  const pts = track.map(([lat, lng]) => `${(P + (lng - minLng) * scale).toFixed(1)},${(H - P - (lat - minLat) * scale).toFixed(1)}`);
-  return { pts: pts.join(" "), first: pts[0] };
-}
-
 function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   const [track, setTrack] = useState<[number, number][] | null>(null);
   const [missing, setMissing] = useState(false);
