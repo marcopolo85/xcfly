@@ -28,7 +28,6 @@ export async function submitFlight(pilot: string, site: string, mode: FlightMode
   return error ? error.message : null;
 }
 
-import { modeLabel, type FlightMode } from "@/game/modes";
 
 export function Leaderboard({ initialSite, onClose }: { initialSite?: string; onClose: () => void }) {
   const site = initialSite ?? SITES[0]?.name ?? "";
