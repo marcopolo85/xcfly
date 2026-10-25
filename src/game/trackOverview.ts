@@ -15,7 +15,7 @@ export function fitTrackOverview(track: [number, number][], width: number, heigh
   const minY = Math.min(...ys), maxY = Math.max(...ys);
   const zoom = Math.min((width - 48) / Math.max(500, maxX - minX), (height - 48) / Math.max(500, maxY - minY));
   const x = (minX + maxX) / 2;
-  const y = (minY + maxY) / 2 + height * 0.05 / zoom;
+  const y = (minY + maxY) / 2 - height * 0.05 / zoom;
   return {
     site, x, y, zoom,
     points: points.map((p) => ({ x: width / 2 + (p.x - x) * zoom, y: height * 0.55 - (p.y - y) * zoom })),
