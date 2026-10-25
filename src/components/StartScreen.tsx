@@ -70,7 +70,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               {sortedSites.map((s) => (
                 <div key={s.id} className="flex items-stretch gap-1">
                   <Button variant="outline" onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
-                    <span className="block text-sm font-semibold leading-tight">{s.name}</span>
+                    <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
                     <span className="block text-[10px] text-muted-foreground">{s.launchAlt} m</span>
                   </Button>
                   <Button variant="outline" size="icon" aria-label={`Rangliste ${s.name}`} title={`Rangliste ${s.name}`} onClick={() => setRankingSite(s.name)} className="choice shrink-0 self-stretch px-1.5">
