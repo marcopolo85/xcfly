@@ -4,10 +4,11 @@ import { sunTimes } from "@/game/sun";
 import { MODES, type FlightMode } from "@/game/modes";
 import heroImg from "@/assets/hero-alps.jpg";
 import logoImg from "@/assets/xcfly-logo.png";
-import { MapPin, Trophy } from "lucide-react";
+import { Info, MapPin, Trophy } from "lucide-react";
 import { Button } from "./ui/button";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
+import { InfoDialog } from "./InfoDialog";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode }
 
