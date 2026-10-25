@@ -18,7 +18,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [mode, setMode] = useState<FlightMode>("free");
   const [startHour, setStartHour] = useState(11);
   const [choosing, setChoosing] = useState(false);
-  const [ranking, setRanking] = useState(false);
+  const [rankingSite, setRankingSite] = useState<string | null>(null);
   useEffect(() => {
     if (navigator.onLine) return;
     try {
