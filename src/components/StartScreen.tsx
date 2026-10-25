@@ -20,6 +20,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [startHour, setStartHour] = useState(11);
   const [choosing, setChoosing] = useState(false);
   const [rankingSite, setRankingSite] = useState<string | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
   useEffect(() => {
     if (navigator.onLine) return;
     try {
@@ -42,7 +43,12 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
 
         <div className="mt-4 space-y-2.5 rounded-xl border border-border bg-card/85 p-4 backdrop-blur">
           <section>
-            <h2 className="hud-label mb-1.5">Modus</h2>
+            <div className="mb-1.5 flex items-center justify-between">
+              <h2 className="hud-label">Modus</h2>
+              <button type="button" title="Info" aria-label="Info" onClick={() => setInfoOpen(true)} className="grid h-6 w-6 place-items-center rounded-md border border-border bg-card/95 text-muted-foreground active:bg-accent">
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-1.5">
               {MODES.map((m) => (
                 <Button variant="outline" key={m.v} onClick={() => setMode(m.v)} data-active={m.v === mode} className="choice h-auto flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
@@ -85,6 +91,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       </div>
       {choosing && <LaunchMapPicker initial={site} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
+      <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
     </div>
   );
 }
