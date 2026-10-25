@@ -19,6 +19,7 @@ function Cell({ label, value, unit, cls = "" }: { label: string; value: string; 
 const vzCls = (v: number) => (v > 0.1 ? "text-climb" : v < -1.5 ? "text-sink" : "");
 const fmtVz = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 const fmtTime = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+const fmtCountdown = (t: number) => `${Math.floor(t / 3600)}:${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 export function FlightHUD({ d }: { d: HudData }) {
   return (
@@ -53,7 +54,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         </div>
         <Cell label="CLOSE" value={d.close > 0 ? (d.close / 1000).toFixed(1) : "0.0"} unit="km" cls={d.close > 0 ? "text-sun" : "text-climb"} />
         <Cell label="WOLKENBASIS" value={d.cloudbase.toFixed(0)} unit="m" />
-        {d.remain !== undefined && <Cell label="RESTZEIT" value={fmtTime(d.remain)} cls={d.remain < 600 ? "text-sink" : ""} />}
+        {d.remain !== undefined && <Cell label="RESTZEIT" value={fmtCountdown(d.remain)} cls={d.remain < 600 ? "text-sink" : ""} />}
         {d.returnRadius !== undefined && <Cell label="START" value={((d.outDist ?? 0) / 1000).toFixed(1)} unit="km" cls={(d.outDist ?? 0) <= d.returnRadius ? "text-climb" : ""} />}
       </div>
       </div>
