@@ -30,7 +30,6 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
   const [mapStyle, setStyle] = useState<MapStyle>("relief");
   useEffect(() => { const s = localStorage.getItem("mapStyle") as MapStyle | null; if (s) setStyle(s); }, []);
   useEffect(() => { setMapStyle(mapStyle); localStorage.setItem("mapStyle", mapStyle); }, [mapStyle]);
-  const credit = MAP_STYLES.find((m) => m.v === mapStyle)?.credit ?? "© swisstopo";
   return (
     <>
       <button
