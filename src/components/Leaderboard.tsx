@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SITES } from "@/game/sites";
 import { MODES, modeLabel, type FlightMode } from "@/game/modes";
 import { X } from "lucide-react";
 
@@ -26,16 +27,19 @@ export async function submitFlight(pilot: string, site: string, mode: FlightMode
   return error ? error.message : null;
 }
 
-export function Leaderboard({ onClose }: { onClose: () => void }) {
+export function Leaderboard({ initialSite, onClose }: { initialSite?: string; onClose: () => void }) {
   const [mode, setMode] = useState<FlightMode>("out_return");
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [site, setSite] = useState<string>(initialSite ?? SITES[0]?.name ?? "");
 
   useEffect(() => {
     let cancelled = false;
     setEntries(null);
     setError(null);
-    supabase.from("leaderboard_entries").select("*").eq("mode", mode).order("distance_km", { ascending: false }).limit(50)
+    // One fetch per mode; the per-site split happens locally so every launch
+    // site (including free map picks) gets its own ranking.
+    supabase.from("leaderboard_entries").select("*").eq("mode", mode).order("distance_km", { ascending: false }).limit(500)
       .then(({ data, error: e }) => {
         if (cancelled) return;
         if (e) setError("Rangliste konnte nicht geladen werden.");
@@ -43,6 +47,10 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
       });
     return () => { cancelled = true; };
   }, [mode]);
+
+  const entrySites = [...new Set((entries ?? []).map((e) => e.site_name))];
+  const siteOptions = [...new Set([...SITES.map((s) => s.name), ...entrySites])].sort((a, b) => a.localeCompare(b, "de"));
+  const shown = (entries ?? []).filter((e) => e.site_name === site).slice(0, 50);
 
   return (
     <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label="Rangliste">
@@ -56,27 +64,33 @@ export function Leaderboard({ onClose }: { onClose: () => void }) {
             <button key={m.v} onClick={() => setMode(m.v)} data-active={m.v === mode} className="choice rounded-md border border-border px-2 py-1.5 text-xs font-semibold text-foreground">{m.label}</button>
           ))}
         </div>
+        <select
+          aria-label="Startplatz"
+          value={site}
+          onChange={(e) => setSite(e.target.value)}
+          className="mt-2 w-full rounded-md border border-border bg-background px-2 py-2 text-sm font-semibold text-foreground"
+        >
+          {siteOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
           {error && <p className="py-6 text-center text-sm text-sink">{error}</p>}
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
-          {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Noch keine Einträge für {modeLabel(mode)}.</p>}
-          {!error && entries && entries.length > 0 && (
+          {!error && entries !== null && shown.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Noch keine Einträge für {site} · {modeLabel(mode)}.</p>}
+          {!error && shown.length > 0 && (
             <table className="w-full text-sm">
               <thead>
                 <tr className="hud-label text-left">
                   <th className="py-1 pr-2">#</th>
                   <th className="py-1 pr-2">Pilot</th>
-                  <th className="py-1 pr-2">Startplatz</th>
                   <th className="py-1 pr-2 text-right">Km</th>
                   <th className="py-1 text-right">Zeit</th>
                 </tr>
               </thead>
               <tbody>
-                {entries.map((e, i) => (
+                {shown.map((e, i) => (
                   <tr key={e.id} className="border-t border-border/50 text-foreground">
                     <td className="py-1 pr-2 font-mono text-muted-foreground">{i + 1}</td>
                     <td className="max-w-0 truncate py-1 pr-2 font-semibold">{e.pilot_name}</td>
-                    <td className="max-w-0 truncate py-1 pr-2 text-muted-foreground">{e.site_name}</td>
                     <td className="py-1 pr-2 text-right font-mono font-bold">{e.distance_km.toFixed(1)}</td>
                     <td className="py-1 text-right font-mono text-muted-foreground">{fmtDur(e.duration_s)}</td>
                   </tr>
