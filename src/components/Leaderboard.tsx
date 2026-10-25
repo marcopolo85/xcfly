@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
 import { modeLabel, type FlightMode } from "@/game/modes";
 import { X } from "lucide-react";
+import { TrackOverview } from "./TrackOverview";
 
 interface Entry {
   id: string;
