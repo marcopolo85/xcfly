@@ -15,3 +15,5 @@
 - [x] Varioton zuverlässig aktivieren und prüfen.
 - [x] Thermik und Ton mit Regressionstests und laufendem Flug überprüfen.
 - [x] Plastische Reliefkarte nach Bildvorlage einsetzen und im Flug prüfen (swisstopo Relief, 6 Tests, Handy/Desktop ohne Seitenfehler).
+- [x] Track-Übersicht auch in der Flugauswertung anzeigen. Testflug bis Landung im Browser: Track mit Startpunkt und Legende im Auswertfenster sichtbar, 72 Tests und Build bestanden.
+- [x] Empfindlichkeit der Slide-Steuerung im beschleunigten Flug halbiert: voller Link-/Rechtsausschlag jetzt bei 140 px statt 70 px Fingerbewegung.

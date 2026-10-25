@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
 import { modeLabel, type FlightMode } from "@/game/modes";
 import { X } from "lucide-react";
+import { TrackOverview } from "./TrackOverview";
 
 interface Entry {
   id: string;
@@ -36,23 +37,6 @@ function fmtTime(s: number) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-const W = 320, H = 220, P = 20;
-
-function trackPath(track: [number, number][]) {
-  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-  for (const [lat, lng] of track) {
-    if (lat < minLat) minLat = lat;
-    if (lat > maxLat) maxLat = lat;
-    if (lng < minLng) minLng = lng;
-    if (lng > maxLng) maxLng = lng;
-  }
-  const dLat = Math.max(1e-4, maxLat - minLat);
-  const dLng = Math.max(1e-4, maxLng - minLng);
-  const scale = Math.min((W - 2 * P) / dLng, (H - 2 * P) / dLat);
-  const pts = track.map(([lat, lng]) => `${(P + (lng - minLng) * scale).toFixed(1)},${(H - P - (lat - minLat) * scale).toFixed(1)}`);
-  return { pts: pts.join(" "), first: pts[0] };
-}
-
 function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   const [track, setTrack] = useState<[number, number][] | null>(null);
   const [missing, setMissing] = useState(false);
@@ -71,7 +55,6 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
     return () => { cancelled = true; };
   }, [entry.id]);
 
-  const path = track ? trackPath(track) : null;
 
   return (
     <div className="absolute inset-0 z-40 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
@@ -89,15 +72,10 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         </div>
         <div className="mt-2 rounded-lg border border-border bg-background p-1">
           {track === null && !missing && <p className="py-16 text-center font-mono text-xs text-muted-foreground">Lade Track…</p>}
-          {missing && <p className="py-16 text-center text-xs text-muted-foreground">Keine Trackdaten vorhanden.</p>}
-          {path && (
-            <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full">
-              <polyline points={path.pts} fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-              <circle cx={Number(path.first.split(",")[0])} cy={Number(path.first.split(",")[1])} r="4" className="fill-climb" />
-            </svg>
-          )}
+          {missing && <TrackOverview track={null} />}
+          {track !== null && <TrackOverview track={track} />}
         </div>
-        {path && <p className="mt-1 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>}
+        {track !== null && <p className="mt-1 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>}
       </div>
     </div>
   );

@@ -21,13 +21,14 @@ import { ZoomControls } from "./ZoomControls";
 import { FlightSettings } from "./FlightSettings";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
+import { TrackOverview } from "./TrackOverview";
 import { needsFlightCoverage, flightCoverageReady, nextCoverageCenter } from "@/game/flightCoverage";
 import { offlineEnabled } from "@/lib/offline-data";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
 const STEER_DEADZONE_PX = 10;
-const STEER_RANGE_PX = 70;
+const STEER_RANGE_PX = 140;
 
 export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
@@ -313,7 +314,7 @@ export function FlightGame() {
       </div>
       {phase === "done" && result && (
         <div className="absolute inset-0 grid place-items-center bg-background/70 p-6 backdrop-blur-sm">
-          <div className="hud-panel w-full max-w-sm p-6 text-center">
+          <div className="hud-panel max-h-full w-full max-w-sm overflow-y-auto p-6 text-center">
             <p className="hud-label">{config?.site.name} · {modeLabel(result.mode)}</p>
             <h2 className={`mt-1 font-display text-4xl font-bold ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
             <p className="mt-1 font-mono text-sm text-muted-foreground">
@@ -330,6 +331,10 @@ export function FlightGame() {
               <div className="hud-cell"><div className="hud-label">Thermiken</div><div className="hud-value text-2xl">{result.thermals}</div></div>
               <div className="hud-cell"><div className="hud-label">Thermikkreise</div><div className="hud-value text-2xl">{result.circles}</div></div>
             </div>
+            <div className="mt-3 rounded-lg border border-border bg-background p-1">
+              <TrackOverview track={finishedTrack.current.length >= 2 ? finishedTrack.current : null} />
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>
             {submitState === "saved" && <p className="mt-4 rounded-lg border border-climb/40 bg-climb/10 py-2 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
             {submitState === "failed" && <p className="mt-4 rounded-lg border border-sink/40 bg-sink/10 py-2 text-sm font-semibold text-sink">Eintragen fehlgeschlagen – bitte erneut versuchen.</p>}
             {(submitState === "idle" || submitState === "sending" || submitState === "failed") && (
