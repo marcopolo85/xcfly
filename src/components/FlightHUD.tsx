@@ -54,7 +54,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         </div>
         <Cell label="CLOSE" value={d.close > 0 ? (d.close / 1000).toFixed(1) : "0.0"} unit="km" cls={d.close > 0 ? "text-sun" : "text-climb"} />
         <Cell label="WOLKENBASIS" value={d.cloudbase.toFixed(0)} unit="m" />
-        {d.remain !== undefined && <Cell label="RESTZEIT" value={fmtTime(d.remain)} cls={d.remain < 600 ? "text-sink" : ""} />}
+        {d.remain !== undefined && <Cell label="RESTZEIT" value={fmtCountdown(d.remain)} cls={d.remain < 600 ? "text-sink" : ""} />}
         {d.returnRadius !== undefined && <Cell label="START" value={((d.outDist ?? 0) / 1000).toFixed(1)} unit="km" cls={(d.outDist ?? 0) <= d.returnRadius ? "text-climb" : ""} />}
       </div>
       </div>
