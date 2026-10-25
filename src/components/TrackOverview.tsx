@@ -1,29 +1,55 @@
-const W = 320, H = 220, P = 20;
-
-function trackPath(track: [number, number][]) {
-  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-  for (const [lat, lng] of track) {
-    if (lat < minLat) minLat = lat;
-    if (lat > maxLat) maxLat = lat;
-    if (lng < minLng) minLng = lng;
-    if (lng > maxLng) maxLng = lng;
-  }
-  const dLat = Math.max(1e-4, maxLat - minLat);
-  const dLng = Math.max(1e-4, maxLng - minLng);
-  const scale = Math.min((W - 2 * P) / dLng, (H - 2 * P) / dLat);
-  const pts = track.map(([lat, lng]) => `${(P + (lng - minLng) * scale).toFixed(1)},${(H - P - (lat - minLat) * scale).toFixed(1)}`);
-  return { pts: pts.join(" "), first: pts[0] };
-}
+import { useEffect, useRef } from "react";
+import { fitTrackOverview } from "@/game/trackOverview";
+import { drawSwissRelief, getMapStyle, MAP_STYLES } from "./SwissRelief";
 
 export function TrackOverview({ track }: { track: [number, number][] | null }) {
-  const path = track && track.length >= 2 ? trackPath(track) : null;
-  if (!path) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const creditRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !track || track.length < 2) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    let frame = 0;
+    const draw = () => {
+      const width = canvas.clientWidth, height = canvas.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      const fit = fitTrackOverview(track, width, height);
+      if (!fit) { frame = requestAnimationFrame(draw); return; }
+      if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+        canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const theme = getComputedStyle(canvas);
+      ctx.fillStyle = theme.getPropertyValue("--background").trim();
+      ctx.fillRect(0, 0, width, height);
+      const mapStyle = getMapStyle();
+      drawSwissRelief(ctx, fit.site, fit.x, fit.y, width, height, fit.zoom, dpr, mapStyle);
+      const credit = MAP_STYLES.find((style) => style.v === mapStyle)?.credit ?? "";
+      if (creditRef.current && creditRef.current.textContent !== credit) creditRef.current.textContent = credit;
+      ctx.beginPath();
+      fit.points.forEach((point, index) => { if (index === 0) ctx.moveTo(point.x, point.y); else ctx.lineTo(point.x, point.y); });
+      ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.lineWidth = 5; ctx.stroke();
+      ctx.strokeStyle = theme.getPropertyValue("--primary").trim(); ctx.lineWidth = 2.5; ctx.stroke();
+      const start = fit.points[0];
+      if (start) {
+        ctx.beginPath(); ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = theme.getPropertyValue("--climb").trim(); ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.stroke();
+      }
+      frame = requestAnimationFrame(draw);
+    };
+    frame = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(frame);
+  }, [track]);
+  if (!track || track.length < 2) {
     return <p className="py-16 text-center text-xs text-muted-foreground">Keine Trackdaten vorhanden.</p>;
   }
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full">
-      <polyline points={path.pts} fill="none" stroke="currentColor" className="text-primary" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={Number(path.first.split(",")[0])} cy={Number(path.first.split(",")[1])} r="4" className="fill-climb" />
-    </svg>
+    <div>
+      <canvas ref={canvasRef} role="img" aria-label="Flugtrack auf der ausgewählten Karte" className="block aspect-[16/11] w-full" />
+      <p ref={creditRef} className="mt-1 text-right text-[9px] text-muted-foreground" />
+    </div>
   );
 }
