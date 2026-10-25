@@ -4,7 +4,7 @@ import { thermalRegionBounds } from "./thermalRegion";
 import { thermalHeat, thermalTileUrl } from "./thermalRaster";
 import { tileResponse } from "@/lib/offline-data";
 
-export interface RegionalTile { x: number; y: number; blob: Blob; image?: ImageBitmap | undefined; pending?: boolean }
+export interface RegionalTile { x: number; y: number; blob: Blob; preview: HTMLCanvasElement; image?: ImageBitmap | undefined; pending?: boolean }
 export interface ThermalProgress { loaded: number; total: number }
 const tiles = new Map<string, RegionalTile>();
 const heat = new Map<string, Uint8Array>();
@@ -14,7 +14,8 @@ const listeners = new Set<(p: ThermalProgress) => void>();
 let progress: ThermalProgress = { loaded: 0, total: 0 };
 
 /** Decode only visible tiles; keep the full region as compressed PNGs and sparse heat bytes. */
-export function regionalTileImage(tile: RegionalTile) {
+export function regionalTileImage(tile: RegionalTile, size = 256) {
+  if (size < 64) return tile.preview;
   const key = `${tile.x},${tile.y}`;
   if (tile.image) {
     decoded.delete(key); decoded.set(key, tile);
@@ -35,7 +36,7 @@ export function regionalTileImage(tile: RegionalTile) {
       }
     }).catch(() => {}).finally(() => { tile.pending = false; });
   }
-  return undefined;
+  return tile.preview;
 }
 
 /** Fetch the complete rectangle once per session, retaining successful tiles for retries. */
@@ -74,7 +75,12 @@ async function fetchRegion() {
             if (strength[i]) hasHeat = true;
           }
           if (hasHeat) heat.set(key, strength);
-          tiles.set(key, { ...job, blob });
+          const preview = document.createElement("canvas");
+          preview.width = 32; preview.height = 32;
+          const previewContext = preview.getContext("2d");
+          if (!previewContext) throw new Error("Thermikkarte nicht lesbar");
+          previewContext.drawImage(image, 0, 0, 32, 32);
+          tiles.set(key, { ...job, blob, preview });
           loaded++;
           report();
         } finally { image.close(); }

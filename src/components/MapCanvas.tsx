@@ -380,7 +380,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
         const tx = sx((tile.x * 256 * metresPerPixel - MERCATOR_EXTENT - origin.x) * origin.scale);
         const ty = sy((MERCATOR_EXTENT - tile.y * 256 * metresPerPixel - origin.y) * origin.scale);
         if (tx + size < 0 || ty + size < 0 || tx > W || ty > H) continue;
-        const surface = regionalTileImage(tile);
+        const surface = regionalTileImage(tile, size);
         if (surface) ctx.drawImage(surface, tx, ty, size + 0.5, size + 0.5);
       }
     }
