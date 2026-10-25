@@ -11,6 +11,8 @@ import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
+import { MODE_TIME_LIMIT_S, modeLabel, modeScore, RETURN_RADIUS_M, type FlightMode } from "@/game/modes";
+import { submitFlight } from "./Leaderboard";
 import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
@@ -30,7 +32,9 @@ export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
   const [config, setConfig] = useState<FlightConfig | null>(null);
   const [hud, setHud] = useState<HudData | null>(null);
-  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number } | null>(null);
+  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number; score: number; mode: FlightMode } | null>(null);
+  const [pilotName, setPilotName] = useState("");
+  const [submitState, setSubmitState] = useState<"idle" | "sending" | "saved" | "skipped" | "failed">("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [coverageStatus, setCoverageStatus] = useState<"ready" | "loading" | "error">("ready");
   const coverageRetry = useRef(false);
@@ -65,6 +69,7 @@ export function FlightGame() {
     setCoverageStatus("ready");
     mapZoom.reset(); profileZoom.reset();
     setResult(null);
+    setSubmitState("idle");
     setPhase("loading");
     setRunId((r) => r + 1);
   };
@@ -129,6 +134,14 @@ export function FlightGame() {
       const trail: { x: number; y: number; vz: number }[] = [];
       let triangle: XcTriangle | null = null, lastTri = 0;
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
+      let maxOutDist = 0;
+      const finish = (reason: string) => {
+        vario.current?.update(0);
+        const endOutDist = Math.hypot(sim.x, sim.y);
+        const { score, goal } = modeScore(config.mode, maxOutDist, endOutDist, sim.xcDist);
+        setResult({ goal, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, score, mode: config.mode });
+        setPhase("done");
+      };
       if (cancelled) return;
       setPhase("flying");
 
@@ -182,14 +195,14 @@ export function FlightGame() {
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
+            remain: config.mode === "free" ? undefined : Math.max(0, MODE_TIME_LIMIT_S - sim.flightTime),
+            outDist: Math.hypot(sim.x, sim.y), returnRadius: config.mode === "out_return" ? RETURN_RADIUS_M : undefined,
           });
         }
-        if (sim.landed) {
-          vario.current?.update(0);
-          setResult({ goal: false, xc, time: sim.flightTime, reason: "Gelandet", maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles });
-          setPhase("done");
-          return;
-        }
+        const outDist = Math.hypot(sim.x, sim.y);
+        if (outDist > maxOutDist) maxOutDist = outDist;
+        if (sim.landed) { finish("Gelandet"); return; }
+        if (config.mode !== "free" && sim.flightTime >= MODE_TIME_LIMIT_S) { finish("Zeitlimit (4 h)"); return; }
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
@@ -298,9 +311,13 @@ export function FlightGame() {
       {phase === "done" && result && (
         <div className="absolute inset-0 grid place-items-center bg-background/70 p-6 backdrop-blur-sm">
           <div className="hud-panel w-full max-w-sm p-6 text-center">
-            <p className="hud-label">{config?.site.name}</p>
+            <p className="hud-label">{config?.site.name} · {modeLabel(result.mode)}</p>
             <h2 className={`mt-1 font-display text-4xl font-bold ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <p className="mt-1 font-mono text-sm text-muted-foreground">
+              {result.mode === "out_return" ? (result.goal ? `Zurück im ${RETURN_RADIUS_M}-m-Radius` : `Nicht zurück – zählt nicht`) : ""}
+            </p>
+            <div className="hud-cell mt-3"><div className="hud-label">Wertung</div><div className="hud-value text-3xl">{(result.score / 1000).toFixed(1)} km</div></div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="hud-cell"><div className="hud-label">XC Strecke</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)} km</div></div>
               <div className="hud-cell"><div className="hud-label">XC Punkte</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)}</div></div>
               <div className="hud-cell"><div className="hud-label">Flugdauer</div><div className="hud-value text-2xl">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
@@ -310,7 +327,23 @@ export function FlightGame() {
               <div className="hud-cell"><div className="hud-label">Thermiken</div><div className="hud-value text-2xl">{result.thermals}</div></div>
               <div className="hud-cell"><div className="hud-label">Thermikkreise</div><div className="hud-value text-2xl">{result.circles}</div></div>
             </div>
-            <div className="mt-5 flex gap-2">
+            {submitState === "saved" && <p className="mt-4 rounded-lg border border-climb/40 bg-climb/10 py-2 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
+            {submitState === "failed" && <p className="mt-4 rounded-lg border border-sink/40 bg-sink/10 py-2 text-sm font-semibold text-sink">Eintragen fehlgeschlagen – bitte erneut versuchen.</p>}
+            {(submitState === "idle" || submitState === "sending" || submitState === "failed") && (
+              <div className="mt-4 rounded-lg border border-border p-3 text-left">
+                <label className="hud-label" htmlFor="pilot-name">Rangliste</label>
+                <div className="mt-1.5 flex gap-2">
+                  <input id="pilot-name" value={pilotName} onChange={(e) => setPilotName(e.target.value)} maxLength={40} placeholder="Dein Name" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground" />
+                  <button disabled={submitState === "sending" || pilotName.trim().length === 0} className="rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50" onClick={() => {
+                    if (!config) return;
+                    setSubmitState("sending");
+                    void submitFlight(pilotName, config.site.name, result.mode, result.score / 1000, result.time).then((err) => setSubmitState(err ? "failed" : "saved"));
+                  }}>{submitState === "sending" ? "…" : "Eintragen"}</button>
+                  <button className="rounded-md border border-border px-3 py-2 text-sm font-bold text-foreground" onClick={() => setSubmitState("skipped")}>Abbrechen</button>
+                </div>
+              </div>
+            )}
+            <div className="mt-4 flex gap-2">
               <button className="flex-1 rounded-lg bg-primary py-3 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
               <button className="flex-1 rounded-lg border border-border py-3 font-bold text-foreground" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</button>
             </div>

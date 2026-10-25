@@ -39,15 +39,19 @@ describe("KK7 July / All day thermal areas", () => {
     raster.strength.fill(0);
     expect(airLift(field, terrain, 0, 0, 1000, 0, { x: 0, y: 0, z: 0.87 }, 4.5)).toBeLessThan(0);
   });
-  it("maps the color scale to climb rates: blue 2 m/s, dark red 6 m/s", () => {
+  it("maps the color scale to randomized climb rates: blue 1–3 m/s, dark red 6–9 m/s", () => {
     const site = SITES[0], pixel = localToPixel(site, 0, 0);
     const terrain: Terrain = { site, h: new Float32Array(N * N), cb: new Float32Array(1600).fill(3000), cbN: 40 };
     const raster: ThermalRaster = { site, left: pixel.px - 1, top: pixel.py - 1, width: 2, height: 2, strength: new Float32Array(4) };
     const field = { grid: new Map(), count: 0, raster };
     const sun = { x: 0, y: 0, z: 0.87 };
     raster.strength.fill(0.1); // blue
-    expect(airLift(field, terrain, 0, 0, 1000, 0, sun, 4.5)).toBeCloseTo(2, 1);
+    const blue = airLift(field, terrain, 0, 0, 1000, 0, sun, 4.5);
+    expect(blue).toBeGreaterThanOrEqual(1);
+    expect(blue).toBeLessThanOrEqual(3);
     raster.strength.fill(1); // dark red
-    expect(airLift(field, terrain, 0, 0, 1000, 0, sun, 4.5)).toBeCloseTo(6, 1);
+    const red = airLift(field, terrain, 0, 0, 1000, 0, sun, 4.5);
+    expect(red).toBeGreaterThanOrEqual(6);
+    expect(red).toBeLessThanOrEqual(9);
   });
 });
