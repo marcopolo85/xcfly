@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Full-region thermal coverage uses compressed per-tile PNGs, sparse byte heat arrays and a bounded visible-bitmap cache; never allocate a single country-sized canvas. Regional coverage is reused independently of moving terrain windows, with local mosaics beyond its bounds.
 - Track overviews reuse the flight map tile renderer and launch-relative Mercator projection with its 55% vertical anchor; fit the full track and read the selected map style so summaries and ranking popups remain aligned with the flight map.
 - Offline support is opt-in: generate the app-shell worker with vite-plugin-pwa, register only through offline-worker with preview guards, and persist CORS-readable regional tiles in a bounded Cache Storage cache; missing offline terrain/thermal coverage must fail or pause rather than fabricate data.
 - Cache static contour paths in bounded, terrain-keyed world-space windows; transform them at draw time and recompute the exact flight-altitude contour each frame so performance improvements do not delay altitude feedback.
