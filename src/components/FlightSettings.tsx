@@ -87,27 +87,6 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
                 <Switch checked={showAirspaceLabels} onCheckedChange={onShowAirspaceLabels} aria-label="Luftraum-Beschriftung anzeigen" />
               </div>
             </Section>
-            <Section title="Offline"><OfflineSettings site={site} /></Section>
-            <Section title="Copyright & Quellen">
-              <div className="space-y-2 text-[11px] leading-snug">
-                <div>
-                  <span className="text-muted-foreground">Karte: </span>
-                  <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="underline">{credit}</a>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Thermik: </span>
-                  <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer" className="underline">M. von Känel · KK7 · Juli / All day</a>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Lufträume: </span>
-                  <a href="https://www.bazl.admin.ch/" target="_blank" rel="noopener noreferrer" className="underline">© BAZL · geo.admin.ch</a> (nicht für Navigation)
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Lizenz: </span>
-                  <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener noreferrer" className="underline">CC BY-NC-SA 4.0 · bearbeitet</a>
-                </div>
-              </div>
-            </Section>
           </div>
         </SheetContent>
       </Sheet>
