@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
-import { X } from "lucide-react";
+import { modeLabel, type FlightMode } from "@/game/modes";
 
 interface Entry {
   id: string;
