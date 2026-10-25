@@ -69,6 +69,7 @@ export function FlightGame() {
     setCoverageStatus("ready");
     mapZoom.reset(); profileZoom.reset();
     setResult(null);
+    setSubmitState("idle");
     setPhase("loading");
     setRunId((r) => r + 1);
   };
@@ -310,9 +311,13 @@ export function FlightGame() {
       {phase === "done" && result && (
         <div className="absolute inset-0 grid place-items-center bg-background/70 p-6 backdrop-blur-sm">
           <div className="hud-panel w-full max-w-sm p-6 text-center">
-            <p className="hud-label">{config?.site.name}</p>
+            <p className="hud-label">{config?.site.name} · {modeLabel(result.mode)}</p>
             <h2 className={`mt-1 font-display text-4xl font-bold ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
-            <div className="mt-5 grid grid-cols-2 gap-2">
+            <p className="mt-1 font-mono text-sm text-muted-foreground">
+              {result.mode === "out_return" ? (result.goal ? `Zurück im ${RETURN_RADIUS_M}-m-Radius` : `Nicht zurück – zählt nicht`) : ""}
+            </p>
+            <div className="hud-cell mt-3"><div className="hud-label">Wertung</div><div className="hud-value text-3xl">{(result.score / 1000).toFixed(1)} km</div></div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="hud-cell"><div className="hud-label">XC Strecke</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)} km</div></div>
               <div className="hud-cell"><div className="hud-label">XC Punkte</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)}</div></div>
               <div className="hud-cell"><div className="hud-label">Flugdauer</div><div className="hud-value text-2xl">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
@@ -322,7 +327,23 @@ export function FlightGame() {
               <div className="hud-cell"><div className="hud-label">Thermiken</div><div className="hud-value text-2xl">{result.thermals}</div></div>
               <div className="hud-cell"><div className="hud-label">Thermikkreise</div><div className="hud-value text-2xl">{result.circles}</div></div>
             </div>
-            <div className="mt-5 flex gap-2">
+            {submitState === "saved" && <p className="mt-4 rounded-lg border border-climb/40 bg-climb/10 py-2 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
+            {submitState === "failed" && <p className="mt-4 rounded-lg border border-sink/40 bg-sink/10 py-2 text-sm font-semibold text-sink">Eintragen fehlgeschlagen – bitte erneut versuchen.</p>}
+            {(submitState === "idle" || submitState === "sending" || submitState === "failed") && (
+              <div className="mt-4 rounded-lg border border-border p-3 text-left">
+                <label className="hud-label" htmlFor="pilot-name">Rangliste</label>
+                <div className="mt-1.5 flex gap-2">
+                  <input id="pilot-name" value={pilotName} onChange={(e) => setPilotName(e.target.value)} maxLength={40} placeholder="Dein Name" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground" />
+                  <button disabled={submitState === "sending" || pilotName.trim().length === 0} className="rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50" onClick={() => {
+                    if (!config) return;
+                    setSubmitState("sending");
+                    void submitFlight(pilotName, config.site.name, result.mode, result.score / 1000, result.time).then((err) => setSubmitState(err ? "failed" : "saved"));
+                  }}>{submitState === "sending" ? "…" : "Eintragen"}</button>
+                  <button className="rounded-md border border-border px-3 py-2 text-sm font-bold text-foreground" onClick={() => setSubmitState("skipped")}>Abbrechen</button>
+                </div>
+              </div>
+            )}
+            <div className="mt-4 flex gap-2">
               <button className="flex-1 rounded-lg bg-primary py-3 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
               <button className="flex-1 rounded-lg border border-border py-3 font-bold text-foreground" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</button>
             </div>
