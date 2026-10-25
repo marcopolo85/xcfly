@@ -19,6 +19,7 @@ function Cell({ label, value, unit, cls = "" }: { label: string; value: string; 
 const vzCls = (v: number) => (v > 0.1 ? "text-climb" : v < -1.5 ? "text-sink" : "");
 const fmtVz = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 const fmtTime = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+const fmtCountdown = (t: number) => `${Math.floor(t / 3600)}:${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 export function FlightHUD({ d }: { d: HudData }) {
   return (
