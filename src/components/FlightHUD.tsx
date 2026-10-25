@@ -4,7 +4,7 @@ export interface HudData {
   xc: number; xcSpeed: number;
   tri: number; triFai: boolean; triMin: number; triMax: number; close: number;
   clock: string; accel: boolean; cloudbase: number;
-  remain?: number; outDist?: number; returnRadius?: number;
+  remain?: number | undefined; outDist?: number | undefined; returnRadius?: number | undefined;
 }
 
 function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string; cls?: string }) {
