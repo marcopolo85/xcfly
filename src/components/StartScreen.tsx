@@ -68,7 +68,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <h2 className="hud-label mb-1.5">Startplatz</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {sortedSites.map((s) => (
-                <Button variant="outline" onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
+                <Button key={s.id} variant="outline" onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
                     <span
