@@ -16,7 +16,6 @@ interface Entry {
 
 const RANKED_MODES = ["out_return", "one_way"] as const;
 
-const fmtDur = (s: number) => `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")} h`;
 
 export async function submitFlight(pilot: string, site: string, mode: FlightMode, distanceKm: number, durationS: number): Promise<string | null> {
   const { error } = await supabase.from("leaderboard_entries").insert({
@@ -77,19 +76,15 @@ export function Leaderboard({ initialSite, onClose }: { initialSite?: string; on
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="hud-label text-left">
-                        <th className="py-1 pr-1">#</th>
                         <th className="py-1 pr-1">Pilot</th>
-                        <th className="py-1 pr-1 text-right">Km</th>
-                        <th className="py-1 text-right">Zeit</th>
+                        <th className="py-1 text-right">Km</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {list.map((e, i) => (
+                      {list.map((e) => (
                         <tr key={e.id} className="border-t border-border/50 text-foreground">
-                          <td className="py-1 pr-1 font-mono text-muted-foreground">{i + 1}</td>
                           <td className="max-w-0 truncate py-1 pr-1 font-semibold">{e.pilot_name}</td>
-                          <td className="py-1 pr-1 text-right font-mono font-bold">{e.distance_km.toFixed(1)}</td>
-                          <td className="py-1 text-right font-mono text-muted-foreground">{fmtDur(e.duration_s)}</td>
+                          <td className="py-1 text-right font-mono font-bold">{e.distance_km.toFixed(1)}</td>
                         </tr>
                       ))}
                     </tbody>
