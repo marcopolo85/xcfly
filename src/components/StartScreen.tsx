@@ -83,7 +83,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
         </div>
       </div>
       {choosing && <LaunchMapPicker initial={site} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
-      {ranking && <Leaderboard initialSite={site.name} onClose={() => setRanking(false)} />}
+      {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
     </div>
   );
 }
