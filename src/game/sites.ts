@@ -22,6 +22,8 @@ export const SITES: Site[] = [
   { id: "rotenflue", name: "Rotenflue", region: "Schwyz · Zentralschweiz", lat: 47.017647, lon: 8.700672, launchAlt: 1502, valley: 500, peak: 1900, lake: true, seed: 113 },
   { id: "pilatus", name: "Pilatus Kulm", region: "Kriens · Luzern", lat: 46.979386, lon: 8.255175, launchAlt: 2040, valley: 450, peak: 2128, lake: true, seed: 131 },
   { id: "brunni", name: "Brunni (Tümpfeli)", region: "Engelberg · Obwalden", lat: 46.840833, lon: 8.415, launchAlt: 1977, valley: 1000, peak: 3200, lake: false, seed: 149 },
+  { id: "uetliberg", name: "Üetliberg (Balderen)", region: "Zürich", lat: 47.3226, lon: 8.5008, launchAlt: 730, valley: 400, peak: 873, lake: true, seed: 167 },
+  { id: "fiesch", name: "Fiesch (Heimat)", region: "Fiescheralp · Wallis", lat: 46.41472, lon: 8.10889, launchAlt: 2150, valley: 1049, peak: 2900, lake: false, seed: 181 },
 ];
 
 export type Season = "spring" | "summer" | "autumn" | "winter";
