@@ -20,6 +20,13 @@ export const HOLD_BOOST_FACTOR = 20;
 
 export type HoldStarts = { left: number | null; right: number | null };
 
+/** Keep the original press time when the OS repeats a held arrow key. */
+export function setTurnInput(input: Input, starts: HoldStarts, key: "left" | "right", pressed: boolean, nowReal: number) {
+  if (pressed && !input[key]) starts[key] = nowReal;
+  if (!pressed) starts[key] = null;
+  input[key] = pressed;
+}
+
 // ×20 simulation rate while a turn button has been held for HOLD_BOOST_MS or longer.
 export function holdBoost(input: Input, holdStart: HoldStarts, nowReal: number) {
   const longHold = (key: "left" | "right") =>
