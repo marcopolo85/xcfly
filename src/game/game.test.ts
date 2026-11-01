@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { timeScale, steer, stepPhysics, TURN_RATE, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, type Sim } from "./physicsEngine";
+import { timeScale, steer, stepPhysics, TURN_RATE, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, setTurnInput, type HoldStarts, type Sim } from "./physicsEngine";
 import { cloudbaseAt, cloudbaseFromPeak, finalizeTerrain, heightAt, N } from "./terrain";
 import { SITES } from "./sites";
 import { mulberry32 } from "./rng";
@@ -17,7 +17,23 @@ describe("game rules", () => {
     expect(timeScale(false, 3)).toBe(3);
     expect(timeScale(true, 3)).toBe(120);
   });
-  it("holding a turn button for 2s boosts the simulation rate 10x until release", () => {
+  it.each(["left", "right"] as const)("holding the %s arrow with keyboard repeats boosts 20x after 2s until release", (key) => {
+    const input = { left: false, right: false, accel: false };
+    const starts: HoldStarts = { left: null, right: null };
+    setTurnInput(input, starts, key, true, 1000);
+    for (let now = 1300; now < 4000; now += 100) {
+      setTurnInput(input, starts, key, true, now);
+      expect(starts[key]).toBe(1000);
+      expect(holdBoost(input, starts, now)).toBe(now < 3000 ? 1 : 20);
+    }
+    setTurnInput(input, starts, key, false, 4000);
+    expect(holdBoost(input, starts, 4000)).toBe(1);
+    expect(starts[key]).toBeNull();
+    setTurnInput(input, starts, key, true, 5000);
+    expect(holdBoost(input, starts, 6999)).toBe(1);
+    expect(holdBoost(input, starts, 7000)).toBe(20);
+  });
+  it("holding a turn button for 2s boosts the simulation rate 20x until release", () => {
     const input = { left: false, right: true, accel: false };
     const starts = { left: null, right: 1000 };
     expect(holdBoost(input, starts, 1000 + 1999)).toBe(1);

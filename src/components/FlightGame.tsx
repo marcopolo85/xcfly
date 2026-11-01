@@ -8,7 +8,7 @@ import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt, type Terrain } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
-import { stepPhysics, steer, timeScale, holdBoost, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
+import { stepPhysics, steer, timeScale, holdBoost, setTurnInput, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { MODE_TIME_LIMIT_S, modeLabel, modeScore, RETURN_RADIUS_M, type FlightMode } from "@/game/modes";
@@ -230,11 +230,9 @@ export function FlightGame() {
     const set = (e: KeyboardEvent, v: boolean) => {
       if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable='true']")) return;
       if (e.code === "ArrowLeft") {
-        input.current.left = v;
-        holdStart.current.left = v ? performance.now() : null;
+        setTurnInput(input.current, holdStart.current, "left", v, performance.now());
       } else if (e.code === "ArrowRight") {
-        input.current.right = v;
-        holdStart.current.right = v ? performance.now() : null;
+        setTurnInput(input.current, holdStart.current, "right", v, performance.now());
       } else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
       else return;
       e.preventDefault();
