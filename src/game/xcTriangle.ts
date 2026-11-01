@@ -29,11 +29,16 @@ export function bestTriangle(xs: number[], ys: number[], cur: Pt): XcTriangle | 
   for (let i = 0; i < n; i += stride) pts.push({ x: xs[i], y: ys[i] });
   pts.push(cur);
   const m = pts.length;
+  // Each leg occurs in many candidate triangles: calculate it once, not per triple.
+  const distances = new Float64Array(m * m);
+  for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
+    distances[i * m + j] = distances[j * m + i] = d(pts[i], pts[j]);
+  }
   let best: XcTriangle | null = null, bestScore = 0;
   for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
-    const lij = d(pts[i], pts[j]);
+    const lij = distances[i * m + j];
     for (let k = j + 1; k < m; k++) {
-      const l2 = d(pts[j], pts[k]), l3 = d(pts[k], pts[i]);
+      const l2 = distances[j * m + k], l3 = distances[k * m + i];
       const p = lij + l2 + l3;
       const fai = Math.min(lij, l2, l3) >= FAI_MIN_LEG * p;
       const score = p * (fai ? 1.4 : 1.2);

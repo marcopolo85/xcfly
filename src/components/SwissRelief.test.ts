@@ -39,10 +39,11 @@ it("filters each relief tile once and reuses the processed surface on subsequent
     expect(drawSwissRelief(ctx, site, 0, 0, 426, 791, 0.085, 2.25).loaded).toBe(initialImages / 4);
   }
   expect(images).toHaveLength(initialImages);
-  expect(surfaces).toHaveLength(processed);
-  expect(surfaces.every(surface => surface.drawImage.mock.calls.length === 1)).toBe(true);
+  expect(surfaces).toHaveLength(processed + initialImages / 4);
+  expect(surfaces.slice(0, processed).every(surface => surface.drawImage.mock.calls.length === 1)).toBe(true);
+  expect(surfaces.slice(processed).every(surface => surface.drawImage.mock.calls.length === 4)).toBe(true);
   expect(context.filter).toBe("none");
-  expect(context.drawImage).toHaveBeenCalledTimes(initialImages * 60);
+  expect(context.drawImage).toHaveBeenCalledTimes(initialImages / 4 * 60);
   // Appearance changes must not reuse tiles processed with the previous theme.
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "none" }));
   drawSwissRelief(ctx, site, 0, 0, 426, 791, 0.085, 2.25);
@@ -85,4 +86,32 @@ it("fills transparent swisstopo tiles beyond the Swiss border from a global unde
   const before = images.length;
   drawSwissRelief(context as unknown as CanvasRenderingContext2D, site, 12345, 12345, 426, 791, 0.085, 2.25);
   expect(images).toHaveLength(before);
+});
+
+it("refreshes the composed tile when a delayed overlay arrives, then reuses it", () => {
+  const images: { src: string; onload?: () => void }[] = [];
+  vi.stubGlobal("Image", class {
+    naturalWidth = 256; naturalHeight = 256; src = ""; onload?: () => void;
+    constructor() { images.push(this); }
+  });
+  const surfaces: { drawImage: ReturnType<typeof vi.fn> }[] = [];
+  vi.stubGlobal("document", { createElement: () => {
+    const context = { filter: "none", drawImage: vi.fn(), fillRect: vi.fn() };
+    surfaces.push(context);
+    return { width: 0, height: 0, getContext: () => context };
+  } });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "delayed-overlay-test" }));
+  const context = { canvas: {}, drawImage: vi.fn() };
+  const draw = () => drawSwissRelief(context as unknown as CanvasRenderingContext2D, SITES[0], -18000, -18000, 200, 200, 0.085, 1);
+  draw();
+  const base = images.find(image => image.src.includes("reliefschattierung"));
+  const water = images.find(image => image.src.includes("vec25-seen"));
+  expect(base).toBeDefined(); expect(water).toBeDefined();
+  base?.onload?.(); draw();
+  const composite = surfaces.at(-1);
+  expect(composite?.drawImage).toHaveBeenCalledTimes(1);
+  water?.onload?.(); draw();
+  expect(composite?.drawImage).toHaveBeenCalledTimes(3);
+  draw();
+  expect(composite?.drawImage).toHaveBeenCalledTimes(3);
 });

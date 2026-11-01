@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 import { MAP_STYLES, setMapStyle, type MapStyle } from "./SwissRelief";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -15,7 +15,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
+export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
   showProfile: boolean;
@@ -91,4 +91,4 @@ export function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, 
       </Sheet>
     </>
   );
-}
+});
