@@ -23,6 +23,29 @@ export function getMapStyle(): MapStyle {
 
 type Tile = { image: HTMLImageElement; surface?: HTMLCanvasElement; loaded: boolean; failedAt: number };
 const cache = new Map<string, Tile>();
+const composites = new Map<string, { sources: CanvasImageSource[]; surface: HTMLCanvasElement }>();
+
+/** Rebuild only when a layer arrives or its processed surface changes. */
+function composedTile(key: string, layers: Tile[]) {
+  const sources = layers.filter((layer) => layer.loaded).map((layer) => layer.surface ?? layer.image);
+  const existing = composites.get(key);
+  if (existing && existing.sources.length === sources.length && sources.every((source, i) => source === existing.sources[i])) return existing.surface;
+  const base = layers[0];
+  if (!base?.loaded) return null;
+  const surface = existing?.surface ?? document.createElement("canvas");
+  surface.width = base.image.naturalWidth;
+  surface.height = base.image.naturalHeight;
+  const context = surface.getContext("2d");
+  if (!context) return null;
+  for (const source of sources) context.drawImage(source, 0, 0);
+  composites.delete(key);
+  composites.set(key, { sources, surface });
+  if (composites.size > 64) {
+    const oldest = composites.keys().next().value;
+    if (oldest !== undefined) composites.delete(oldest);
+  }
+  return surface;
+}
 
 function loadImageElement(url: string, onready: (image: HTMLImageElement) => void, onfail: () => void) {
   const image = new Image();
@@ -120,22 +143,15 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Pick<Site, 
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr, offline ? 12 : 17)) {
     const tile = tileImage(style.url(position.level, position.x, position.y), relief ? reliefFilter : "none", "", style.fallback?.(position.level, position.x, position.y));
     if (tile.loaded) {
-      ctx.drawImage(tile.surface ?? tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
+      if (!relief) ctx.drawImage(tile.surface ?? tile.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
       loaded++;
     } else if (tile.failedAt) failed++;
     if (!relief) continue;
     const water = tileImage(waterTileUrl(position.x, position.y, position.level), "none", waterColor);
-    if (tile.loaded && water.loaded) {
-      ctx.drawImage(water.surface ?? water.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
-    }
     const forest = tileImage(forestTileUrl(position.x, position.y, position.level), "none", forestColor);
-    if (tile.loaded && forest.loaded) {
-      ctx.drawImage(forest.surface ?? forest.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
-    }
     const river = tileImage(riverTileUrl(position.x, position.y, position.level), "none", waterColor);
-    if (tile.loaded && river.loaded) {
-      ctx.drawImage(river.surface ?? river.image, position.left, position.top, position.size + 0.5, position.size + 0.5);
-    }
+    const surface = composedTile(`${position.level}/${position.x}/${position.y}/${reliefFilter}/${waterColor}/${forestColor}`, [tile, water, forest, river]);
+    if (surface) ctx.drawImage(surface, position.left, position.top, position.size + 0.5, position.size + 0.5);
   }
   return { loaded, failed };
 }
