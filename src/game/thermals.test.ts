@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SITES } from "./sites";
-import { generateTerrain, heightAt } from "./terrain";
-import { airLift, generateThermals, peakLift, type ThermalField } from "./thermals";
+import { generateTerrain, heightAt, N, type Terrain } from "./terrain";
+import { airLift, generateThermals, peakLift, sunlitSurfaceLift, type ThermalField } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 import { mulberry32 } from "./rng";
 import { POLAR } from "./physicsEngine";
@@ -82,5 +82,40 @@ describe("summit thermals", () => {
     expect(other).not.toBe(low);
     expect(other).toBeGreaterThanOrEqual(3);
     expect(other).toBeLessThanOrEqual(6);
+  });
+});
+
+describe("sunlit surfaces below ridge height", () => {
+  const terrain: Terrain = {
+    h: new Float32Array(N * N).fill(500),
+    cb: new Float32Array(1600).fill(2500), cbN: 40, site: SITES[0],
+  };
+  const sun = { x: 0, y: 0, z: 1 };
+  const candidates: { x: number; y: number; lift: number }[] = [];
+  for (let y = -2000; y <= 2000; y += 100) for (let x = -2000; x <= 2000; x += 100) {
+    candidates.push({ x, y, lift: sunlitSurfaceLift(terrain, x, y, 550, sun) });
+  }
+  const best = candidates.reduce((a, b) => a.lift > b.lift ? a : b);
+
+  it("provides net climb close to sunlit ground without a summit or KK7 heat", () => {
+    const { px, py } = localToPixel(terrain.site, best.x, best.y, THERMAL_ZOOM);
+    const field: ThermalField = { grid: new Map(), count: 0, raster: {
+      site: terrain.site, left: Math.floor(px) - 1, top: Math.floor(py) - 1,
+      width: 8, height: 8, strength: new Float32Array(64),
+    } };
+    expect(airLift(field, terrain, best.x, best.y, 550, 39600, sun, 4.5) - POLAR.trim.sink).toBeGreaterThan(0);
+    expect(candidates.some(p => p.lift < 0.1)).toBe(true);
+  });
+  it("keeps random sources stable across frames and moving terrain windows", () => {
+    expect(sunlitSurfaceLift(terrain, best.x, best.y, 550, sun)).toBe(best.lift);
+    expect(sunlitSurfaceLift({ ...terrain, centerX: 1000, centerY: 1000 }, best.x, best.y, 550, sun)).toBe(best.lift);
+  });
+  it("does not produce surface thermals at night or on poorly illuminated surfaces", () => {
+    expect(sunlitSurfaceLift(terrain, best.x, best.y, 550, { x: 0, y: 0, z: -1 })).toBe(0);
+    expect(sunlitSurfaceLift(terrain, best.x, best.y, 550, { x: 0.98, y: 0, z: 0.2 })).toBe(0);
+  });
+  it("stops at cloudbase and does not create lift below ground", () => {
+    expect(sunlitSurfaceLift(terrain, best.x, best.y, 2500, sun)).toBe(0);
+    expect(sunlitSurfaceLift(terrain, best.x, best.y, 500, sun)).toBe(0);
   });
 });
