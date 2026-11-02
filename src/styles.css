@@ -96,6 +96,8 @@
   --sun: oklch(0.85 0.17 85);
   --profile-mountain: oklch(0.35 0.045 155);
   --profile-ridge: oklch(0.7 0.065 155);
+  --glide-boundary: oklch(0.94 0.14 95);
+  --glide-boundary-outline: oklch(0.23 0.02 250 / 0.8);
   --map-relief-filter: contrast(1.45) brightness(0.88);
   --map-water: oklch(0.68 0.12 235);
   --map-forest: oklch(0.42 0.09 145 / 0.4);

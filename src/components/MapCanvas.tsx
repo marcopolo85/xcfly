@@ -11,6 +11,9 @@ import { regionalTileImage } from "@/game/loadThermalRegion";
 import { CLOSING_RATIO, type XcTriangle } from "@/game/xcTriangle";
 import wingUrl from "@/assets/glider-wing.png";
 import { AIRSPACE_COLORS, formatLimitM, insideVertical, type Airspace } from "@/game/airspace";
+import { GLIDE_BOUNDARY_RAYS, traceGlideBoundary } from "@/game/glideBoundary";
+
+const glideBoundaryPoints = new Float64Array(GLIDE_BOUNDARY_RAYS * 2);
 
 let wingImage: HTMLImageElement | null = null;
 function getWingImage() {
@@ -125,6 +128,7 @@ export interface SceneData {
   showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
+  glideVz?: number; // same smoothed vertical speed displayed by the GPS
 }
 
 const airspacePaths = new WeakMap<Airspace, Path2D>();
@@ -409,6 +413,29 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   if (s.airspaces?.length) drawAirspaces(ctx, s.airspaces, sim.x, sim.y, sim.alt, heightAt(s.terrain, sim.x, sim.y), sx, sy, z, W, H, s.airspaceLabels !== false);
 
   if (s.triangle) drawTriangle(ctx, s.triangle, sx, sy, z);
+
+  // Terrain-following reachability outline using the same instantaneous glide ratio as the GPS.
+  if (!sim.landed) {
+    traceGlideBoundary(s.terrain, { ...sim, vz: s.glideVz ?? sim.vz }, glideBoundaryPoints);
+    ctx.save();
+    ctx.beginPath();
+    let previousValid = false;
+    for (let i = 0; i <= GLIDE_BOUNDARY_RAYS; i++) {
+      const index = (i % GLIDE_BOUNDARY_RAYS) * 2;
+      const x = glideBoundaryPoints[index], y = glideBoundaryPoints[index + 1];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) { previousValid = false; continue; }
+      if (previousValid) ctx.lineTo(sx(x), sy(y)); else ctx.moveTo(sx(x), sy(y));
+      previousValid = true;
+    }
+    ctx.setLineDash([7, 5]);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = theme.getPropertyValue("--glide-boundary-outline").trim();
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = theme.getPropertyValue("--glide-boundary").trim();
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // trail coloured by climb
   for (let i = 1; i < s.trail.length; i++) {
