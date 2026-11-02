@@ -115,7 +115,7 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             <div>Erstellt durch Marco Bürgisser</div>
             <div className="text-muted-foreground">Kontakt: <a href="mailto:xcfly@gmx.ch" className="underline">xcfly@gmx.ch</a></div>
           </section>
-          <a href="https://buymeacoffee.com/marcopolo85" target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-lg bg-sun py-2.5 font-bold text-background transition hover:brightness-110">
+          <a hidden href="https://buymeacoffee.com/marcopolo85" target="_blank" rel="noopener noreferrer" className="hidden w-full items-center justify-center gap-2 rounded-lg bg-sun py-2.5 font-bold text-background transition hover:brightness-110">
             ☕ Buy me a coffee
           </a>
         </div>
