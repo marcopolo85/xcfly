@@ -161,6 +161,44 @@ export function slopeTrigger(n: { x: number; y: number; z: number }, s: { x: num
   return Math.max(0, Math.min(1, (irr - 0.45) / 0.5));
 }
 
+/** Sparse, position-stable sources on well-lit surfaces, independent of KK7
+ * and summit height. Evaluate only neighbouring cells in loaded terrain. */
+export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number, sun: { x: number; y: number; z: number }) {
+  if (sun.z <= 0 || alt <= heightAt(t, x, y)) return 0;
+  const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
+  if (fade === 0) return 0;
+  const cell = 900, cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+  const ox = t.centerX ?? 0, oy = t.centerY ?? 0;
+  let best = 0;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const a = cx + dx, b = cy + dy;
+    if (peakRandom(a * 200, b * 200) < 0.5) continue;
+    const px = (a + 0.2 + 0.6 * peakRandom(a * 200 + 1400, b * 200 - 600)) * cell;
+    const py = (b + 0.2 + 0.6 * peakRandom(a * 200 - 1000, b * 200 + 2200)) * cell;
+    if (Math.abs(px - ox) > EXTENT - 100 || Math.abs(py - oy) > EXTENT - 100) continue;
+    const radius = 180 + 80 * peakRandom(a * 200 + 2600, b * 200 + 1800);
+    const d2 = (x - px) ** 2 + (y - py) ** 2;
+    if (d2 > 6.25 * radius * radius) continue;
+    const exposure = slopeTrigger(normalAt(t, px, py), sun);
+    if (exposure < 0.6) continue;
+    // Reject slopes hidden behind nearby terrain in the direction of the sun.
+    const horizontal = Math.hypot(sun.x, sun.y);
+    let shaded = false;
+    if (horizontal > 0.01) {
+      const ground = heightAt(t, px, py);
+      for (const distance of [100, 250, 500, 1000, 2000]) {
+        const sx = px + sun.x / horizontal * distance, sy = py + sun.y / horizontal * distance;
+        if (Math.abs(sx - ox) > EXTENT || Math.abs(sy - oy) > EXTENT) { shaded = true; break; }
+        if (heightAt(t, sx, sy) > ground + 5 + distance * sun.z / horizontal) { shaded = true; break; }
+      }
+    }
+    if (shaded) continue;
+    const core = 3 + 2 * peakRandom(a * 200 - 1800, b * 200 - 3000);
+    best = Math.max(best, core * exposure * Math.exp(-d2 / (radius * radius)));
+  }
+  return best * fade;
+}
+
 /**
  * Vertical air movement (m/s) at a point. Thermals are invisible; strength follows
  * solar irradiance on the source slope, so east faces trigger in the morning,
@@ -173,6 +211,7 @@ export function airLift(
   const sunAmp = maxLift * Math.sqrt(Math.max(0, sun.z) / 0.87);
   const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
   let lift = 0;
+  const surface = sunlitSurfaceLift(t, x, y, alt, sun);
   if (f.raster) {
     // KK7 color scale mapped to climb rates with a deterministic random
     // offset: blue 1–3 m/s, dark red 6–9 m/s, in between the same ratio.
@@ -182,12 +221,12 @@ export function airLift(
     if (sun.z <= 0) return shadeSink;
     const fadeP = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
     const summit = peakLift(t, x, y) * Math.sqrt(Math.max(0, sun.z) / 0.87) * fadeP;
-    if (heat <= 0) return summit > 0.3 ? summit : shadeSink;
+    if (heat <= 0) return Math.max(summit, surface) > 0.3 ? Math.max(summit, surface) : shadeSink;
     const t01 = Math.max(0, Math.min(1, (heat - 0.1) / 0.9));
     const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
     const mid = 2 + 5.5 * t01;
     const spread = 1 + 0.5 * t01;
-    return Math.max(summit, (mid + spread * strengthNoise(x, y)) * fade);
+    return Math.max(summit, surface, (mid + spread * strengthNoise(x, y)) * fade);
   }
   for (let dy = -1; dy <= 1; dy++)
     for (let dx = -1; dx <= 1; dx++) {
@@ -210,5 +249,5 @@ export function airLift(
   const local = slopeTrigger(normalAt(t, x, y), sun);
   const shadeSink = local < 0.05 ? -0.55 : -0.15;
   const summit = peakLift(t, x, y) * Math.sqrt(Math.max(0, sun.z) / 0.87) * Math.max(0, Math.min(1, (cb - alt) / 200));
-  return Math.max(summit, Math.min(maxLift * 1.5, lift) + shadeSink);
+  return Math.max(summit, surface, Math.min(maxLift * 1.5, lift) + shadeSink);
 }
