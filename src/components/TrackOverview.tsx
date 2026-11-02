@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { fitTrackOverview } from "@/game/trackOverview";
 import { drawSwissRelief, getMapStyle, MAP_STYLES } from "./SwissRelief";
 
-export function TrackOverview({ track }: { track: [number, number][] | null }) {
+export function TrackOverview({ track, className = "aspect-[16/11] w-full" }: { track: [number, number][] | null; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const creditRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
@@ -13,6 +13,7 @@ export function TrackOverview({ track }: { track: [number, number][] | null }) {
     let frame = 0;
     const draw = () => {
       const width = canvas.clientWidth, height = canvas.clientHeight;
+      if (width === 0 || height === 0) { frame = requestAnimationFrame(draw); return; }
       const dpr = window.devicePixelRatio || 1;
       const fit = fitTrackOverview(track, width, height);
       if (!fit) { frame = requestAnimationFrame(draw); return; }
@@ -44,11 +45,11 @@ export function TrackOverview({ track }: { track: [number, number][] | null }) {
     return () => cancelAnimationFrame(frame);
   }, [track]);
   if (!track || track.length < 2) {
-    return <p className="py-16 text-center text-xs text-muted-foreground">Keine Trackdaten vorhanden.</p>;
+    return <p className="py-10 text-center text-xs text-muted-foreground">Keine Trackdaten vorhanden.</p>;
   }
   return (
     <div>
-      <canvas ref={canvasRef} role="img" aria-label="Flugtrack auf der ausgewählten Karte" className="block aspect-[16/11] w-full" />
+      <canvas ref={canvasRef} role="img" aria-label="Flugtrack auf der ausgewählten Karte" className={`block w-full ${className}`} />
       <p ref={creditRef} className="mt-1 text-right text-[9px] text-muted-foreground" />
     </div>
   );
