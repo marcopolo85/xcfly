@@ -56,7 +56,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               {MODES.map((m) => (
                 <Button variant="outline" key={m.v} onClick={() => setMode(m.v)} data-active={m.v === mode} className="choice h-auto flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="flex w-full items-center justify-between gap-1">
-                    <span className="block text-sm font-semibold leading-tight">{m.label}{m.v === "xc" && <span className="ml-1.5 inline-flex gap-0.5 align-middle"><RouteIcon type="free" className="h-3.5 w-3.5" /><RouteIcon type="tri" className="h-3.5 w-3.5" /><RouteIcon type="fai" className="h-3.5 w-3.5" /></span>}</span>
+                    <span className="flex items-center gap-1 text-sm font-semibold leading-tight"><span className="whitespace-nowrap">{m.label}</span>{m.v === "xc" && <span className="inline-flex shrink-0 items-center gap-0.5"><RouteIcon type="free" className="h-3.5 w-3.5" /><RouteIcon type="tri" className="h-3.5 w-3.5" /><RouteIcon type="fai" className="h-3.5 w-3.5" /></span>}</span>
                     <span
                       role="button"
                       tabIndex={0}
