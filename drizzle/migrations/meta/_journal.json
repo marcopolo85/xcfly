@@ -15,6 +15,13 @@
       "when": 1792963751545,
       "tag": "0001_leaderboard_track_column",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793649098392,
+      "tag": "0002_xc_points",
+      "breakpoints": true
     }
   ]
 }

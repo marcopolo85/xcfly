@@ -1,0 +1,1 @@
+ALTER TABLE public.leaderboard_entries ADD COLUMN IF NOT EXISTS points numeric NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS route_type text NOT NULL DEFAULT 'free';
