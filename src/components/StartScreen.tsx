@@ -21,6 +21,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [choosing, setChoosing] = useState(false);
   const [rankingSite, setRankingSite] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
   useEffect(() => {
     if (navigator.onLine) return;
     try {
