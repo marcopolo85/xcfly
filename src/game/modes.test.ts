@@ -1,22 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { MODE_TIME_LIMIT_S, modeScore, RETURN_RADIUS_M } from "./modes";
+import { xcScore, XC_FACTORS } from "./xcScore";
 
-describe("modeScore", () => {
-  it("begrenzt Out & Return und One-Way auf 4 Stunden", () => {
-    expect(MODE_TIME_LIMIT_S).toBe(4 * 3600);
+describe("xcScore (XContest)", () => {
+  it("Faktoren frei 1.0, Dreieck 1.2, FAI 1.4", () => {
+    expect(XC_FACTORS).toEqual({ free: 1.0, tri: 1.2, fai: 1.4 });
   });
-
-  it("zählt Out & Return nur bei Rückkehr in den 400-m-Radius", () => {
-    expect(RETURN_RADIUS_M).toBe(400);
-    expect(modeScore("out_return", 52000, 350, 90000)).toEqual({ score: 52000, goal: true });
-    expect(modeScore("out_return", 52000, 401, 90000)).toEqual({ score: 0, goal: false });
+  it("gerade Strecke zählt als freie Strecke", () => {
+    const s = xcScore([5000, 10000], [0, 0]);
+    expect(s.type).toBe("free");
+    expect(s.points).toBeCloseTo(10, 3);
   });
-
-  it("zählt One-Way die Entfernung vom Start am Flugende", () => {
-    expect(modeScore("one_way", 60000, 48000, 90000)).toEqual({ score: 48000, goal: true });
+  it("geschlossenes gleichseitiges Dreieck zählt als FAI ×1.4", () => {
+    const s = xcScore([10000, 5000, 0], [0, 8660, 0]);
+    expect(s.type).toBe("fai");
+    expect(s.points).toBeCloseTo(30 * 1.4, 0);
   });
-
-  it("zählt Freeflight die optimierte freie Strecke", () => {
-    expect(modeScore("free", 10000, 5000, 73500)).toEqual({ score: 73500, goal: true });
+  it("offenes Dreieck über 20 % Schliessdistanz wird nicht gewertet", () => {
+    expect(xcScore([10000, 5000, 7000], [0, 8660, 6000]).type).toBe("free");
   });
 });
