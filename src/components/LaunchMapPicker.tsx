@@ -12,9 +12,12 @@ import { Button } from "./ui/button";
 
 const SCALE = 0.025;
 
-export function LaunchMapPicker({ initial, onSelect, onClose }: { initial: Site; onSelect: (site: Site) => void; onClose: () => void }) {
-  const [center, setCenter] = useState(initial);
-  const [selected, setSelected] = useState(initial);
+/** Map view shown before any launch is selected: the middle of Switzerland. */
+const DEFAULT_CENTER: Site = { id: "view-ch", name: "Schweiz", region: "Schweiz", lat: 46.8, lon: 8.23, launchAlt: 0, valley: 400, peak: 3000, lake: false, seed: 0 };
+
+export function LaunchMapPicker({ initial, onSelect, onClose }: { initial?: Site; onSelect: (site: Site) => void; onClose: () => void }) {
+  const [center, setCenter] = useState<Site>(initial ?? DEFAULT_CENTER);
+  const [selected, setSelected] = useState<Site | null>(initial ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const request = useRef(0);
@@ -46,13 +49,15 @@ export function LaunchMapPicker({ initial, onSelect, onClose }: { initial: Site;
             ctx.font = "12px monospace"; ctx.textAlign = "center";
             ctx.fillText(status.failed ? "Karte nicht erreichbar" : "Schweizer Reliefkarte lädt…", W / 2, H / 2);
           }
-          const local = hotspotLocal(center, selected);
-          const x = cx + local.x * z, y = cy - local.y * z;
-          ctx.strokeStyle = theme.getPropertyValue("--primary-foreground").trim();
-          ctx.fillStyle = theme.getPropertyValue("--primary").trim();
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x + 16, y); ctx.moveTo(x, y - 16); ctx.lineTo(x, y + 16); ctx.stroke();
+          if (selected) {
+            const local = hotspotLocal(center, selected);
+            const x = cx + local.x * z, y = cy - local.y * z;
+            ctx.strokeStyle = theme.getPropertyValue("--primary-foreground").trim();
+            ctx.fillStyle = theme.getPropertyValue("--primary").trim();
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x + 16, y); ctx.moveTo(x, y - 16); ctx.lineTo(x, y + 16); ctx.stroke();
+          }
         }
       }
       raf = requestAnimationFrame(draw);
@@ -105,9 +110,9 @@ export function LaunchMapPicker({ initial, onSelect, onClose }: { initial: Site;
       <a className="absolute bottom-0 right-0 bg-background/90 px-2 py-1 font-mono text-[9px] text-foreground" href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer">© swisstopo · OpenTopoMap · OSM</a>
     </div>
     <footer className="shrink-0 space-y-2 border-t border-border p-3">
-      <div className="flex flex-wrap items-center justify-between gap-1 font-mono text-xs"><span>{selected.lat.toFixed(5)}° N · {selected.lon.toFixed(5)}° E</span><span>{loading ? "Höhe lädt…" : error ? "—" : `${selected.launchAlt} m`}</span></div>
+      <div className="flex flex-wrap items-center justify-between gap-1 font-mono text-xs"><span>{selected ? `${selected.lat.toFixed(5)}° N · ${selected.lon.toFixed(5)}° E` : "Kein Startplatz gewählt"}</span><span>{loading ? "Höhe lädt…" : error || !selected ? "—" : `${selected.launchAlt} m`}</span></div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      <Button className="h-11 w-full" disabled={loading || !!error} onClick={() => onSelect(selected)}><MapPin />Startplatz übernehmen</Button>
+      <Button className="h-11 w-full" disabled={loading || !!error || !selected} onClick={() => { if (selected) onSelect(selected); }}><MapPin />Startplatz übernehmen</Button>
     </footer>
   </div>;
 }

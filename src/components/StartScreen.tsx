@@ -113,7 +113,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
           <p className="text-center text-[10px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
         </div>
       </div>
-      {choosing && <LaunchMapPicker initial={site} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
+      {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
       <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>
