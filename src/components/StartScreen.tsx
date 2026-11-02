@@ -18,7 +18,7 @@ const FIXED_SEASON: Season = "summer";
 
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
   const [site, setSite] = useState<Site>(SITES[0]);
-  const [mode, setMode] = useState<FlightMode>("free");
+  const [mode, setMode] = useState<FlightMode>("xc");
   const [startHour, setStartHour] = useState(11);
   const [choosing, setChoosing] = useState(false);
   const [rankingSite, setRankingSite] = useState<string | null>(null);
