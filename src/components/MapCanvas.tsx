@@ -427,7 +427,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
       if (previousValid) ctx.lineTo(sx(x), sy(y)); else ctx.moveTo(sx(x), sy(y));
       previousValid = true;
     }
-    ctx.setLineDash([7, 5]);
+    ctx.setLineDash([]);
     ctx.lineWidth = 4;
     ctx.strokeStyle = theme.getPropertyValue("--glide-boundary-outline").trim();
     ctx.stroke();
