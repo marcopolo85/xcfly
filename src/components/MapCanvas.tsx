@@ -50,14 +50,25 @@ function drawContours(ctx: CanvasRenderingContext2D, t: Terrain, sx: (x: number)
         const h00 = h[j * N + i], h10 = h[j * N + i2], h01 = h[j2 * N + i], h11 = h[j2 * N + i2];
         const x0 = centerX + i * RES - EXTENT, x1 = centerX + i2 * RES - EXTENT;
         const y0 = centerY + EXTENT - j * RES, y1 = centerY + EXTENT - j2 * RES;
-        const pts: [number, number][] = [];
-        if ((h00 - level) * (h10 - level) < 0) pts.push([x0 + ((level - h00) / (h10 - h00)) * (x1 - x0), y0]);
-        if ((h10 - level) * (h11 - level) < 0) pts.push([x1, y0 + ((level - h10) / (h11 - h10)) * (y1 - y0)]);
-        if ((h01 - level) * (h11 - level) < 0) pts.push([x0 + ((level - h01) / (h11 - h01)) * (x1 - x0), y1]);
-        if ((h00 - level) * (h01 - level) < 0) pts.push([x0, y0 + ((level - h00) / (h01 - h00)) * (y1 - y0)]);
-        for (let p = 0; p + 1 < pts.length; p += 2) {
-          path.moveTo(pts[p][0], pts[p][1]);
-          path.lineTo(pts[p + 1][0], pts[p + 1][1]);
+        // Trace the same edge order without allocating crossing arrays per cell.
+        let crossings = 0;
+        if ((h00 - level) * (h10 - level) < 0) {
+          path.moveTo(x0 + ((level - h00) / (h10 - h00)) * (x1 - x0), y0);
+          crossings++;
+        }
+        if ((h10 - level) * (h11 - level) < 0) {
+          const y = y0 + ((level - h10) / (h11 - h10)) * (y1 - y0);
+          if (crossings % 2 === 0) path.moveTo(x1, y); else path.lineTo(x1, y);
+          crossings++;
+        }
+        if ((h01 - level) * (h11 - level) < 0) {
+          const x = x0 + ((level - h01) / (h11 - h01)) * (x1 - x0);
+          if (crossings % 2 === 0) path.moveTo(x, y1); else path.lineTo(x, y1);
+          crossings++;
+        }
+        if ((h00 - level) * (h01 - level) < 0) {
+          const y = y0 + ((level - h00) / (h01 - h00)) * (y1 - y0);
+          if (crossings % 2 === 0) path.moveTo(x0, y); else path.lineTo(x0, y);
         }
       }
     }
@@ -376,7 +387,15 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     if (image) ctx.drawImage(image, sx(left), sy(top), raster.width * metresPerPixel * origin.scale * z, raster.height * metresPerPixel * origin.scale * z);
     if (s.thermalMap.regionalTiles) {
       const size = 256 * metresPerPixel * origin.scale * z;
-      for (const tile of s.thermalMap.regionalTiles.values()) {
+      const leftPx = sx(left), topPx = sy(top);
+      const firstX = raster.left / 256, firstY = raster.top / 256;
+      const x0 = Math.max(firstX, firstX + Math.floor(-leftPx / size));
+      const x1 = Math.min(firstX + raster.width / 256 - 1, firstX + Math.floor((W - leftPx) / size));
+      const y0 = Math.max(firstY, firstY + Math.floor(-topPx / size));
+      const y1 = Math.min(firstY + raster.height / 256 - 1, firstY + Math.floor((H - topPx) / size));
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const tile = s.thermalMap.regionalTiles.get(`${x},${y}`);
+        if (!tile) continue;
         const tx = sx((tile.x * 256 * metresPerPixel - MERCATOR_EXTENT - origin.x) * origin.scale);
         const ty = sy((MERCATOR_EXTENT - tile.y * 256 * metresPerPixel - origin.y) * origin.scale);
         if (tx + size < 0 || ty + size < 0 || tx > W || ty > H) continue;
