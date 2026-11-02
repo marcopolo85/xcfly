@@ -1,5 +1,4 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { MODES } from "@/game/modes";
 import logoImg from "@/assets/xcfly-logo.png";
 
 export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -13,15 +12,6 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5 text-xs leading-snug text-foreground">
-          <section className="space-y-2">
-            <h3 className="hud-label">Modi</h3>
-            {MODES.map((m) => (
-              <div key={m.v} className="space-y-0.5">
-                <div className="text-sm font-semibold">{m.label}</div>
-                <div className="text-muted-foreground">{m.desc}</div>
-              </div>
-            ))}
-          </section>
           <section className="space-y-1.5">
             <h3 className="hud-label">Copyright & Quellen</h3>
             <div>
