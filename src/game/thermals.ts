@@ -33,6 +33,54 @@ function strengthNoise(x: number, y: number) {
   return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
 }
 
+/** Prominent, exposed summits found once per terrain window. */
+export interface Peak { x: number; y: number; h: number }
+const peakCache = new WeakMap<Terrain, Map<number, Peak[]>>();
+const PEAK_CELL = 2000;
+export function terrainPeaks(t: Terrain) {
+  let grid = peakCache.get(t);
+  if (grid) return grid;
+  grid = new Map();
+  const step = 200, ox = t.centerX ?? 0, oy = t.centerY ?? 0;
+  for (let y = oy - EXTENT + 800; y <= oy + EXTENT - 800; y += step)
+    for (let x = ox - EXTENT + 800; x <= ox + EXTENT - 800; x += step) {
+      const h = heightAt(t, x, y);
+      let ring = 0, isMax = true;
+      for (let i = 0; i < 8 && isMax; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const n = heightAt(t, x + Math.cos(a) * step, y + Math.sin(a) * step);
+        if (n >= h) isMax = false;
+        ring += heightAt(t, x + Math.cos(a) * 700, y + Math.sin(a) * 700);
+      }
+      // Exposed summit: at least 150 m above its 700 m surroundings.
+      if (!isMax || h - ring / 8 < 150) continue;
+      const k = key(Math.floor(x / PEAK_CELL), Math.floor(y / PEAK_CELL));
+      let arr = grid.get(k); if (!arr) grid.set(k, (arr = []));
+      arr.push({ x, y, h });
+    }
+  peakCache.set(t, grid);
+  return grid;
+}
+
+/** Summit lift (m/s): higher peaks give stronger thermals, ~1.5 m/s at 500 m up to ~6 m/s at 4000 m. */
+export function peakLift(t: Terrain, x: number, y: number) {
+  const grid = terrainPeaks(t);
+  const cx = Math.floor(x / PEAK_CELL), cy = Math.floor(y / PEAK_CELL);
+  let best = 0;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const arr = grid.get(key(cx + dx, cy + dy));
+    if (!arr) continue;
+    for (const p of arr) {
+      const d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
+      if (d2 > 640000) continue;
+      const core = 1.5 + 4.5 * Math.max(0, Math.min(1, (p.h - 500) / 3500));
+      const v = core * Math.exp(-d2 / (250 * 250));
+      if (v > best) best = v;
+    }
+  }
+  return best;
+}
+
 export function generateThermals(t: Terrain, rnd: () => number): ThermalField {
   const grid = new Map<number, Thermal[]>();
   let count = 0;
@@ -123,12 +171,15 @@ export function airLift(
     const heat = rasterHeatAt(f.raster, x, y);
     const local = slopeTrigger(normalAt(t, x, y), sun);
     const shadeSink = local < 0.05 ? -0.55 : -0.15;
-    if (sun.z <= 0 || heat <= 0) return shadeSink;
+    if (sun.z <= 0) return shadeSink;
+    const fadeP = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
+    const summit = peakLift(t, x, y) * Math.sqrt(Math.max(0, sun.z) / 0.87) * fadeP;
+    if (heat <= 0) return summit > 0.3 ? summit : shadeSink;
     const t01 = Math.max(0, Math.min(1, (heat - 0.1) / 0.9));
     const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
     const mid = 2 + 5.5 * t01;
     const spread = 1 + 0.5 * t01;
-    return Math.max(0, (mid + spread * strengthNoise(x, y)) * fade);
+    return Math.max(summit, (mid + spread * strengthNoise(x, y)) * fade);
   }
   for (let dy = -1; dy <= 1; dy++)
     for (let dx = -1; dx <= 1; dx++) {
@@ -150,5 +201,6 @@ export function airLift(
   lift *= Math.max(0, Math.min(1, (cb - alt) / 200));
   const local = slopeTrigger(normalAt(t, x, y), sun);
   const shadeSink = local < 0.05 ? -0.55 : -0.15;
-  return Math.min(maxLift * 1.5, lift) + shadeSink;
+  const summit = peakLift(t, x, y) * Math.sqrt(Math.max(0, sun.z) / 0.87) * Math.max(0, Math.min(1, (cb - alt) / 200));
+  return Math.max(summit, Math.min(maxLift * 1.5, lift) + shadeSink);
 }
