@@ -61,9 +61,14 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-climb: var(--climb);
   --color-fai: var(--fai);
-  --color-route-free: oklch(0.72 0.18 55);
-  --color-route-tri: oklch(0.68 0.19 145);
-  --color-route-fai: oklch(0.6 0.2 255);
+  --color-route-free: #d95a1a;
+  --color-route-free-light: #f0703a;
+  --color-route-tri: #3fae1e;
+  --color-route-tri-light: #5ecf3e;
+  --color-route-fai: #1a96cd;
+  --color-route-fai-light: #3fb6ea;
+  --route-glyph: #ffffff;
+  --route-node-dot: #1a1a1a;
   --color-sink: var(--sink);
   --color-sun: var(--sun);
   --font-display: "Space Grotesk", system-ui, sans-serif;
