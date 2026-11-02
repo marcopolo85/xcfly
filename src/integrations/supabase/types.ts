@@ -22,6 +22,8 @@ export type Database = {
           id: string
           mode: string
           pilot_name: string
+          points: number
+          route_type: string
           site_name: string
           track: Json | null
         }
@@ -32,6 +34,8 @@ export type Database = {
           id?: string
           mode: string
           pilot_name: string
+          points?: number
+          route_type?: string
           site_name: string
           track?: Json | null
         }
@@ -42,6 +46,8 @@ export type Database = {
           id?: string
           mode?: string
           pilot_name?: string
+          points?: number
+          route_type?: string
           site_name?: string
           track?: Json | null
         }

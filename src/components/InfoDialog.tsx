@@ -25,16 +25,14 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
               <li>Wähle einen der drei Flugmodi. Die kleinen Info-Symbole an den Modus-Buttons erklären den jeweiligen Modus separat.</li>
               <li>Wähle einen Startplatz aus der alphabetischen Liste. Unter dem Namen steht die Starthöhe in Metern. Das Pokalsymbol öffnet die Ranglisten dieses Startplatzes.</li>
               <li>Mit <strong>Auf Karte wählen</strong> kannst du einen eigenen Startpunkt festlegen. Verschiebe und zoome die Karte, wähle einen Punkt und bestätige ihn; seine Geländehöhe wird geladen.</li>
-              <li>Im Freeflight kannst du die Startzeit mit dem Regler wählen. In den beiden 4-Stunden-Modi ist sie vorgegeben. Die Simulation verwendet Sommerbedingungen.</li>
+              <li>Im Freeflight kannst du die Startzeit mit dem Regler wählen. Im XC-Modus startest du um 11 Uhr. Die Simulation verwendet Sommerbedingungen.</li>
               <li>Schalte den Geräteton ein und drücke <strong>Starten</strong>. Gelände und Thermikkarte werden geladen; bei der vollständigen regionalen Thermikkarte siehst du einen Fortschrittsbalken.</li>
             </ol>
           </section>
           <section className="space-y-2">
             <h3 className="font-semibold text-base">3. Flugmodi und Wertung</h3>
-            <p><strong>Out & Return (4h):</strong> Flieg möglichst weit weg und schaffe es wieder zurück an den Startplatz in 4h. Gewertet wird die grösste Entfernung vom Start, wenn du am Flugende wieder innerhalb des 400-m-Radius bist. Bist du ausserhalb, zählt der Flug nicht für diese Wertung. Plane also genügend Zeit und Höhe für die Rückkehr ein.</p>
-            <p><strong>One-Way (4h):</strong> Flieg möglichst weit weg in 4h. Gewertet wird deine Entfernung vom Startplatz am Flugende; du musst nicht zurückkehren. Ein weiter entfernter Punkt, den du zuvor besucht hast, zählt nicht, wenn du danach wieder näher zum Start fliegst.</p>
+            <p><strong>XC:</strong> Gewertet wie beim XContest Schweiz. Nach der Landung wird automatisch die beste Streckenart berechnet: <strong>freie Strecke</strong> über bis zu 3 Wendepunkte (Faktor 1.0, oranges Symbol), <strong>flaches Dreieck</strong> (Faktor 1.2, grünes Dreieck) oder <strong>FAI-Dreieck</strong> mit jeder Seite mindestens 28 % des Umfangs (Faktor 1.4, blaues Dreieck). Ein Dreieck ist geschlossen, wenn Anfangs- und Endpunkt höchstens 20 % des Umfangs auseinanderliegen; gewertet wird der Umfang minus diese Schliessdistanz. Die Rangliste ist nach XC-Punkten sortiert.</p>
             <p><strong>Freeflight:</strong> Freies Fliegen ohne Zeitlimit und mit wählbarer Startzeit. Hier kannst du üben, Thermiken erkunden oder lange Strecken fliegen. Es gibt keine öffentliche Freeflight-Rangliste.</p>
-            <p>In den 4-Stunden-Modi endet der Flug spätestens beim Ablauf der Flugzeit, ansonsten bei der Landung. Die <strong>RESTZEIT</strong> im GPS zählt von 4:00:00 herunter. Das ist simulierte Flugzeit, nicht die Zeit vor deinem Bildschirm: Beschleunigung lässt auch den Countdown schneller laufen.</p>
           </section>
           <section className="space-y-2">
             <h3 className="font-semibold text-base">4. Schirm steuern und Zeit beschleunigen</h3>
@@ -60,7 +58,7 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
               <div><dt>XC KM / XC GESCHW.</dt><dd>Die optimierte freie XC-Distanz und diese Distanz geteilt durch die Flugdauer. XC KM ist nicht einfach die Summe aller geflogenen Kreise: Es wird die längste Strecke vom Start über einen aufgezeichneten Zwischenpunkt bis zur jeweiligen Flugposition gesucht; der beste bisher erreichte Wert bleibt erhalten. Diese XC-Werte sind nicht dieselbe Wertung wie die Startentfernung der Wettbewerbsmodi.</dd></div>
               <div><dt>TRIANGLE / MIN FAI / MAX FAI</dt><dd>TRIANGLE zeigt den Umfang des aus deinem Track ermittelten, noch nicht geschlossenen Dreiecks. MIN und MAX FAI beschreiben die möglichen Umfangsgrenzen der dazugehörigen FAI-Sektoren. Ohne passenden Wert erscheint ein Strich.</dd></div>
               <div><dt>CLOSE / WOLKENBASIS</dt><dd>CLOSE ist die noch verbleibende Entfernung bis zum Schliessbereich des Dreiecks; 0,0 km bedeutet, dass du darin bist. WOLKENBASIS zeigt die lokale Thermikobergrenze in Metern über Meer.</dd></div>
-              <div><dt>RESTZEIT / START</dt><dd>RESTZEIT erscheint nur in den 4-Stunden-Modi. Bei Out & Return zeigt START zusätzlich deine aktuelle Entfernung zum Start; innerhalb des 400-m-Radius wird der Wert hervorgehoben.</dd></div>
+              
             </dl>
           </section>
           <section className="space-y-2">

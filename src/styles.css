@@ -61,6 +61,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-climb: var(--climb);
   --color-fai: var(--fai);
+  --color-route-free: oklch(0.72 0.18 55);
+  --color-route-tri: oklch(0.68 0.19 145);
+  --color-route-fai: oklch(0.6 0.2 255);
   --color-sink: var(--sink);
   --color-sun: var(--sun);
   --font-display: "Space Grotesk", system-ui, sans-serif;
