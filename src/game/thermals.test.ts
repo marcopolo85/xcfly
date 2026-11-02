@@ -118,4 +118,7 @@ describe("sunlit surfaces below ridge height", () => {
     expect(sunlitSurfaceLift(terrain, best.x, best.y, 2500, sun)).toBe(0);
     expect(sunlitSurfaceLift(terrain, best.x, best.y, 500, sun)).toBe(0);
   });
+  it("does not fabricate lift outside loaded terrain", () => {
+    expect(sunlitSurfaceLift({ ...terrain, centerX: best.x + 50000 }, best.x, best.y, 550, sun)).toBe(0);
+  });
 });

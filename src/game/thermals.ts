@@ -164,11 +164,12 @@ export function slopeTrigger(n: { x: number; y: number; z: number }, s: { x: num
 /** Sparse, position-stable sources on well-lit surfaces, independent of KK7
  * and summit height. Evaluate only neighbouring cells in loaded terrain. */
 export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number, sun: { x: number; y: number; z: number }) {
+  const ox = t.centerX ?? 0, oy = t.centerY ?? 0;
+  if (Math.abs(x - ox) > EXTENT - 100 || Math.abs(y - oy) > EXTENT - 100) return 0;
   if (sun.z <= 0 || alt <= heightAt(t, x, y)) return 0;
   const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
   if (fade === 0) return 0;
   const cell = 900, cx = Math.floor(x / cell), cy = Math.floor(y / cell);
-  const ox = t.centerX ?? 0, oy = t.centerY ?? 0;
   let best = 0;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
     const a = cx + dx, b = cy + dy;
