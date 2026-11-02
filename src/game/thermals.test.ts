@@ -75,12 +75,12 @@ describe("summit thermals", () => {
     const low = flat(1400), high = flat(3500);
     // Same position, different heights: identical random strength.
     expect(high).toBe(low);
-    expect(low).toBeGreaterThanOrEqual(1.5);
+    expect(low).toBeGreaterThanOrEqual(3);
     expect(low).toBeLessThanOrEqual(6);
     // Different summits get different random strengths.
     const other = flat(3500, 4000, 4000);
     expect(other).not.toBe(low);
-    expect(other).toBeGreaterThanOrEqual(1.5);
+    expect(other).toBeGreaterThanOrEqual(3);
     expect(other).toBeLessThanOrEqual(6);
   });
 });
