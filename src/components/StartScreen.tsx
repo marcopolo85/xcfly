@@ -113,6 +113,14 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       {choosing && <LaunchMapPicker initial={site} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
+      <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">{MODES.find((m) => m.v === modeInfo)?.label}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{MODES.find((m) => m.v === modeInfo)?.desc}</p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
