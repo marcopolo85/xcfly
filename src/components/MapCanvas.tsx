@@ -128,6 +128,7 @@ export interface SceneData {
   showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
+  glideVz?: number; // same smoothed vertical speed displayed by the GPS
 }
 
 const airspacePaths = new WeakMap<Airspace, Path2D>();
@@ -415,7 +416,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
 
   // Terrain-following reachability outline using the same instantaneous glide ratio as the GPS.
   if (!sim.landed) {
-    traceGlideBoundary(s.terrain, sim, glideBoundaryPoints);
+    traceGlideBoundary(s.terrain, { ...sim, vz: s.glideVz ?? sim.vz }, glideBoundaryPoints);
     ctx.save();
     ctx.beginPath();
     let previousValid = false;

@@ -8,7 +8,7 @@ export const GLIDE_BOUNDARY_RAYS = 180;
 export function traceGlideBoundary(t: Terrain, sim: Pick<Sim, "x" | "y" | "alt" | "speed" | "vz">, points: Float64Array) {
   points.fill(NaN);
   const ratio = glideRatio(sim.speed, sim.vz);
-  if (!Number.isFinite(ratio) || ratio <= 0 || sim.alt <= heightAt(t, sim.x, sim.y)) return;
+  if (sim.vz >= -0.1 || !Number.isFinite(ratio) || ratio <= 0 || sim.alt <= heightAt(t, sim.x, sim.y)) return;
   const west = (t.centerX ?? 0) - EXTENT, east = west + 2 * EXTENT;
   const south = (t.centerY ?? 0) - EXTENT, north = south + 2 * EXTENT;
   if (sim.x < west || sim.x > east || sim.y < south || sim.y > north) return;
