@@ -323,43 +323,43 @@ export function FlightGame() {
       </div>
       {phase === "done" && result && (
         <div className="absolute inset-0 grid place-items-center bg-background/70 p-6 backdrop-blur-sm">
-          <div className="hud-panel max-h-full w-full max-w-sm overflow-y-auto p-6 text-center">
+          <div className="hud-panel max-h-full w-full max-w-sm p-4 text-center">
             <p className="hud-label">{config?.site.name} · {modeLabel(result.mode)}</p>
-            <h2 className={`mt-1 font-display text-4xl font-bold ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
-            <div className="hud-cell mt-3"><div className="hud-label">Wertung · {ROUTE_LABEL[result.routeType]} ×{XC_FACTORS[result.routeType].toFixed(1)}</div><div className="hud-value flex items-center justify-center gap-2 text-3xl"><RouteIcon type={result.routeType} className="h-6 w-6" />{result.points.toFixed(1)} Pkt</div><div className="font-mono text-xs text-muted-foreground">{(result.routeDist / 1000).toFixed(1)} km</div></div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="hud-cell"><div className="hud-label">XC Strecke</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)} km</div></div>
-              <div className="hud-cell"><div className="hud-label">XC Punkte</div><div className="hud-value text-2xl">{result.points.toFixed(1)}</div></div>
-              <div className="hud-cell"><div className="hud-label">Flugdauer</div><div className="hud-value text-2xl">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
-              <div className="hud-cell"><div className="hud-label">XC Geschw.</div><div className="hud-value text-2xl">{result.time > 0 ? (((result.xc / 1000) / (result.time / 3600))).toFixed(1) : "0.0"} km/h</div></div>
-              <div className="hud-cell"><div className="hud-label">Max Höhe</div><div className="hud-value text-2xl">{Math.round(result.maxAlt)} m</div></div>
-              <div className="hud-cell"><div className="hud-label">Höhengewinn</div><div className="hud-value text-2xl">{Math.round(result.climb)} m</div></div>
-              <div className="hud-cell"><div className="hud-label">Thermiken</div><div className="hud-value text-2xl">{result.thermals}</div></div>
-              <div className="hud-cell"><div className="hud-label">Thermikkreise</div><div className="hud-value text-2xl">{result.circles}</div></div>
+            <h2 className={`mt-0.5 font-display text-3xl font-bold leading-tight ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
+            <div className="hud-cell mt-2 py-2"><div className="hud-label">Wertung · {ROUTE_LABEL[result.routeType]} ×{XC_FACTORS[result.routeType].toFixed(1)}</div><div className="hud-value mt-0.5 flex items-center justify-center gap-2 text-2xl"><RouteIcon type={result.routeType} className="h-5 w-5" />{result.points.toFixed(1)} Pkt</div><div className="font-mono text-xs text-muted-foreground">{(result.routeDist / 1000).toFixed(1)} km</div></div>
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <div className="hud-cell py-1"><div className="hud-label">XC Strecke</div><div className="hud-value text-lg">{(result.xc / 1000).toFixed(1)} km</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">XC Punkte</div><div className="hud-value text-lg">{result.points.toFixed(1)}</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">Flugdauer</div><div className="hud-value text-lg">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">XC Geschw.</div><div className="hud-value text-lg">{result.time > 0 ? (((result.xc / 1000) / (result.time / 3600))).toFixed(1) : "0.0"} km/h</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">Max Höhe</div><div className="hud-value text-lg">{Math.round(result.maxAlt)} m</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">Höhengewinn</div><div className="hud-value text-lg">{Math.round(result.climb)} m</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">Thermiken</div><div className="hud-value text-lg">{result.thermals}</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">Thermikkreise</div><div className="hud-value text-lg">{result.circles}</div></div>
             </div>
-            <div className="mt-3 rounded-lg border border-border bg-background p-1">
-              <TrackOverview track={finishedTrack.current.length >= 2 ? finishedTrack.current : null} />
+            <div className="mt-2 rounded-lg border border-border bg-background p-1">
+              <TrackOverview track={finishedTrack.current.length >= 2 ? finishedTrack.current : null} className="h-28" />
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>
-            {submitState === "saved" && <p className="mt-4 rounded-lg border border-climb/40 bg-climb/10 py-2 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
-            {submitState === "failed" && <p className="mt-4 rounded-lg border border-sink/40 bg-sink/10 py-2 text-sm font-semibold text-sink">Eintragen fehlgeschlagen – bitte erneut versuchen.</p>}
+            <p className="mt-0.5 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>
+            {submitState === "saved" && <p className="mt-2 rounded-lg border border-climb/40 bg-climb/10 py-1.5 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
+            {submitState === "failed" && <p className="mt-2 rounded-lg border border-sink/40 bg-sink/10 py-1.5 text-sm font-semibold text-sink">Eintragen fehlgeschlagen – bitte erneut versuchen.</p>}
             {result.mode === "xc" && (submitState === "idle" || submitState === "sending" || submitState === "failed") && (
-              <div className="mt-4 rounded-lg border border-border p-3 text-left">
+              <div className="mt-2 rounded-lg border border-border p-2 text-left">
                 <label className="hud-label" htmlFor="pilot-name">Rangliste</label>
-                <div className="mt-1.5 flex gap-2">
-                  <input id="pilot-name" value={pilotName} onChange={(e) => setPilotName(e.target.value)} maxLength={40} placeholder="Dein Name" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground" />
-                  <button disabled={submitState === "sending" || pilotName.trim().length === 0} className="rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50" onClick={() => {
+                <div className="mt-1 flex gap-1.5">
+                  <input id="pilot-name" value={pilotName} onChange={(e) => setPilotName(e.target.value)} maxLength={40} placeholder="Dein Name" className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground" />
+                  <button disabled={submitState === "sending" || pilotName.trim().length === 0} className="rounded-md bg-primary px-2.5 py-1.5 text-sm font-bold text-primary-foreground disabled:opacity-50" onClick={() => {
                     if (!config) return;
                     setSubmitState("sending");
                     void submitFlight(pilotName, config.site.name, result.routeDist / 1000, result.points, result.routeType, result.time, finishedTrack.current).then((err) => setSubmitState(err ? "failed" : "saved"));
                   }}>{submitState === "sending" ? "…" : "Eintragen"}</button>
-                  <button className="rounded-md border border-border px-3 py-2 text-sm font-bold text-foreground" onClick={() => setSubmitState("skipped")}>Abbrechen</button>
+                  <button className="rounded-md border border-border px-2.5 py-1.5 text-sm font-bold text-foreground" onClick={() => setSubmitState("skipped")}>Abbrechen</button>
                 </div>
               </div>
             )}
-            <div className="mt-4 flex gap-2">
-              <button className="flex-1 rounded-lg bg-primary py-3 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
-              <button className="flex-1 rounded-lg border border-border py-3 font-bold text-foreground" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</button>
+            <div className="mt-3 flex gap-2">
+              <button className="flex-1 rounded-lg bg-primary py-2.5 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
+              <button className="flex-1 rounded-lg border border-border py-2.5 font-bold text-foreground" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</button>
             </div>
           </div>
         </div>
