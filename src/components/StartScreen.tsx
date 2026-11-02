@@ -17,7 +17,7 @@ export interface FlightConfig { site: Site; season: Season; startHour: number; m
 const FIXED_SEASON: Season = "summer";
 
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
-  const [site, setSite] = useState<Site>(SITES[0]);
+  const [site, setSite] = useState<Site | null>(null);
   const [mode, setMode] = useState<FlightMode>("xc");
   const [startHour, setStartHour] = useState(11);
   const [choosing, setChoosing] = useState(false);
@@ -31,8 +31,8 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       if (saved && typeof saved.id === "string" && typeof saved.lat === "number" && typeof saved.lon === "number") setSite(saved);
     } catch { /* Keep the default launch if device metadata is missing. */ }
   }, []);
-  const st = sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst);
-  const earliest = Math.ceil(st.sunrise), latest = Math.floor(st.sunset - 1);
+  const st = site ? sunTimes(site.lat, SEASONS[FIXED_SEASON].doy, SEASONS[FIXED_SEASON].dst) : null;
+  const earliest = st ? Math.ceil(st.sunrise) : 5, latest = st ? Math.floor(st.sunset - 1) : 21;
   const effectiveHour = mode === "free" ? Math.min(Math.max(startHour, earliest), latest) : Math.min(Math.max(11, earliest), latest);
   const sortedSites = [...SITES].sort((a, b) => a.name.localeCompare(b.name, "de"));
 
@@ -84,7 +84,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <h2 className="hud-label mb-1.5">Startplatz</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {sortedSites.map((s) => (
-                <Button key={s.id} variant="outline" onClick={() => setSite(s)} data-active={s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
+                <Button key={s.id} variant="outline" onClick={() => setSite(s)} data-active={site !== null && s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
                     <span
@@ -104,11 +104,12 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               ))}
             </div>
             <Button variant="outline" className="mt-2 h-9 w-full text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
-            {site.id.startsWith("map-") && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
+            {site?.id.startsWith("map-") && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
-          <button onClick={() => onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode })} className="w-full rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110">
+          <button disabled={!site} onClick={() => { if (site) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode }); }} className="w-full rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             Starten
           </button>
+          {!site && <p className="text-center text-xs text-muted-foreground">Bitte einen Startplatz wählen</p>}
           <p className="text-center text-[10px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
         </div>
       </div>
