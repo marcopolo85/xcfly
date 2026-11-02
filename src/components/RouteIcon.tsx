@@ -6,9 +6,9 @@ export const ROUTE_LABEL: Record<RouteType, string> = { free: "Freie Strecke", t
  * Streckensymbole im Stil der App-Icons: abgerundetes farbiges Badge mit weissem Glyph.
  * Blau = FAI-Dreieck, grün = flaches Dreieck, orange = freie Strecke.
  */
-function Badge({ id, color, light, label, children }: { id: string; color: string; light: string; label: string; children: React.ReactNode }) {
+function Badge({ id, color, light, label, className = "h-4 w-4", children }: { id: string; color: string; light: string; label: string; className?: string; children: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" role="img" aria-label={label}>
+    <svg viewBox="0 0 24 24" role="img" aria-label={label} className={className}>
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={light} />
