@@ -20,4 +20,4 @@
 - [x] Plastische Reliefkarte nach Bildvorlage einsetzen und im Flug prüfen (swisstopo Relief, 6 Tests, Handy/Desktop ohne Seitenfehler).
 - [x] Track-Übersicht auch in der Flugauswertung anzeigen. Testflug bis Landung im Browser: Track mit Startpunkt und Legende im Auswertfenster sichtbar, 72 Tests und Build bestanden.
 - [x] Empfindlichkeit der Slide-Steuerung im beschleunigten Flug halbiert: voller Link-/Rechtsausschlag jetzt bei 140 px statt 70 px Fingerbewegung.
-- [ ] XC-Ranglisteneintrag: abgewiesenen Cloud-Eintrag reproduzieren, bestehende Schreibfreigabe um XC ergänzen und Speichern samt Ranglistenanzeige prüfen.
+- [x] XC-Ranglisteneintrag: Cloud lehnte XC wegen veralteter Modusfreigabe ab; Freigabe ergänzt, identische Speicherfunktion erfolgreich ausgeführt, Werte und Track in Cloud sowie Ranglistenanzeige geprüft; Testflug wieder entfernt, zwei Regressionstests bestanden.
