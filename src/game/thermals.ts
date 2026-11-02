@@ -70,7 +70,7 @@ function peakRandom(x: number, y: number) {
   return (n >>> 0) / 4294967296;
 }
 
-/** Summit lift (m/s): randomized per summit, independent of its height (1.5–6 m/s). */
+/** Summit lift (m/s): randomized per summit, independent of its height (3–6 m/s). */
 export function peakLift(t: Terrain, x: number, y: number) {
   const grid = terrainPeaks(t);
   const cx = Math.floor(x / PEAK_CELL), cy = Math.floor(y / PEAK_CELL);
@@ -81,7 +81,7 @@ export function peakLift(t: Terrain, x: number, y: number) {
     for (const p of arr) {
       const d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
       if (d2 > 640000) continue;
-      const core = 1.5 + 4.5 * peakRandom(p.x, p.y);
+      const core = 3 + 3 * peakRandom(p.x, p.y);
       const v = core * Math.exp(-d2 / (250 * 250));
       if (v > best) best = v;
     }
