@@ -15,7 +15,7 @@ const SCALE = 0.025;
 /** Map view shown before any launch is selected: the middle of Switzerland. */
 const DEFAULT_CENTER: Site = { id: "view-ch", name: "Schweiz", region: "Schweiz", lat: 46.8, lon: 8.23, launchAlt: 0, valley: 400, peak: 3000, lake: false, seed: 0 };
 
-export function LaunchMapPicker({ initial, onSelect, onClose }: { initial?: Site; onSelect: (site: Site) => void; onClose: () => void }) {
+export function LaunchMapPicker({ initial, onSelect, onClose }: { initial?: Site | undefined; onSelect: (site: Site) => void; onClose: () => void }) {
   const [center, setCenter] = useState<Site>(initial ?? DEFAULT_CENTER);
   const [selected, setSelected] = useState<Site | null>(initial ?? null);
   const [loading, setLoading] = useState(false);
