@@ -323,7 +323,7 @@ export function FlightGame() {
       </div>
       {phase === "done" && result && (
         <div className="absolute inset-0 grid place-items-center bg-background/70 p-6 backdrop-blur-sm">
-          <div className="hud-panel max-h-full w-full max-w-sm p-4 text-center">
+          <div className="hud-panel max-h-[calc(100vh-3rem)] w-full max-w-sm overflow-y-auto p-4 text-center">
             <p className="hud-label">{config?.site.name} · {modeLabel(result.mode)}</p>
             <h2 className={`mt-0.5 font-display text-3xl font-bold leading-tight ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
             <div className="hud-cell mt-2 py-2"><div className="hud-label">Wertung · {ROUTE_LABEL[result.routeType]} ×{XC_FACTORS[result.routeType].toFixed(1)}</div><div className="hud-value mt-0.5 flex items-center justify-center gap-2 text-2xl"><RouteIcon type={result.routeType} className="h-5 w-5" />{result.points.toFixed(1)} Pkt</div><div className="font-mono text-xs text-muted-foreground">{(result.routeDist / 1000).toFixed(1)} km</div></div>
