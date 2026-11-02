@@ -58,3 +58,22 @@ describe("thermal release points", () => {
     expect(releaseScore(t, best.x, best.y)).toBeGreaterThan(0.5);
   });
 });
+describe("summit thermals", () => {
+  it("higher summits give stronger lift", async () => {
+    const { peakLift } = await import("./thermals");
+    const flat = (hp: number) => {
+      const t = generateTerrain(SITES[0]);
+      t.h.fill(400);
+      // cone-shaped peak at the grid centre
+      const N = Math.sqrt(t.h.length), c = (N - 1) / 2;
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+        const d = Math.hypot(i - c, j - c) * 25;
+        if (d < 2000) t.h[j * N + i] = 400 + (hp - 400) * (1 - d / 2000);
+      }
+      return peakLift(t, 0, 0);
+    };
+    const low = flat(1200), high = flat(3500);
+    expect(low).toBeGreaterThan(1);
+    expect(high).toBeGreaterThan(low + 2);
+  });
+});
