@@ -6,6 +6,7 @@ import heroImg from "@/assets/hero-alps.jpg";
 import logoImg from "@/assets/xcfly-logo.png";
 import { Info, MapPin, Trophy } from "lucide-react";
 import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
