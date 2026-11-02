@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
-import { modeLabel, type FlightMode } from "@/game/modes";
+import type { RouteType } from "@/game/xcScore";
+import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { X } from "lucide-react";
 import { TrackOverview } from "./TrackOverview";
 
@@ -12,18 +13,23 @@ interface Entry {
   mode: string;
   distance_km: number;
   duration_s: number;
+  points: number;
+  route_type: string;
   created_at: string;
 }
 
-const RANKED_MODES = ["out_return", "one_way"] as const;
-const ENTRY_COLUMNS = "id,pilot_name,site_name,mode,distance_km,duration_s,created_at";
+const ENTRY_COLUMNS = "id,pilot_name,site_name,mode,distance_km,duration_s,points,route_type,created_at";
+const asRoute = (t: string): RouteType => (t === "fai" || t === "tri" ? t : "free");
+const xcSpeed = (e: Entry) => (e.duration_s > 0 ? e.distance_km / (e.duration_s / 3600) : 0);
 
-export async function submitFlight(pilot: string, site: string, mode: FlightMode, distanceKm: number, durationS: number, track: [number, number][]): Promise<string | null> {
+export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: [number, number][]): Promise<string | null> {
   const { error } = await supabase.from("leaderboard_entries").insert({
     pilot_name: pilot.trim().slice(0, 40),
     site_name: site.slice(0, 80),
-    mode,
+    mode: "xc",
     distance_km: Math.round(distanceKm * 10) / 10,
+    points: Math.round(points * 100) / 100,
+    route_type: routeType,
     duration_s: Math.round(durationS),
     track,
   });
@@ -62,12 +68,13 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
-            <p className="text-xs text-muted-foreground">{entry.site_name} · {modeLabel(entry.mode as FlightMode)}</p>
+            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]}</p>
           </div>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
         <div className="mt-2 flex gap-4 font-mono text-sm">
-          <span className="font-bold text-foreground">{entry.distance_km.toFixed(1)} km</span>
+          <span className="font-bold text-foreground">{entry.points.toFixed(1)} Pkt</span>
+          <span className="text-foreground">{entry.distance_km.toFixed(1)} km</span>
           <span className="text-muted-foreground">{fmtTime(entry.duration_s)}</span>
         </div>
         <div className="mt-2 rounded-lg border border-border bg-background p-1">
@@ -83,71 +90,58 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
 
 export function Leaderboard({ initialSite, onClose }: { initialSite?: string; onClose: () => void }) {
   const site = initialSite ?? SITES[0]?.name ?? "";
-  const [entries, setEntries] = useState<Record<string, Entry[]> | null>(null);
+  const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Entry | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setEntries(null);
-    setError(null);
-    // One fetch per ranked mode; the per-site split happens locally so every
-    // launch site (including free map picks) gets its own ranking.
-    Promise.all(
-      RANKED_MODES.map((mode) =>
-        supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", mode).order("distance_km", { ascending: false }).limit(500)
-          .then(({ data, error: e }) => (e ? null : (data as Entry[])))
-      )
-    ).then(([outReturn, oneWay]) => {
-      if (cancelled) return;
-      if (outReturn === null || oneWay === null) setError("Rangliste konnte nicht geladen werden.");
-      else setEntries({ out_return: outReturn, one_way: oneWay });
-    });
+    supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc").eq("site_name", site).order("points", { ascending: false }).limit(50)
+      .then(({ data, error: e }) => {
+        if (cancelled) return;
+        if (e) setError("Rangliste konnte nicht geladen werden.");
+        else setEntries(data as Entry[]);
+      });
     return () => { cancelled = true; };
-  }, []);
-
-  const shown = (mode: string) => (entries?.[mode] ?? []).filter((e) => e.site_name === site).slice(0, 50);
+  }, [site]);
 
   return (
     <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label="Rangliste">
       <div className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-foreground">Rangliste · {site}</h2>
+          <h2 className="font-display text-xl font-bold text-foreground">Rangliste XC · {site}</h2>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
-        <div className="mt-3 grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto">
-          {error && <p className="col-span-2 py-6 text-center text-sm text-sink">{error}</p>}
-          {!error && entries === null && <p className="col-span-2 py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
-          {!error && entries !== null && RANKED_MODES.map((mode) => {
-            const list = shown(mode);
-            return (
-              <div key={mode} className="flex min-h-0 flex-col">
-                <h3 className="mb-1 text-xs font-semibold text-foreground">{modeLabel(mode)}</h3>
-                {list.length === 0 ? (
-                  <p className="py-4 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>
-                ) : (
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="hud-label text-left">
-                        <th className="py-1 pr-1">Pilot</th>
-                        <th className="py-1 text-right">Km</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {list.map((e) => (
-                        <tr key={e.id} className="border-t border-border/50 text-foreground">
-                          <td className="max-w-0 truncate py-1 pr-1">
-                            <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                          </td>
-                          <td className="py-1 text-right font-mono font-bold">{e.distance_km.toFixed(1)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            );
-          })}
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+          {error && <p className="py-6 text-center text-sm text-sink">{error}</p>}
+          {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
+          {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
+          {!error && entries !== null && entries.length > 0 && (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="hud-label text-left">
+                  <th className="w-6 py-1"></th>
+                  <th className="py-1 pr-1">Pilot</th>
+                  <th className="py-1 text-right">Km</th>
+                  <th className="py-1 text-right">Punkte</th>
+                  <th className="py-1 text-right">km/h</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={e.id} className="border-t border-border/50 text-foreground">
+                    <td className="py-1"><RouteIcon type={asRoute(e.route_type)} /></td>
+                    <td className="max-w-0 truncate py-1 pr-1">
+                      <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                    </td>
+                    <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
+                    <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>
+                    <td className="py-1 text-right font-mono">{xcSpeed(e).toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
       {selected && <TrackPopup entry={selected} onClose={() => setSelected(null)} />}

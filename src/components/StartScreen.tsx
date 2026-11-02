@@ -7,6 +7,7 @@ import logoImg from "@/assets/xcfly-logo.png";
 import { Info, MapPin, Trophy } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { RouteIcon } from "./RouteIcon";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
@@ -51,11 +52,11 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
                 <Info className="h-3.5 w-3.5" />
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               {MODES.map((m) => (
                 <Button variant="outline" key={m.v} onClick={() => setMode(m.v)} data-active={m.v === mode} className="choice h-auto flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="flex w-full items-center justify-between gap-1">
-                    <span className="block text-sm font-semibold leading-tight">{m.label}{m.v !== "free" && " (4h)"}</span>
+                    <span className="block text-sm font-semibold leading-tight">{m.label}{m.v === "xc" && <span className="ml-1.5 inline-flex gap-0.5 align-middle"><RouteIcon type="free" className="h-3.5 w-3.5" /><RouteIcon type="tri" className="h-3.5 w-3.5" /><RouteIcon type="fai" className="h-3.5 w-3.5" /></span>}</span>
                     <span
                       role="button"
                       tabIndex={0}
