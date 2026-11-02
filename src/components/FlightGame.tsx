@@ -215,7 +215,6 @@ export function FlightGame() {
         const outDist = Math.hypot(sim.x, sim.y);
         if (outDist > maxOutDist) maxOutDist = outDist;
         if (sim.landed) { finish("Gelandet"); return; }
-        if (config.mode !== "free" && sim.flightTime >= MODE_TIME_LIMIT_S) { finish("Zeitlimit (4 h)"); return; }
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
@@ -344,7 +343,7 @@ export function FlightGame() {
             <p className="mt-1 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>
             {submitState === "saved" && <p className="mt-4 rounded-lg border border-climb/40 bg-climb/10 py-2 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
             {submitState === "failed" && <p className="mt-4 rounded-lg border border-sink/40 bg-sink/10 py-2 text-sm font-semibold text-sink">Eintragen fehlgeschlagen – bitte erneut versuchen.</p>}
-            {(submitState === "idle" || submitState === "sending" || submitState === "failed") && (
+            {result.mode === "xc" && (submitState === "idle" || submitState === "sending" || submitState === "failed") && (
               <div className="mt-4 rounded-lg border border-border p-3 text-left">
                 <label className="hud-label" htmlFor="pilot-name">Rangliste</label>
                 <div className="mt-1.5 flex gap-2">
