@@ -53,7 +53,20 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <div className="grid grid-cols-3 gap-1.5">
               {MODES.map((m) => (
                 <Button variant="outline" key={m.v} onClick={() => setMode(m.v)} data-active={m.v === mode} className="choice h-auto flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
-                  <span className="block text-sm font-semibold leading-tight">{m.label}{m.v !== "free" && " (4h)"}</span>
+                  <span className="flex w-full items-center justify-between gap-1">
+                    <span className="block text-sm font-semibold leading-tight">{m.label}{m.v !== "free" && " (4h)"}</span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Info ${m.label}`}
+                      title={`Info ${m.label}`}
+                      onClick={(e) => { e.stopPropagation(); setModeInfo(m.v); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setModeInfo(m.v); } }}
+                      className="grid shrink-0 place-items-center rounded-md p-0.5 text-muted-foreground active:bg-accent"
+                    >
+                      <Info className="h-3 w-3" />
+                    </span>
+                  </span>
                 </Button>
               ))}
             </div>
