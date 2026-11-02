@@ -50,9 +50,9 @@ export function terrainPeaks(t: Terrain) {
         const a = (i / 8) * Math.PI * 2;
         const n = heightAt(t, x + Math.cos(a) * step, y + Math.sin(a) * step);
         if (n >= h) isMax = false;
-        ring += heightAt(t, x + Math.cos(a) * 700, y + Math.sin(a) * 700);
+        ring += heightAt(t, x + Math.cos(a) * 350, y + Math.sin(a) * 350);
       }
-      // Exposed summit: at least 150 m above its 700 m surroundings.
+      // Exposed summit: at least 150 m above its 350 m surroundings.
       if (!isMax || h - ring / 8 < 150) continue;
       const k = key(Math.floor(x / PEAK_CELL), Math.floor(y / PEAK_CELL));
       let arr = grid.get(k); if (!arr) grid.set(k, (arr = []));
@@ -62,7 +62,15 @@ export function terrainPeaks(t: Terrain) {
   return grid;
 }
 
-/** Summit lift (m/s): higher peaks give stronger thermals, ~1.5 m/s at 500 m up to ~6 m/s at 4000 m. */
+/** Deterministic random value (0..1) per summit position, so the strength is
+ * stable across frames but unrelated to the summit's height. */
+function peakRandom(x: number, y: number) {
+  let n = (Math.imul(Math.round(x / 200), 374761393) ^ Math.imul(Math.round(y / 200), 668265263)) >>> 0;
+  n = Math.imul(n ^ (n >>> 13), 1274126177) >>> 0;
+  return (n >>> 0) / 4294967296;
+}
+
+/** Summit lift (m/s): randomized per summit, independent of its height (1.5–6 m/s). */
 export function peakLift(t: Terrain, x: number, y: number) {
   const grid = terrainPeaks(t);
   const cx = Math.floor(x / PEAK_CELL), cy = Math.floor(y / PEAK_CELL);
@@ -73,7 +81,7 @@ export function peakLift(t: Terrain, x: number, y: number) {
     for (const p of arr) {
       const d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
       if (d2 > 640000) continue;
-      const core = 1.5 + 4.5 * Math.max(0, Math.min(1, (p.h - 500) / 3500));
+      const core = 1.5 + 4.5 * peakRandom(p.x, p.y);
       const v = core * Math.exp(-d2 / (250 * 250));
       if (v > best) best = v;
     }

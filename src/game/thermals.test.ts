@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SITES } from "./sites";
 import { generateTerrain, heightAt } from "./terrain";
-import { airLift, generateThermals, type ThermalField } from "./thermals";
+import { airLift, generateThermals, peakLift, type ThermalField } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 import { mulberry32 } from "./rng";
 import { POLAR } from "./physicsEngine";
@@ -59,21 +59,28 @@ describe("thermal release points", () => {
   });
 });
 describe("summit thermals", () => {
-  it("higher summits give stronger lift", async () => {
-    const { peakLift } = await import("./thermals");
-    const flat = (hp: number) => {
-      const t = generateTerrain(SITES[0]);
-      t.h.fill(400);
-      // cone-shaped peak at the grid centre
-      const N = Math.sqrt(t.h.length), c = (N - 1) / 2;
-      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-        const d = Math.hypot(i - c, j - c) * 25;
-        if (d < 2000) t.h[j * N + i] = 400 + (hp - 400) * (1 - d / 2000);
-      }
-      return peakLift(t, 0, 0);
-    };
-    const low = flat(1200), high = flat(3500);
-    expect(low).toBeGreaterThan(1);
-    expect(high).toBeGreaterThan(low + 2);
+  const flat = (hp: number, cx = 0, cy = 0) => {
+    const t = generateTerrain(SITES[0]);
+    t.h.fill(400);
+    // cone-shaped peak centred at (cx, cy) in metres
+    const N = Math.sqrt(t.h.length), c = (N - 1) / 2;
+    const ci = c + cx / 25, cj = c - cy / 25; // row 0 = north
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+      const d = Math.hypot(i - ci, j - cj) * 25;
+      if (d < 2000) t.h[j * N + i] = 400 + (hp - 400) * (1 - d / 2000);
+    }
+    return peakLift(t, cx, cy);
+  };
+  it("strength is randomized and independent of summit height", () => {
+    const low = flat(1400), high = flat(3500);
+    // Same position, different heights: identical random strength.
+    expect(high).toBe(low);
+    expect(low).toBeGreaterThanOrEqual(1.5);
+    expect(low).toBeLessThanOrEqual(6);
+    // Different summits get different random strengths.
+    const other = flat(3500, 4000, 4000);
+    expect(other).not.toBe(low);
+    expect(other).toBeGreaterThanOrEqual(1.5);
+    expect(other).toBeLessThanOrEqual(6);
   });
 });
