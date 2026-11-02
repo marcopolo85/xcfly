@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SITES } from "./sites";
 import { generateTerrain, heightAt } from "./terrain";
-import { airLift, generateThermals, type ThermalField } from "./thermals";
+import { airLift, generateThermals, peakLift, type ThermalField } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 import { mulberry32 } from "./rng";
 import { POLAR } from "./physicsEngine";
@@ -71,8 +71,7 @@ describe("summit thermals", () => {
     }
     return peakLift(t, cx, cy);
   };
-  it("strength is randomized and independent of summit height", async () => {
-    const { peakLift } = await import("./thermals");
+  it("strength is randomized and independent of summit height", () => {
     const low = flat(1400), high = flat(3500);
     // Same position, different heights: identical random strength.
     expect(high).toBe(low);
