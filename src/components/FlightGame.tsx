@@ -11,8 +11,10 @@ import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, timeScale, holdBoost, setTurnInput, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
-import { MODE_TIME_LIMIT_S, modeLabel, modeScore, RETURN_RADIUS_M, type FlightMode } from "@/game/modes";
+import { modeLabel, type FlightMode } from "@/game/modes";
+import { xcScore, XC_FACTORS, type RouteType } from "@/game/xcScore";
 import { submitFlight } from "./Leaderboard";
+import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { trackToLatLng } from "@/game/swissMap";
 import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
@@ -37,7 +39,7 @@ export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
   const [config, setConfig] = useState<FlightConfig | null>(null);
   const [hud, setHud] = useState<HudData | null>(null);
-  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number; score: number; mode: FlightMode } | null>(null);
+  const [result, setResult] = useState<{ goal: boolean; xc: number; time: number; reason: string; maxAlt: number; climb: number; thermals: number; circles: number; points: number; routeType: RouteType; routeDist: number; mode: FlightMode } | null>(null);
   const [pilotName, setPilotName] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "sending" | "saved" | "skipped" | "failed">("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -151,9 +153,8 @@ export function FlightGame() {
       const finish = (reason: string) => {
         vario.current?.update(0);
         finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
-        const endOutDist = Math.hypot(sim.x, sim.y);
-        const { score, goal } = modeScore(config.mode, maxOutDist, endOutDist, sim.xcDist);
-        setResult({ goal, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, score, mode: config.mode });
+        const sc = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]);
+        setResult({ goal: true, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, points: sc.points, routeType: sc.type, routeDist: sc.distance, mode: config.mode });
         setPhase("done");
       };
       if (cancelled) return;
@@ -209,8 +210,6 @@ export function FlightGame() {
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
-            remain: config.mode === "free" ? undefined : Math.max(0, MODE_TIME_LIMIT_S - sim.flightTime),
-            outDist: Math.hypot(sim.x, sim.y), returnRadius: config.mode === "out_return" ? RETURN_RADIUS_M : undefined,
           });
         }
         const outDist = Math.hypot(sim.x, sim.y);
@@ -328,13 +327,10 @@ export function FlightGame() {
           <div className="hud-panel max-h-full w-full max-w-sm overflow-y-auto p-6 text-center">
             <p className="hud-label">{config?.site.name} · {modeLabel(result.mode)}</p>
             <h2 className={`mt-1 font-display text-4xl font-bold ${result.goal ? "text-climb" : "text-foreground"}`}>{result.reason}</h2>
-            <p className="mt-1 font-mono text-sm text-muted-foreground">
-              {result.mode === "out_return" ? (result.goal ? `Zurück im ${RETURN_RADIUS_M}-m-Radius` : `Nicht zurück – zählt nicht`) : ""}
-            </p>
-            <div className="hud-cell mt-3"><div className="hud-label">Wertung</div><div className="hud-value text-3xl">{(result.score / 1000).toFixed(1)} km</div></div>
+            <div className="hud-cell mt-3"><div className="hud-label">Wertung · {ROUTE_LABEL[result.routeType]} ×{XC_FACTORS[result.routeType].toFixed(1)}</div><div className="hud-value flex items-center justify-center gap-2 text-3xl"><RouteIcon type={result.routeType} className="h-6 w-6" />{result.points.toFixed(1)} Pkt</div><div className="font-mono text-xs text-muted-foreground">{(result.routeDist / 1000).toFixed(1)} km</div></div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="hud-cell"><div className="hud-label">XC Strecke</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)} km</div></div>
-              <div className="hud-cell"><div className="hud-label">XC Punkte</div><div className="hud-value text-2xl">{(result.xc / 1000).toFixed(1)}</div></div>
+              <div className="hud-cell"><div className="hud-label">XC Punkte</div><div className="hud-value text-2xl">{result.points.toFixed(1)}</div></div>
               <div className="hud-cell"><div className="hud-label">Flugdauer</div><div className="hud-value text-2xl">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
               <div className="hud-cell"><div className="hud-label">XC Geschw.</div><div className="hud-value text-2xl">{result.time > 0 ? (((result.xc / 1000) / (result.time / 3600))).toFixed(1) : "0.0"} km/h</div></div>
               <div className="hud-cell"><div className="hud-label">Max Höhe</div><div className="hud-value text-2xl">{Math.round(result.maxAlt)} m</div></div>
@@ -356,7 +352,7 @@ export function FlightGame() {
                   <button disabled={submitState === "sending" || pilotName.trim().length === 0} className="rounded-md bg-primary px-3 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50" onClick={() => {
                     if (!config) return;
                     setSubmitState("sending");
-                    void submitFlight(pilotName, config.site.name, result.mode, result.score / 1000, result.time, finishedTrack.current).then((err) => setSubmitState(err ? "failed" : "saved"));
+                    void submitFlight(pilotName, config.site.name, result.routeDist / 1000, result.points, result.routeType, result.time, finishedTrack.current).then((err) => setSubmitState(err ? "failed" : "saved"));
                   }}>{submitState === "sending" ? "…" : "Eintragen"}</button>
                   <button className="rounded-md border border-border px-3 py-2 text-sm font-bold text-foreground" onClick={() => setSubmitState("skipped")}>Abbrechen</button>
                 </div>
