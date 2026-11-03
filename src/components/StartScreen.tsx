@@ -42,6 +42,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [startHour, setStartHour] = useState(11);
   const [choosing, setChoosing] = useState(false);
   const [rankingSite, setRankingSite] = useState<string | null>(null);
+  const [overallRanking, setOverallRanking] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
   useEffect(() => {
@@ -67,7 +68,12 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
         <div className="mt-4 space-y-2.5 rounded-xl border border-border bg-card/85 p-4 backdrop-blur">
           <section>
             <div className="mb-1.5 flex items-center justify-between">
-              <h2 className="hud-label">Modus</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="hud-label">Modus</h2>
+                <Button type="button" variant="outline" size="icon" title="Gesamtrangliste" aria-label="Gesamtrangliste" onClick={() => setOverallRanking(true)} className="h-6 w-6 text-muted-foreground [&_svg]:size-3.5">
+                  <Trophy />
+                </Button>
+              </div>
               <button type="button" title="Info" aria-label="Info" onClick={() => setInfoOpen(true)} className="grid h-6 w-6 place-items-center rounded-md border border-border bg-card/95 text-muted-foreground active:bg-accent">
                 <Info className="h-3.5 w-3.5" />
               </button>
@@ -136,6 +142,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       </div>
       {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
+      {overallRanking && <Leaderboard overall onClose={() => setOverallRanking(false)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
       <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>
         <DialogContent className="sm:max-w-sm">

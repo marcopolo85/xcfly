@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Site-specific and overall leaderboards share the same XC query and display; only the optional site filter differs, keeping scoring and track access consistent.
 - Relief layers are composited into bounded native-resolution tile surfaces, invalidated by source identity and appearance; triangle candidates reuse pairwise distances without changing scoring.
 - Turn-key input preserves the initial press timestamp across keyboard auto-repeat so desktop and touch long holds use the same simulation boost.
 - Full-region thermal coverage uses compressed per-tile PNGs, sparse byte heat arrays and a bounded visible-bitmap cache; never allocate a single country-sized canvas. Regional coverage is reused independently of moving terrain windows, with local mosaics beyond its bounds.

@@ -5,6 +5,7 @@ import type { RouteType } from "@/game/xcScore";
 import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { X } from "lucide-react";
 import { TrackOverview } from "./TrackOverview";
+import { Button } from "./ui/button";
 
 interface Entry {
   id: string;
@@ -21,6 +22,12 @@ interface Entry {
 const ENTRY_COLUMNS = "id,pilot_name,site_name,mode,distance_km,duration_s,points,route_type,created_at";
 const asRoute = (t: string): RouteType => (t === "fai" || t === "tri" ? t : "free");
 const xcSpeed = (e: Entry) => (e.duration_s > 0 ? e.distance_km / (e.duration_s / 3600) : 0);
+
+export function loadLeaderboardEntries(site?: string) {
+  let query = supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc");
+  if (site !== undefined) query = query.eq("site_name", site);
+  return query.order("points", { ascending: false }).limit(50);
+}
 
 export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: [number, number][]): Promise<string | null> {
   const { error } = await supabase.from("leaderboard_entries").insert({
@@ -88,15 +95,17 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   );
 }
 
-export function Leaderboard({ initialSite, onClose }: { initialSite?: string; onClose: () => void }) {
-  const site = initialSite ?? SITES[0]?.name ?? "";
+export function Leaderboard({ initialSite, overall = false, onClose }: { initialSite?: string; overall?: boolean; onClose: () => void }) {
+  const site = overall ? undefined : initialSite ?? SITES[0]?.name ?? "";
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Entry | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc").eq("site_name", site).order("points", { ascending: false }).limit(50)
+    setEntries(null);
+    setError(null);
+    loadLeaderboardEntries(site)
       .then(({ data, error: e }) => {
         if (cancelled) return;
         if (e) setError("Rangliste konnte nicht geladen werden.");
@@ -109,8 +118,8 @@ export function Leaderboard({ initialSite, onClose }: { initialSite?: string; on
     <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label="Rangliste">
       <div className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-foreground">Rangliste XC · {site}</h2>
-          <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+          <h2 className="font-display text-xl font-bold text-foreground">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
+          <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
         </div>
         <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
           {error && <p className="py-6 text-center text-sm text-sink">{error}</p>}
@@ -133,6 +142,7 @@ export function Leaderboard({ initialSite, onClose }: { initialSite?: string; on
                     <td className="py-1"><RouteIcon type={asRoute(e.route_type)} /></td>
                     <td className="max-w-0 truncate py-1 pr-1">
                       <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                       {overall && <span className="block truncate text-[10px] text-muted-foreground">{e.site_name}</span>}
                     </td>
                     <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
                     <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>

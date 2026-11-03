@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { insert, from } = vi.hoisted(() => {
+const { insert, from, query } = vi.hoisted(() => {
   const insert = vi.fn();
-  return { insert, from: vi.fn(() => ({ insert })) };
+  const query = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), limit: vi.fn() };
+  query.select.mockReturnValue(query);
+  query.eq.mockReturnValue(query);
+  query.order.mockReturnValue(query);
+  query.limit.mockResolvedValue({ data: [], error: null });
+  return { insert, query, from: vi.fn(() => ({ insert, ...query })) };
 });
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from } }));
 
-import { submitFlight } from "./Leaderboard";
+import { loadLeaderboardEntries, submitFlight } from "./Leaderboard";
 
 describe("XC leaderboard submission", () => {
   beforeEach(() => {
@@ -29,5 +34,16 @@ describe("XC leaderboard submission", () => {
   it("does not report success when the cloud rejects an entry", async () => {
     insert.mockResolvedValue({ error: { message: "Permission denied" } });
     expect(await submitFlight("TiM", "Gummen", 81.1, 97.4, "tri", 11316, [])).toBe("Permission denied");
+  });
+
+  it("loads overall XC flights across all sites in descending points order", async () => {
+    await loadLeaderboardEntries();
+    expect(query.eq.mock.calls).toEqual([["mode", "xc"]]);
+    expect(query.order).toHaveBeenCalledWith("points", { ascending: false });
+  });
+
+  it("keeps the individual launch-site ranking restricted to that site", async () => {
+    await loadLeaderboardEntries("Gummen");
+    expect(query.eq.mock.calls).toEqual([["mode", "xc"], ["site_name", "Gummen"]]);
   });
 });
