@@ -28,7 +28,9 @@ export function setTurnInput(input: Input, starts: HoldStarts, key: "left" | "ri
 }
 
 // ×20 simulation rate while a turn button has been held for HOLD_BOOST_MS or longer.
+// Never applies on the speed bar: accelerated flight must not stack the hold boost.
 export function holdBoost(input: Input, holdStart: HoldStarts, nowReal: number) {
+  if (input.accel) return 1;
   const longHold = (key: "left" | "right") =>
     input[key] && holdStart[key] !== null && nowReal - (holdStart[key] as number) >= HOLD_BOOST_MS;
   return longHold("left") || longHold("right") ? HOLD_BOOST_FACTOR : 1;
