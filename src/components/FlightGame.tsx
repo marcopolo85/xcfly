@@ -70,6 +70,7 @@ export function FlightGame() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const vario = useRef<AudioVario | null>(null);
   const [paused, setPaused] = useState(false);
+  const [boss, setBoss] = useState(false);
   const pausedRef = useRef(false);
   pausedRef.current = paused;
   const resumeFree = useRef<(() => void) | null>(null);
