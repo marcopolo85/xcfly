@@ -33,3 +33,14 @@ describe("current glide terrain boundary", () => {
     expect(Array.from(trace(flat, { ...sim, alt: 10000 })).every(Number.isNaN)).toBe(true);
   });
 });
+import { addGlideSample, averageGlideVz } from "./glideBoundary";
+describe("average glide ratio", () => {
+  it("averages only glide segments and ignores climbs", () => {
+    const avg = { dist: 0, drop: 0 };
+    addGlideSample(avg, 10, -1, 0, 100); // 1:10
+    addGlideSample(avg, 10, -2, 0, 100); // 1:5
+    addGlideSample(avg, 10, 2, 3, 100); // thermal, ignored
+    expect(avg.dist / avg.drop).toBeCloseTo(2000 / 300, 6);
+    expect(averageGlideVz(avg, 10, -1)).toBeCloseTo(-1.5, 6);
+  });
+});

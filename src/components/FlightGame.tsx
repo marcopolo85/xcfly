@@ -28,6 +28,7 @@ import { needsFlightCoverage, flightCoverageReady, nextCoverageCenter } from "@/
 import { offlineEnabled } from "@/lib/offline-data";
 import { loadThermalRegion, type ThermalProgress } from "@/game/loadThermalRegion";
 import { inThermalRegion } from "@/game/thermalRegion";
+import { addGlideSample, averageGlideVz } from "@/game/glideBoundary";
 import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
@@ -68,6 +69,10 @@ export function FlightGame() {
   showAirspaceLabelsRef.current = showAirspaceLabels;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const vario = useRef<AudioVario | null>(null);
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  pausedRef.current = paused;
+  const resumeFree = useRef<(() => void) | null>(null);
 
   const start = (c: FlightConfig) => {
     if (!vario.current) vario.current = new AudioVario();
@@ -79,6 +84,7 @@ export function FlightGame() {
     setCoverageStatus("ready");
     mapZoom.reset(); profileZoom.reset();
     setResult(null);
+    setPaused(false);
     setSubmitState("idle");
     setPhase("loading");
     setRunId((r) => r + 1);
@@ -152,7 +158,9 @@ export function FlightGame() {
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       let maxOutDist = 0;
       let flightEnded = false;
-      const evProps = () => ({ mode: config.mode, flight_minutes: Math.round(sim.flightTime / 60) });
+      let mode: FlightMode = config.mode;
+      const glideAvg = { dist: 0, drop: 0 };
+      const evProps = () => ({ mode, flight_minutes: Math.round(sim.flightTime / 60) });
       const onAbort = () => {
         if (flightEnded) return;
         flightEnded = true;
@@ -167,8 +175,17 @@ export function FlightGame() {
         vario.current?.update(0);
         finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
         const sc = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]);
-        setResult({ goal: true, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, points: sc.points, routeType: sc.type, routeDist: sc.distance, mode: config.mode });
+        setResult({ goal: true, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, points: sc.points, routeType: sc.type, routeDist: sc.distance, mode });
         setPhase("done");
+      };
+      resumeFree.current = () => {
+        mode = "free";
+        flightEnded = false;
+        window.addEventListener("pagehide", onAbort);
+        setResult(null);
+        setPhase("flying");
+        last = performance.now();
+        raf = requestAnimationFrame(loop);
       };
       if (cancelled) return;
       setPhase("flying");
@@ -177,6 +194,11 @@ export function FlightGame() {
       const loop = (now: number) => {
         const dtReal = Math.min(0.05, (now - last) / 1000);
         last = now;
+        if (pausedRef.current) {
+          vario.current?.update(0);
+          raf = requestAnimationFrame(loop);
+          return;
+        }
         updateCoverage(sim.x, sim.y, now);
         if (!flightCoverageReady(terrain, sim.x, sim.y)) {
           vario.current?.update(0);
@@ -194,6 +216,7 @@ export function FlightGame() {
         for (let i = 0; i < steps && !sim.landed; i++) {
           const lift = airLift(thermals, terrain, sim.x, sim.y, sim.alt, sim.flightTime + config.startHour * 3600, sv, season.maxLift);
           stepPhysics(sim, inp, simDt / steps, terrain, lift);
+          addGlideSample(glideAvg, sim.speed, sim.vz, lift, simDt / steps);
         }
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
         vario.current?.update(smoothVz);
@@ -210,7 +233,7 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, glideVz: smoothVz, thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
@@ -223,14 +246,14 @@ export function FlightGame() {
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,
-            remain: config.mode === "xc" ? Math.max(0, XC_TIME_LIMIT_S - sim.flightTime) : undefined,
+            remain: mode === "xc" ? Math.max(0, XC_TIME_LIMIT_S - sim.flightTime) : undefined,
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
         }
         const outDist = Math.hypot(sim.x, sim.y);
         if (outDist > maxOutDist) maxOutDist = outDist;
         if (sim.landed) { finish("Gelandet"); return; }
-        if (sim.flightTime >= XC_TIME_LIMIT_S) { finish("Zeitlimit erreicht (4 h)"); return; }
+        if (mode === "xc" && sim.flightTime >= XC_TIME_LIMIT_S) { finish("Zeitlimit erreicht (4 h)"); return; }
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
@@ -311,6 +334,8 @@ export function FlightGame() {
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
       {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />}
+      {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
+      {phase === "flying" && paused && <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center"><span className="rounded-md border border-border bg-card/95 px-4 py-2 font-display text-2xl font-bold text-foreground">Pause</span></div>}
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">
           <div role="status" className="space-y-3 px-6 text-center font-mono text-sm text-muted-foreground">
@@ -377,6 +402,7 @@ export function FlightGame() {
               </div>
             )}
             <div className="mt-3 flex gap-2">
+              {result.mode === "xc" && !result.reason.startsWith("Gelandet") && <button className="flex-1 rounded-lg border border-primary py-2.5 font-bold text-primary" onClick={() => resumeFree.current?.()}>Weiter im Freeflight</button>}
               <button className="flex-1 rounded-lg bg-primary py-2.5 font-bold text-primary-foreground" onClick={() => config && start(config)}>Nochmal</button>
               <button className="flex-1 rounded-lg border border-border py-2.5 font-bold text-foreground" onClick={() => { setRunId(0); setPhase("config"); }}>Menü</button>
             </div>
