@@ -182,8 +182,7 @@ export function FlightGame() {
         vario.current?.update(0);
         finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
         void supabase.from("flight_stats").insert({ site_name: config.site.name, mode }).select("id").single()
-          .then(({ data }) => { if (data) statsRow.current = (data as { id: string }).id; })
-          .catch(() => {});
+          .then(({ data }) => { if (data) statsRow.current = (data as { id: string }).id; }, () => {});
         const sc = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]);
         setResult({ goal: true, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, points: sc.points, routeType: sc.type, routeDist: sc.distance, mode });
         setPhase("done");
