@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { insert, from, query } = vi.hoisted(() => {
   const insert = vi.fn();
-  const query = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), limit: vi.fn() };
+  const query = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), limit: vi.fn(), range: vi.fn() };
   query.select.mockReturnValue(query);
   query.eq.mockReturnValue(query);
   query.order.mockReturnValue(query);
@@ -18,6 +18,7 @@ describe("XC leaderboard submission", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     insert.mockResolvedValue({ error: null });
+    query.range.mockReset().mockResolvedValue({ data: [], error: null });
   });
 
   it("saves XC mode, route points and the track in the shared leaderboard", async () => {
@@ -45,5 +46,15 @@ describe("XC leaderboard submission", () => {
   it("keeps the individual launch-site ranking restricted to that site", async () => {
     await loadLeaderboardEntries("Gummen");
     expect(query.eq.mock.calls).toEqual([["mode", "xc"], ["site_name", "Gummen"]]);
+  });
+
+  it("includes every overall flight beyond both the old 50-flight limit and a full result page", async () => {
+    const firstPage = Array.from({ length: 500 }, (_, i) => ({ id: `flight-${i}`, site_name: i % 2 ? "Gummen" : "Mornera" }));
+    const lastFlight = { id: "flight-500", site_name: "Niesen" };
+    query.range.mockResolvedValueOnce({ data: firstPage, error: null }).mockResolvedValueOnce({ data: [lastFlight], error: null });
+    const result = await loadLeaderboardEntries();
+    expect(result.data).toEqual([...firstPage, lastFlight]);
+    expect(query.range.mock.calls).toEqual([[0, 499], [500, 999]]);
+    expect(query.limit).not.toHaveBeenCalled();
   });
 });
