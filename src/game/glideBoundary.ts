@@ -35,3 +35,15 @@ export function traceGlideBoundary(t: Terrain, sim: Pick<Sim, "x" | "y" | "alt" 
     }
   }
 }
+/** Running average glide ratio over glide segments only (sinking, no lift ≥0.5 m/s). */
+export interface GlideAverage { dist: number; drop: number }
+export function addGlideSample(avg: GlideAverage, speed: number, vz: number, lift: number, dt: number) {
+  if (vz >= -0.1 || lift > 0.5) return;
+  avg.dist += speed * dt;
+  avg.drop += -vz * dt;
+}
+/** Equivalent sink rate at the current speed; falls back to the instantaneous vz before any glide. */
+export function averageGlideVz(avg: GlideAverage, speed: number, fallbackVz: number) {
+  if (avg.drop < 1) return fallbackVz;
+  return -speed / (avg.dist / avg.drop);
+}
