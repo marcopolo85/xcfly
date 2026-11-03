@@ -70,17 +70,25 @@ function updateXc(sim: Sim) {
   }
 }
 
+/** Arrow turn rate while on the speed bar: 2° per real second (not per simulated second). */
+export const ACCEL_TURN_RATE = (2 * Math.PI) / 180;
+
 export interface Input { left: boolean; right: boolean; accel: boolean; steer?: number }
 
 /**
  * Applies the turn rate per simulated second so the flown circle keeps the
  * same radius regardless of the simulation speed (see game.test.ts).
  * `steer` is the analog slide value (-1..1) from the speed button.
+ * On the speed bar the arrows turn at a fixed gentle 2°/s real time instead of
+ * scaling with the accelerated simulation rate; slide steering is unchanged.
  */
 export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
-  const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0) + (input.steer ?? 0) * STEER_ANALOG_FACTOR;
+  const dirDigital = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const dirAnalog = (input.steer ?? 0) * STEER_ANALOG_FACTOR;
   const dtSim = dtReal * timeScale(input.accel, simSpeed);
-  const rot = dir * TURN_RATE * dtSim;
+  const rot = input.accel
+    ? dirDigital * ACCEL_TURN_RATE * dtReal + dirAnalog * TURN_RATE * dtSim
+    : (dirDigital + dirAnalog) * TURN_RATE * dtSim;
   // A full 360° rotation counts as a thermalling circle, but only while climbing.
   if (dir !== 0) {
     sim.turnAcc += Math.abs(rot);
