@@ -70,6 +70,14 @@ describe("game rules", () => {
     steer(sim, { left: false, right: false, accel: false, steer: -0.5 }, 1, 1);
     expect(sim.heading).toBeCloseTo((TURN_RATE * STEER_ANALOG_FACTOR) / 2, 6);
   });
+  it("on the speed bar the arrows turn at 2° per real second", () => {
+    const sim = newSim();
+    steer(sim, { left: false, right: true, accel: true }, 1, 1);
+    expect(sim.heading).toBeCloseTo((2 * Math.PI) / 180, 6);
+    // The hold boost speeds up flight time but not the arrow turn rate.
+    steer(sim, { left: false, right: true, accel: true }, 1, HOLD_BOOST_FACTOR);
+    expect(sim.heading).toBeCloseTo(2 * ((2 * Math.PI) / 180), 6);
+  });
   it("cloudbase is 500 m above the peaks", () => {
     expect(cloudbaseFromPeak(2800)).toBe(3300);
   });
