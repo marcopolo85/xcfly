@@ -55,6 +55,8 @@ export function FlightGame() {
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
+  const lastSpaceTap = useRef(0);
+  const bossRef = useRef(false);
   const speedHold = useRef<{ id: number | null; startX: number }>({ id: null, startX: 0 });
   const [thermalOpacity, setThermalOpacity] = useState(0.3);
   const thermalOpacityRef = useRef(0.3);
