@@ -23,10 +23,19 @@ const ENTRY_COLUMNS = "id,pilot_name,site_name,mode,distance_km,duration_s,point
 const asRoute = (t: string): RouteType => (t === "fai" || t === "tri" ? t : "free");
 const xcSpeed = (e: Entry) => (e.duration_s > 0 ? e.distance_km / (e.duration_s / 3600) : 0);
 
-export function loadLeaderboardEntries(site?: string) {
-  let query = supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc");
-  if (site !== undefined) query = query.eq("site_name", site);
-  return query.order("points", { ascending: false }).limit(50);
+export async function loadLeaderboardEntries(site?: string) {
+  const entries: Entry[] = [];
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    let query = supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc");
+    if (site !== undefined) query = query.eq("site_name", site);
+    const ordered = query.order("points", { ascending: false }).order("id", { ascending: true });
+    const { data, error } = await (site === undefined ? ordered.range(offset, offset + pageSize - 1) : ordered.limit(50));
+    if (error) return { data: null, error };
+    const page = (data ?? []) as Entry[];
+    entries.push(...page);
+    if (site !== undefined || page.length < pageSize) return { data: entries, error: null };
+  }
 }
 
 export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: [number, number][]): Promise<string | null> {
@@ -116,7 +125,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
 
   return (
     <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label="Rangliste">
-      <div className="flex max-h-[85dvh] w-full max-w-lg flex-col rounded-xl border border-border bg-card p-4">
+      <div className={`flex max-h-[85dvh] w-full flex-col rounded-xl border border-border bg-card p-4 ${overall ? "max-w-2xl" : "max-w-lg"}`}>
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-bold text-foreground">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
@@ -131,6 +140,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                 <tr className="hud-label text-left">
                   <th className="w-6 py-1"></th>
                   <th className="py-1 pr-1">Pilot</th>
+                  {overall && <th className="py-1 px-1">Startplatz</th>}
                   <th className="py-1 text-right">Km</th>
                   <th className="py-1 text-right">Punkte</th>
                   <th className="py-1 text-right">km/h</th>
@@ -142,8 +152,8 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                     <td className="py-1"><RouteIcon type={asRoute(e.route_type)} /></td>
                     <td className="max-w-0 truncate py-1 pr-1">
                       <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                       {overall && <span className="block truncate text-[10px] text-muted-foreground">{e.site_name}</span>}
                     </td>
+                    {overall && <td className="max-w-0 break-words px-1 py-1 text-muted-foreground">{e.site_name}</td>}
                     <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
                     <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>
                     <td className="py-1 text-right font-mono">{xcSpeed(e).toFixed(1)}</td>
