@@ -92,6 +92,7 @@ export function FlightGame() {
     setResult(null);
     setPaused(false);
     setSubmitState("idle");
+    statsRow.current = null;
     setPhase("loading");
     setRunId((r) => r + 1);
   };
@@ -180,6 +181,9 @@ export function FlightGame() {
         window.__lovableEvents?.track?.("project.flight_completed", { ...evProps(), reason: reason === "Gelandet" ? "landed" : "time_limit" });
         vario.current?.update(0);
         finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
+        void supabase.from("flight_stats").insert({ site_name: config.site.name, mode }).select("id").single()
+          .then(({ data }) => { if (data) statsRow.current = (data as { id: string }).id; })
+          .catch(() => {});
         const sc = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]);
         setResult({ goal: true, xc: sim.xcDist, time: sim.flightTime, reason, maxAlt: sim.maxAlt, climb: sim.climbTotal, thermals: sim.thermals, circles: sim.circles, points: sc.points, routeType: sc.type, routeDist: sc.distance, mode });
         setPhase("done");
@@ -416,7 +420,10 @@ export function FlightGame() {
                   <button disabled={submitState === "sending" || pilotName.trim().length === 0} className="rounded-md bg-primary px-2.5 py-1.5 text-sm font-bold text-primary-foreground disabled:opacity-50" onClick={() => {
                     if (!config) return;
                     setSubmitState("sending");
-                    void submitFlight(pilotName, config.site.name, result.routeDist / 1000, result.points, result.routeType, result.time, finishedTrack.current).then((err) => setSubmitState(err ? "failed" : "saved"));
+                    void submitFlight(pilotName, config.site.name, result.routeDist / 1000, result.points, result.routeType, result.time, finishedTrack.current).then((err) => {
+                      setSubmitState(err ? "failed" : "saved");
+                      if (!err && statsRow.current) void supabase.from("flight_stats").delete().eq("id", statsRow.current).then(() => { statsRow.current = null; });
+                    });
                   }}>{submitState === "sending" ? "…" : "Eintragen"}</button>
                   <button className="rounded-md border border-border px-2.5 py-1.5 text-sm font-bold text-foreground" onClick={() => setSubmitState("skipped")}>Abbrechen</button>
                 </div>
