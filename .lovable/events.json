@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "events": {
+    "project.flight_aborted": {
+      "event_schema_version": 1,
+      "description": "A running flight was left (page closed or navigated away) before landing.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mode",
+          "flight_minutes"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "flight_minutes": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "project.flight_completed": {
+      "event_schema_version": 1,
+      "description": "A flight ended by landing or the XC time limit and reached the evaluation.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mode",
+          "flight_minutes",
+          "reason"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "flight_minutes": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "landed",
+              "time_limit"
+            ]
+          }
+        }
+      }
+    },
+    "project.flight_started": {
+      "event_schema_version": 1,
+      "description": "A flight started after terrain and thermals loaded.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "mode"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
