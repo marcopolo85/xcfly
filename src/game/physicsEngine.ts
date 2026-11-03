@@ -71,7 +71,7 @@ function updateXc(sim: Sim) {
 }
 
 /** Arrow turn rate while on the speed bar: 2° per real second (not per simulated second). */
-export const ACCEL_TURN_RATE = (2 * Math.PI) / 180;
+export const ACCEL_TURN_RATE = (10 * Math.PI) / 180;
 
 export interface Input { left: boolean; right: boolean; accel: boolean; steer?: number }
 
