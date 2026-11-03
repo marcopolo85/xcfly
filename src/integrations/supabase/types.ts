@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      flight_stats: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          site_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode: string
+          site_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          site_name?: string
+        }
+        Relationships: []
+      }
       leaderboard_entries: {
         Row: {
           created_at: string
@@ -58,7 +79,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      flight_summary: {
+        Args: never
+        Returns: {
+          flights_total: number
+          flights_unranked: number
+          pilots: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
