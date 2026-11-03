@@ -41,6 +41,13 @@ describe("game rules", () => {
     expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
     expect(holdBoost(input, { left: null, right: null }, 5000)).toBe(1);
   });
+  it("holding a turn button never boosts while on the speed bar", () => {
+    const input = { left: false, right: true, accel: true };
+    const starts = { left: null, right: 1000 };
+    expect(holdBoost(input, starts, 1000 + 4999)).toBe(1);
+    expect(holdBoost(input, starts, 1000 + 5000)).toBe(1);
+    expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
+  });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {
       const sim = newSim();
