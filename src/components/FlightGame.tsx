@@ -15,6 +15,7 @@ import { SEASONS } from "@/game/sites";
 import { modeLabel, XC_TIME_LIMIT_S, type FlightMode } from "@/game/modes";
 import { xcScore, XC_FACTORS, type RouteType } from "@/game/xcScore";
 import { submitFlight } from "./Leaderboard";
+import { supabase } from "@/integrations/supabase/client";
 import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { trackToLatLng } from "@/game/swissMap";
 import { loadRealTerrain } from "@/game/realTerrain";
@@ -49,6 +50,7 @@ export function FlightGame() {
   const [coverageStatus, setCoverageStatus] = useState<"ready" | "loading" | "error">("ready");
   const coverageRetry = useRef(false);
   const finishedTrack = useRef<[number, number][]>([]);
+  const statsRow = useRef<string | null>(null);
   const [runId, setRunId] = useState(0);
   const mapZoom = useCanvasZoom(0.01, 8, phase !== "config");
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
