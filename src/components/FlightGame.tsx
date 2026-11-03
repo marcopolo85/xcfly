@@ -55,6 +55,8 @@ export function FlightGame() {
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
+  const lastSpaceTap = useRef(0);
+  const bossRef = useRef(false);
   const speedHold = useRef<{ id: number | null; startX: number }>({ id: null, startX: 0 });
   const [thermalOpacity, setThermalOpacity] = useState(0.3);
   const thermalOpacityRef = useRef(0.3);
@@ -275,8 +277,20 @@ export function FlightGame() {
         setTurnInput(input.current, holdStart.current, "left", v, performance.now());
       } else if (e.code === "ArrowRight") {
         setTurnInput(input.current, holdStart.current, "right", v, performance.now());
-      } else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
-      else return;
+      } else if (e.code === "Space" || e.code === "ArrowUp") {
+        if (e.code === "Space" && v && !e.repeat) {
+          if (bossRef.current) {
+            bossRef.current = false; setBoss(false); setPaused(false);
+          } else {
+            const now = performance.now();
+            if (now - lastSpaceTap.current < 400) {
+              lastSpaceTap.current = 0;
+              bossRef.current = true; setBoss(true); setPaused(true);
+            } else lastSpaceTap.current = now;
+          }
+        }
+        input.current.accel = v;
+      } else return;
       e.preventDefault();
     };
     const down = (e: KeyboardEvent) => set(e, true), up = (e: KeyboardEvent) => set(e, false);
@@ -288,6 +302,8 @@ export function FlightGame() {
       holdStart.current = { left: null, right: null };
     };
   }, [phase]);
+
+  useEffect(() => { bossRef.current = boss; }, [boss]);
 
   if (phase === "config") return <StartScreen onStart={start} />;
 
