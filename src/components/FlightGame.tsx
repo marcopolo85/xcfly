@@ -303,6 +303,8 @@ export function FlightGame() {
     };
   }, [phase]);
 
+  useEffect(() => { bossRef.current = boss; }, [boss]);
+
   if (phase === "config") return <StartScreen onStart={start} />;
 
   const stopHold = (k: "left" | "right" | "accel") => {
