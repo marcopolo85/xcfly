@@ -87,6 +87,7 @@ export function FlightGame() {
   useEffect(() => {
     if (runId === 0 || !config) return;
     let raf = 0, cancelled = false;
+    let abortFlight: (() => void) | null = null;
     const timer = setTimeout(async () => {
       let terrain: Terrain, thermalMap: ThermalMap;
       try {
@@ -150,7 +151,19 @@ export function FlightGame() {
       let triangle: XcTriangle | null = null, lastTri = 0;
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       let maxOutDist = 0;
+      let flightEnded = false;
+      const evProps = () => ({ mode: config.mode, flight_minutes: Math.round(sim.flightTime / 60) });
+      const onAbort = () => {
+        if (flightEnded) return;
+        flightEnded = true;
+        window.__lovableEvents?.track?.("project.flight_aborted", evProps());
+      };
+      abortFlight = onAbort;
+      window.addEventListener("pagehide", onAbort);
       const finish = (reason: string) => {
+        flightEnded = true;
+        window.removeEventListener("pagehide", onAbort);
+        window.__lovableEvents?.track?.("project.flight_completed", { ...evProps(), reason: reason === "Gelandet" ? "landed" : "time_limit" });
         vario.current?.update(0);
         finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
         const sc = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]);
@@ -159,6 +172,7 @@ export function FlightGame() {
       };
       if (cancelled) return;
       setPhase("flying");
+      window.__lovableEvents?.track?.("project.flight_started", { mode: config.mode });
 
       const loop = (now: number) => {
         const dtReal = Math.min(0.05, (now - last) / 1000);
@@ -221,7 +235,10 @@ export function FlightGame() {
       };
       raf = requestAnimationFrame(loop);
     }, 30);
-    return () => { cancelled = true; clearTimeout(timer); cancelAnimationFrame(raf); };
+    return () => {
+      cancelled = true; clearTimeout(timer); cancelAnimationFrame(raf);
+      if (abortFlight) { abortFlight(); window.removeEventListener("pagehide", abortFlight); }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
