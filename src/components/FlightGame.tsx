@@ -277,8 +277,20 @@ export function FlightGame() {
         setTurnInput(input.current, holdStart.current, "left", v, performance.now());
       } else if (e.code === "ArrowRight") {
         setTurnInput(input.current, holdStart.current, "right", v, performance.now());
-      } else if (e.code === "Space" || e.code === "ArrowUp") input.current.accel = v;
-      else return;
+      } else if (e.code === "Space" || e.code === "ArrowUp") {
+        if (e.code === "Space" && v && !e.repeat) {
+          if (bossRef.current) {
+            bossRef.current = false; setBoss(false); setPaused(false);
+          } else {
+            const now = performance.now();
+            if (now - lastSpaceTap.current < 400) {
+              lastSpaceTap.current = 0;
+              bossRef.current = true; setBoss(true); setPaused(true);
+            } else lastSpaceTap.current = now;
+          }
+        }
+        input.current.accel = v;
+      } else return;
       e.preventDefault();
     };
     const down = (e: KeyboardEvent) => set(e, true), up = (e: KeyboardEvent) => set(e, false);
