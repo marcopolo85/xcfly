@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
 import { sunTimes } from "@/game/sun";
 import { MODES, type FlightMode } from "@/game/modes";
@@ -13,6 +14,25 @@ import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode }
+
+function FlightStats() {
+  const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.rpc("flight_summary").then(({ data, error }) => {
+      if (cancelled || error || !data) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) setStats({ total: Number(row.flights_total), unranked: Number(row.flights_unranked), pilots: Number(row.pilots) });
+    });
+    return () => { cancelled = true; };
+  }, []);
+  if (!stats) return null;
+  return (
+    <p className="text-center text-[10px] text-muted-foreground">
+      {stats.total} {stats.total === 1 ? "Flug" : "Flüge"} · {stats.total - stats.unranked} in der Rangliste · {stats.total - stats.unranked === stats.total ? "keine" : stats.unranked} ohne Rangliste · {stats.pilots} {stats.pilots === 1 ? "Pilot" : "Piloten"}
+    </p>
+  );
+}
 
 const FIXED_SEASON: Season = "summer";
 
@@ -111,6 +131,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
           </button>
           {!site && <p className="text-center text-xs text-muted-foreground">Bitte einen Startplatz wählen</p>}
           <p className="text-center text-[10px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
+          <FlightStats />
         </div>
       </div>
       {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
