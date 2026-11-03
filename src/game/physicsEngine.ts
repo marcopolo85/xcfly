@@ -90,7 +90,7 @@ export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
     ? dirDigital * ACCEL_TURN_RATE * dtReal + dirAnalog * TURN_RATE * dtSim
     : (dirDigital + dirAnalog) * TURN_RATE * dtSim;
   // A full 360° rotation counts as a thermalling circle, but only while climbing.
-  if (dir !== 0) {
+  if (dirDigital + dirAnalog !== 0) {
     sim.turnAcc += Math.abs(rot);
     if (sim.turnAcc >= Math.PI * 2) {
       sim.turnAcc -= Math.PI * 2;
