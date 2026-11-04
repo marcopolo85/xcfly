@@ -96,7 +96,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         <div className="mt-2 rounded-lg border border-border bg-background p-1">
           {track === null && !missing && <p className="py-16 text-center font-mono text-xs text-muted-foreground">Lade Track…</p>}
           {missing && <TrackOverview track={null} />}
-          {track !== null && <TrackOverview track={track} />}
+          {track !== null && <TrackOverview track={track} expandable />}
         </div>
         {track !== null && <p className="mt-1 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>}
       </div>
