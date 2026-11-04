@@ -1,5 +1,15 @@
 import { mapOrigin } from "./swissMap";
 
+/** Convert a screen-space pan/zoom back into the tile renderer's world-space camera. */
+export function trackOverviewCamera(fit: { x: number; y: number; zoom: number }, width: number, height: number, view: { x: number; y: number; k: number }) {
+  const zoom = fit.zoom * view.k;
+  return {
+    zoom,
+    x: fit.x + (width / 2 - (width / 2 * view.k + view.x)) / zoom,
+    y: fit.y + (height * 0.55 * view.k + view.y - height * 0.55) / zoom,
+  };
+}
+
 /** Fit a geographic track using exactly the flight map's projection and 55% vertical anchor. */
 export function fitTrackOverview(track: [number, number][], width: number, height: number) {
   const first = track[0];

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { fitTrackOverview } from "./trackOverview";
+import { fitTrackOverview, trackOverviewCamera } from "./trackOverview";
 import { mapOrigin } from "./swissMap";
 
 it("places the whole track within the map and uses the same Mercator anchor as the tiles", () => {
@@ -24,4 +24,15 @@ it("fits a stationary track without infinite zoom", () => {
   expect(fit?.zoom).toBe(172 / 500);
   expect(fit?.points[0].x).toBe(160);
   expect(fit?.points[0].y).toBeCloseTo(110);
+});
+
+it("keeps the zoomed and panned track aligned with the map's 55% anchor", () => {
+  const fit = { x: 1000, y: -2000, zoom: 0.05 };
+  const view = { x: -70, y: 35, k: 2 };
+  const camera = trackOverviewCamera(fit, 320, 220, view);
+  const point = { x: 1600, y: -2400 };
+  expect(camera.zoom).toBe(0.1);
+  expect(160 + (point.x - camera.x) * camera.zoom).toBeCloseTo((160 + (point.x - fit.x) * fit.zoom) * 2 - 70);
+  expect(121 - (point.y - camera.y) * camera.zoom).toBeCloseTo((121 - (point.y - fit.y) * fit.zoom) * 2 + 35);
+  expect(trackOverviewCamera(fit, 320, 220, { x: 0, y: 0, k: 1 })).toEqual(fit);
 });

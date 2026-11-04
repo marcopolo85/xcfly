@@ -406,7 +406,7 @@ export function FlightGame() {
               <div className="hud-cell py-1"><div className="hud-label">Thermikkreise</div><div className="hud-value text-lg">{result.circles}</div></div>
             </div>
             <div className="mt-2 rounded-lg border border-border bg-background p-1">
-              <TrackOverview track={finishedTrack.current.length >= 2 ? finishedTrack.current : null} className="h-28" />
+              <TrackOverview track={finishedTrack.current.length >= 2 ? finishedTrack.current : null} className="h-28" expandable />
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">Punkt = Startplatz · Linie = Flugweg</p>
             {submitState === "saved" && <p className="mt-2 rounded-lg border border-climb/40 bg-climb/10 py-1.5 text-sm font-semibold text-climb">In der Rangliste eingetragen.</p>}
