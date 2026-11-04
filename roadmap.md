@@ -1,5 +1,5 @@
 # Aufgaben
-- [ ] Flugtrack aus der Auswertung bildschirmfüllend öffnen, zoomen, verschieben und zur unveränderten Auswertung zurückkehren; Tests und echten Flug prüfen.
+- [x] Flugtrack aus der Auswertung bildschirmfüllend öffnen, zoomen, verschieben und zur unveränderten Auswertung zurückkehren; 10 Tests und echter Flug bis Landung samt Kartensteuerung auf Computer/Handy ohne Seitenfehler geprüft.
 - [x] Pokal neben MODUS öffnet die XC-Gesamtrangliste aller Startplätze nach Punkten; vier Tests sowie Öffnen, reale Einträge und Schliessen im Browser ohne Seitenfehler geprüft.
 - [x] Flugleistung gemessen: Reliefebenen pro Kachel gemeinsam zwischengespeichert (vier Zeichenaufrufe → einer), Dreiecksberechnung mit wiederverwendeten Distanzen, weniger Höhenlinien-Allokationen und nur sichtbare Thermikkacheln; 23 Tests und echter Flug mit Zoom, Thermik, Höhenlinien und Tastatur ohne Seitenfehler geprüft. Sehr grosse Ansichten mit Seitenprofil bleiben in der Testumgebung langsam.
 - [x] Ganze KK7-Juli-/Ganztagskarte für Schweiz und Nachbarregionen inklusive Domodossola vor dem Flug laden: 2726 reale Kacheln mit HTTP 200, Fortschritt und Flugdarstellung im Browser geprüft; 11 Tests zu Abdeckung, Kachelnaht, Wiederverwendung und Fehlerwiederholung bestanden. Komprimierte Kacheln, sparsame Wärmewerte und begrenzter Detailbildspeicher statt Länder-Gesamtcanvas.
