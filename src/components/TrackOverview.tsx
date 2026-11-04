@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { fitTrackOverview, trackOverviewCamera } from "@/game/trackOverview";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
@@ -82,12 +83,12 @@ export function TrackOverview({ track, className = "aspect-[16/11] w-full", expa
       <TrackMap track={track} className={className} />
       {expandable && track && track.length >= 2 && <Button ref={openRef} variant="outline" size="icon" className="absolute right-1 top-1 h-7 w-7 bg-card/95" aria-label="Flugtrack anschauen" title="Flugtrack anschauen" onClick={() => setOpen(true)}><Maximize2 /></Button>}
     </div>
-    {open && <div role="dialog" aria-modal="true" aria-labelledby="flight-track-title" className="fixed inset-0 z-50 flex flex-col bg-background">
+    {open && createPortal(<div role="dialog" aria-modal="true" aria-labelledby="flight-track-title" className="fixed inset-0 z-50 flex flex-col bg-background">
       <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
         <h2 id="flight-track-title" className="font-display text-lg font-bold">Flugtrack</h2>
         <Button ref={closeRef} variant="ghost" size="icon" aria-label="Zurück zur Auswertung" title="Zurück zur Auswertung" onClick={() => setOpen(false)}><X /></Button>
       </header>
       <div className="min-h-0 flex-1"><TrackMap track={track} className="h-full" interactive /></div>
-    </div>}
+    </div>, document.body)}
   </>;
 }
