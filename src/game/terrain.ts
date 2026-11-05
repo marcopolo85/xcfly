@@ -142,7 +142,7 @@ export function gradientAt(t: Terrain, x: number, y: number) {
 
 export function normalAt(t: Terrain, x: number, y: number) {
   const { gx, gy } = gradientAt(t, x, y);
-  const l = Math.hypot(gx, gy, 1);
+  const l = Math.sqrt(gx * gx + gy * gy + 1);
   return { x: -gx / l, y: -gy / l, z: 1 / l };
 }
 
@@ -168,7 +168,7 @@ export function renderTerrain(t: Terrain): HTMLCanvasElement {
       const hv = t.h[k];
       const gx = (t.h[k + 1] - hv) / RES;
       const gy = (hv - t.h[k + N]) / RES;
-      const l = Math.hypot(gx, gy, 1);
+      const l = Math.sqrt(gx * gx + gy * gy + 1);
       const shade = Math.max(0, (-gx * L.x - gy * L.y + L.z) / l);
       let r: number, g: number, b: number;
       if (t.site.lake && hv < valley + 12) { r = 120; g = 170; b = 205; }

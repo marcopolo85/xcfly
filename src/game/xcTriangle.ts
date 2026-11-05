@@ -14,7 +14,7 @@ export const FAI_MIN_LEG = 0.28;
 export const CLOSING_RATIO = 0.2;
 const MAX_PTS = 70;
 
-const d = (p: Pt, q: Pt) => Math.hypot(p.x - q.x, p.y - q.y);
+const d = (p: Pt, q: Pt) => Math.sqrt((p.x - q.x) ** 2 + (p.y - q.y) ** 2);
 
 export function isFai(a: Pt, b: Pt, c: Pt) {
   const l1 = d(a, b), l2 = d(b, c), l3 = d(c, a), p = l1 + l2 + l3;
