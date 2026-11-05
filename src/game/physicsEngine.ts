@@ -5,7 +5,7 @@ export const POLAR = {
   trim: { v: 10.5, sink: 1.1 }, // ~38 km/h, L/D ≈ 9.5
   accel: { v: 14.5, sink: 2.05 }, // ~52 km/h, L/D ≈ 7.1
 };
-export const TURN_RATE = (64 * Math.PI) / 180; // rad per simulated second
+export const TURN_RATE = (128 * Math.PI) / 180; // rad per simulated second
 /** Slide steering on the speed button turns at a fraction of the full turn rate. */
 export const STEER_ANALOG_FACTOR = 0.125;
 export const TURN_SINK = 0.45;
@@ -123,8 +123,8 @@ export function stepVisualYaw(yaw: VisualYaw, heading: number, rot: number, dtRe
   const cap = SYMBOL_MAX_RATE * dtReal;
   const shown = rot > cap ? cap : rot < -cap ? -cap : rot;
   yaw.lag += rot - shown;
-  // Keeping the shortfall within one turn never changes the drawn angle.
-  yaw.lag = ((((yaw.lag + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
+  // Drop whole turns but keep the sign, so catching up never spins backwards.
+  if (yaw.lag > TAU) yaw.lag %= TAU; else if (yaw.lag < -TAU) yaw.lag = -(-yaw.lag % TAU);
   const spare = cap - Math.abs(shown);
   if (spare > 0 && yaw.lag !== 0) {
     const back = Math.min(Math.abs(yaw.lag), spare);
