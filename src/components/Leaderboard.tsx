@@ -65,7 +65,6 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
  *  every column exactly as wide as its content, so pilot → date is as far apart as date → km, km → pkt
  *  and pkt → km/h. No column stretches, so no gutter can grow. */
 const ROW_COLS = "grid-cols-[1rem_max-content_max-content_max-content_max-content_max-content]";
-const ROW_COLS_OVERALL = "grid-cols-[1rem_minmax(min-content,max-content)_max-content_max-content_max-content_max-content_max-content]";
 /** Continuous separator under every data row; the 8px gutter lives inside the cells so the line stays unbroken. */
 const LINE = "border-t border-border/50 py-1.5";
 const CELL = `${LINE} min-w-0 pl-2`;
