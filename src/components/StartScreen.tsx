@@ -162,7 +162,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               <span>Gelände: Terrarium DEM · © OSM</span>
             </div>
             <div className="flex h-full flex-col items-center justify-center gap-1 rounded-md border border-border bg-card/60 p-2 text-center">
-              <Button variant="outline" size="sm" className="h-7 w-full text-xs" onClick={() => setInfoOpen(true)}><Info />Anleitung</Button>
+              <p className="text-[10px] leading-tight text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
               <FlightStats />
             </div>
             <div className="flex h-full flex-col items-center justify-center gap-1 rounded-md border border-border bg-card/60 p-2 text-center">
@@ -170,7 +170,6 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               <span className="text-[9px] leading-tight text-muted-foreground">Damit werden die AI-Credits und der Alkoholpegel des Entwicklers finanziert.</span>
             </div>
           </div>
-          <p className="text-center text-[10px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
         </div>
       </div>
       {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
