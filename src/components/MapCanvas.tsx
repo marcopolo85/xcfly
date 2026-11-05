@@ -129,6 +129,7 @@ export interface SceneData {
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
+  visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
 
 const airspacePaths = new WeakMap<Airspace, Path2D>();
@@ -454,7 +455,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     if (agl > 1) {
       const gr = POLAR.trim.v / POLAR.trim.sink;
       const maxRange = agl * gr;
-      const dx = Math.sin(sim.heading), dy = Math.cos(sim.heading);
+      const dx = Math.sin(s.visYaw), dy = Math.cos(s.visYaw);
       const step = 40; // m between terrain samples along the glide path
       let range = maxRange;
       let prev = 0;
@@ -504,7 +505,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   // glider (photo wing on transparent background)
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(sim.heading);
+  ctx.rotate(s.visYaw);
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath(); ctx.ellipse(6, 8, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "rgba(255,255,255,0.6)";

@@ -9,7 +9,7 @@ import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt, type Terrain } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
-import { stepPhysics, steer, timeScale, holdBoost, setTurnInput, type Sim, type Input, type HoldStarts } from "@/game/physicsEngine";
+import { stepPhysics, steer, stepVisualYaw, timeScale, holdBoost, setTurnInput, type Sim, type Input, type HoldStarts, type VisualYaw } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { modeLabel, XC_TIME_LIMIT_S, type FlightMode } from "@/game/modes";
@@ -168,6 +168,7 @@ export function FlightGame() {
         maxAlt: 0, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
+      const visYaw: VisualYaw = { vis: sim.heading, lag: 0 };
       let triangle: XcTriangle | null = null, lastTri = 0;
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       let maxOutDist = 0;
@@ -231,7 +232,8 @@ export function FlightGame() {
         }
         zoomAccel = inp.accel;
         const effSimSpeed = boost * (inp.accel ? 1 : prefs.normalSpeed);
-        steer(sim, inp, dtReal, effSimSpeed, prefs.accelSpeed);
+        const rot = steer(sim, inp, dtReal, effSimSpeed, prefs.accelSpeed);
+        stepVisualYaw(visYaw, sim.heading, rot, dtReal, inp.accel);
         const simDt = dtReal * timeScale(inp.accel, effSimSpeed, prefs.accelSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
         const sv = sunVector(sp);
@@ -256,7 +258,7 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
