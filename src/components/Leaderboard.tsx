@@ -61,8 +61,9 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Row skeleton: symbol, flexible text column, fixed-width numbers. */
+/** Row skeleton: symbol, pilot name with startplatz + date right beside it, fixed-width numbers. */
 const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_auto]";
+const META_COLS = "shrink-0 text-left leading-tight";
 const NUM_COLS = "grid grid-cols-[2.5rem_2.75rem_2.5rem] shrink-0 items-baseline gap-x-1";
 
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
@@ -146,7 +147,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
           <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
         </div>
-        <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
+        <div className="mt-2 min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {error && <p className="py-6 text-center text-sm text-sink">{error}</p>}
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
           {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
@@ -154,7 +155,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
             <div className="text-xs">
               <div className={`grid items-end gap-x-2 ${ROW_COLS} hud-label pb-1`}>
                 <span className="w-4" />
-                <span className="min-w-0">{overall ? "Pilot · Startplatz" : "Pilot"}</span>
+                <span className="min-w-0">{overall ? "Pilot · Startplatz · Datum" : "Pilot · Datum"}</span>
                 <span className={NUM_COLS}>
                   <span className="text-right">Km</span>
                   <span className="text-right">Pkt</span>
@@ -166,10 +167,12 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                 return (
                   <div key={e.id} className={`grid items-center gap-x-2 border-t border-border/50 py-1.5 ${ROW_COLS}`}>
                     <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
-                    <div className="min-w-0">
-                      <button className="block max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                      {overall && <div className="leading-tight text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
-                      <div className="font-mono text-[10px] leading-tight text-muted-foreground">{st.date}</div>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <button className="min-w-0 max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                      <div className={META_COLS}>
+                        {overall && <div className="max-w-[7rem] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
+                        <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
+                      </div>
                     </div>
                     <div className={NUM_COLS}>
                       <span className="text-right font-mono">{e.distance_km.toFixed(1)}</span>

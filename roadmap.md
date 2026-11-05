@@ -1,4 +1,7 @@
 # Aufgaben
+- [x] Leeren Platz zwischen Pilotenname und Datum verkleinert (6 px Abstand, Datum direkt neben dem Namen); bei 390 px und 1041 px Breite im Browser geprüft, 7 Ranglistentests bestanden, kein Überlauf und keine abgeschnittenen Namen.
+- [x] Scrollbalken in der Rangliste ausgeblendet (scrollbar-width none, Webkit-Scrollbar versteckt); Scrollen im Browser geprüft, Ranglistentests bestanden.
+- [x] Startplatz und Datum in der Rangliste rechts neben den Pilotennamen gestellt (Datum unter dem Startplatz); bei 390 px Breite ohne Überlauf, ohne abgeschnittene Namen und ohne sichtbaren Scrollbalken im Browser geprüft.
 - [x] Rangliste auf Handybildschirmeite umbaut (390 px): Pilotenname wird nicht abgeschnitten, Startplatz und Datum unter dem Namen, nur noch das Datum ohne Uhrzeit; 7 Ranglistentests bestanden, Gesamtrangliste (66 Einträge) und Gummen-Rangliste (5 Einträge) im Browser ohne Überlauf und ohne abgeschnittene Namen geprüft.
 - [x] Flugtrack aus der Auswertung bildschirmfüllend öffnen, zoomen, verschieben und zur unveränderten Auswertung zurückkehren; 10 Tests und echter Flug bis Landung samt Kartensteuerung auf Computer/Handy ohne Seitenfehler geprüft.
 - [x] Pokal neben MODUS öffnet die XC-Gesamtrangliste aller Startplätze nach Punkten; vier Tests sowie Öffnen, reale Einträge und Schliessen im Browser ohne Seitenfehler geprüft.
