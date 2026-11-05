@@ -54,6 +54,7 @@ export function FlightGame() {
   const statsRow = useRef<string | null>(null);
   const [runId, setRunId] = useState(0);
   const mapZoom = useCanvasZoom(0.01, 8, phase !== "config");
+  const mapZoomChange = useRef(mapZoom.change);
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
   const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
@@ -308,6 +309,8 @@ export function FlightGame() {
           }
         }
         input.current.accel = v;
+      } else if (e.code === "KeyA" || e.code === "KeyQ") {
+        if (v) mapZoomChange.current(e.code === "KeyA" ? 1.3 : 1 / 1.3);
       } else return;
       e.preventDefault();
     };
@@ -322,6 +325,7 @@ export function FlightGame() {
   }, [phase]);
 
   useEffect(() => { bossRef.current = boss; }, [boss]);
+  mapZoomChange.current = mapZoom.change;
 
   if (phase === "config") return <StartScreen onStart={start} />;
 
