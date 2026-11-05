@@ -61,6 +61,10 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
+/** Row skeleton: symbol, flexible text column, fixed-width numbers. */
+const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_auto]";
+const NUM_COLS = "grid grid-cols-[2.5rem_2.75rem_2.5rem] shrink-0 items-baseline gap-x-1";
+
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
 export function fmtStamp(iso: string) {
   const d = new Date(iso);
@@ -92,11 +96,11 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
 
   return (
     <div className="absolute inset-0 z-40 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-4">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
-            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date} - {fmtStamp(entry.created_at).time}</p>
+            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date}</p>
           </div>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
@@ -136,48 +140,46 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
   }, [site]);
 
   return (
-    <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label="Rangliste">
-      <div className={`flex max-h-[85dvh] w-full flex-col rounded-xl border border-border bg-card p-4 ${overall ? "max-w-2xl" : "max-w-lg"}`}>
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-foreground">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
+    <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
+      <div className={`flex max-h-[85dvh] w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4 ${overall ? "max-w-2xl" : "max-w-lg"}`}>
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
         </div>
-        <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+        <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
           {error && <p className="py-6 text-center text-sm text-sink">{error}</p>}
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
           {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
           {!error && entries !== null && entries.length > 0 && (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="hud-label text-left">
-                  <th className="w-6 py-1"></th>
-                  <th className="py-1 pr-1">Pilot</th>
-                  {overall && <th className="py-1 px-1">Startplatz</th>}
-                  <th className="py-1 px-1 text-right">Zeit</th>
-                  <th className="py-1 text-right">Km</th>
-                  <th className="py-1 text-right">Punkte</th>
-                  <th className="py-1 text-right">km/h</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((e) => {
-                  const st = fmtStamp(e.created_at);
-                  return (
-                    <tr key={e.id} className="border-t border-border/50 text-foreground">
-                      <td className="py-1"><RouteIcon type={asRoute(e.route_type)} /></td>
-                      <td className="max-w-0 truncate py-1 pr-1">
-                        <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                      </td>
-                      {overall && <td className="max-w-0 break-words px-1 py-1 text-muted-foreground">{e.site_name}</td>}
-                      <td className="whitespace-nowrap px-1 py-1 text-right font-mono text-[10px] text-muted-foreground">{st.date} - {st.time}</td>
-                      <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
-                      <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>
-                      <td className="py-1 text-right font-mono">{xcSpeed(e).toFixed(1)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="text-xs">
+              <div className={`grid items-end gap-x-2 ${ROW_COLS} hud-label pb-1`}>
+                <span className="w-4" />
+                <span className="min-w-0">{overall ? "Pilot · Startplatz" : "Pilot"}</span>
+                <span className={NUM_COLS}>
+                  <span className="text-right">Km</span>
+                  <span className="text-right">Pkt</span>
+                  <span className="text-right">km/h</span>
+                </span>
+              </div>
+              {entries.map((e) => {
+                const st = fmtStamp(e.created_at);
+                return (
+                  <div key={e.id} className={`grid items-center gap-x-2 border-t border-border/50 py-1.5 ${ROW_COLS}`}>
+                    <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
+                    <div className="min-w-0">
+                      <button className="block max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                      {overall && <div className="leading-tight text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
+                      <div className="font-mono text-[10px] leading-tight text-muted-foreground">{st.date}</div>
+                    </div>
+                    <div className={NUM_COLS}>
+                      <span className="text-right font-mono">{e.distance_km.toFixed(1)}</span>
+                      <span className="text-right font-mono font-bold">{e.points.toFixed(1)}</span>
+                      <span className="text-right font-mono text-muted-foreground">{xcSpeed(e).toFixed(1)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-05c",
+    id: "2026-11-05d",
     date: "5. Nov 2026",
     items: [
       "Thermikkarte in der App gespeichert – lädt nur 1× pro Gerät",
@@ -12,7 +12,8 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
       "Karte zoomen mit Taste A (rein) und Q (raus)",
       "Einstellbare Standard-Zoomstufen und automatischer Zoomwechsel Thermik ↔ Speed",
       "Fliessende Zoomübergänge",
-      "Datum und Uhrzeit in den Ranglisten",
+      "Datum in den Ranglisten",
+      "Rangliste passt jetzt aufs Handy – Pilotenname wird nicht mehr abgeschnitten",
     ],
   },
 ];
