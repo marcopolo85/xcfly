@@ -61,8 +61,9 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Row skeleton: symbol, flexible text column, fixed-width numbers. */
-const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_auto]";
+/** Row skeleton: symbol, pilot name, startplatz + date, fixed-width numbers. */
+const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_auto_auto]";
+const META_COLS = "min-w-0 max-w-[8rem] shrink-0 text-right leading-tight";
 const NUM_COLS = "grid grid-cols-[2.5rem_2.75rem_2.5rem] shrink-0 items-baseline gap-x-1";
 
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
