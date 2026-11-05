@@ -100,7 +100,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
-            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date} - {fmtStamp(entry.created_at).time}</p>
+            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date}</p>
           </div>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
@@ -169,7 +169,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                     <div className="min-w-0">
                       <button className="block max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
                       {overall && <div className="leading-tight text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
-                      <div className="font-mono text-[10px] leading-tight text-muted-foreground">{st.date} - {st.time}</div>
+                      <div className="font-mono text-[10px] leading-tight text-muted-foreground">{st.date}</div>
                     </div>
                     <div className={NUM_COLS}>
                       <span className="text-right font-mono">{e.distance_km.toFixed(1)}</span>

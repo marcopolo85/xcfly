@@ -1,4 +1,5 @@
 # Aufgaben
+- [ ] Rangliste auf Handybildschirmeite passend umbauen: Pilotenname darf nicht abgeschnitten werden, Datum und Zeit unter dem Startplatz (2 Zeilen); zusätzlich nur noch das Datum zeigen, keine Uhrzeit.
 - [x] Flugtrack aus der Auswertung bildschirmfüllend öffnen, zoomen, verschieben und zur unveränderten Auswertung zurückkehren; 10 Tests und echter Flug bis Landung samt Kartensteuerung auf Computer/Handy ohne Seitenfehler geprüft.
 - [x] Pokal neben MODUS öffnet die XC-Gesamtrangliste aller Startplätze nach Punkten; vier Tests sowie Öffnen, reale Einträge und Schliessen im Browser ohne Seitenfehler geprüft.
 - [x] Flugleistung gemessen: Reliefebenen pro Kachel gemeinsam zwischengespeichert (vier Zeichenaufrufe → einer), Dreiecksberechnung mit wiederverwendeten Distanzen, weniger Höhenlinien-Allokationen und nur sichtbare Thermikkacheln; 23 Tests und echter Flug mit Zoom, Thermik, Höhenlinien und Tastatur ohne Seitenfehler geprüft. Sehr grosse Ansichten mit Seitenprofil bleiben in der Testumgebung langsam.
