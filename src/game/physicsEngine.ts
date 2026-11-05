@@ -1,3 +1,4 @@
+import { len } from "./fastMath";
 import { cloudbaseAt, heightAt, type Terrain } from "./terrain";
 
 export const POLAR = {
@@ -60,14 +61,14 @@ function updateXc(sim: Sim) {
   const n = sim.trackX.length;
   const lx = n ? sim.trackX[n - 1] : 0;
   const ly = n ? sim.trackY[n - 1] : 0;
-  if (Math.hypot(sim.x - lx, sim.y - ly) < XC_TRACK_STEP) return;
+  if (len(sim.x - lx, sim.y - ly) < XC_TRACK_STEP) return;
   sim.trackX.push(sim.x);
   sim.trackY.push(sim.y);
   const ex = sim.x, ey = sim.y;
   for (let i = 0; i <= n; i++) {
     const px = i < n ? sim.trackX[i] : 0;
     const py = i < n ? sim.trackY[i] : 0;
-    const d = Math.hypot(px, py) + Math.hypot(ex - px, ey - py);
+    const d = len(px, py) + len(ex - px, ey - py);
     if (d > sim.xcDist) sim.xcDist = d;
   }
 }
@@ -116,7 +117,7 @@ export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift
   const dx = Math.sin(sim.heading) * sim.speed * dt;
   const dy = Math.cos(sim.heading) * sim.speed * dt;
   sim.x += dx; sim.y += dy;
-  sim.distance += Math.hypot(dx, dy);
+  sim.distance += len(dx, dy);
   updateXc(sim);
   sim.alt += sim.vz * dt;
   if (sim.alt > sim.maxAlt) sim.maxAlt = sim.alt;
