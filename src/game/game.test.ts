@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { timeScale, steer, stepPhysics, TURN_RATE, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, setTurnInput, type HoldStarts, type Sim } from "./physicsEngine";
+import { timeScale, steer, stepPhysics, TURN_RATE, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, setTurnInput, stepVisualYaw, type HoldStarts, type Sim, type VisualYaw } from "./physicsEngine";
 import { cloudbaseAt, cloudbaseFromPeak, finalizeTerrain, heightAt, N } from "./terrain";
 import { SITES } from "./sites";
 import { mulberry32 } from "./rng";
@@ -7,6 +7,9 @@ import { slopeTrigger } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 
 const newSim = (alt = 2000, vz = -1): Sim => ({ x: 0, y: 0, alt, heading: 0, vz, airLift: 0, speed: 10.5, distance: 0, flightTime: 0, clock: 12, trackX: [], trackY: [], xcDist: 0, landed: false, maxAlt: alt, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false });
+
+/** Signed angle difference folded into -π..π. */
+const shortestAngle = (a: number) => (((((a + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI);
 
 describe("game rules", () => {
   it("speedbar runs game time 40x faster", () => {
@@ -142,5 +145,63 @@ describe("game rules", () => {
     }
     expect(sim.circles).toBe(1);
     expect(sim.thermals).toBe(1);
+  });
+  it("draws the glider at one turn per real second while thermalling, with climb and radius untouched", () => {
+    const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
+    const sim = newSim();
+    const yaw: VisualYaw = { vis: 0, lag: 0 };
+    const input = { left: false, right: true, accel: false };
+    const dt = 0.05;
+    let turned = 0, drawn = 0, prev = yaw.vis;
+    // One real second of a boosted long hold: the simulation turns ×20.
+    for (let i = 0; i < 20; i++) {
+      const rot = steer(sim, input, dt, HOLD_BOOST_FACTOR);
+      turned += rot;
+      stepPhysics(sim, input, dt * HOLD_BOOST_FACTOR, flat, 4);
+      stepVisualYaw(yaw, sim.heading, rot, dt, false);
+      drawn += shortestAngle(yaw.vis - prev);
+      prev = yaw.vis;
+    }
+    // Physics keep spinning: 128°/s × 20 = 2560° in one real second.
+    expect(turned).toBeCloseTo((2560 * Math.PI) / 180, 1);
+    // The drawn symbol completes exactly one revolution per real second.
+    expect(drawn).toBeCloseTo(Math.PI * 2, 3);
+    // Climb rate and turn radius are the same as before the visual slowdown.
+    expect(sim.climbTotal).toBeCloseTo((4 - (1.1 + TURN_SINK)) * 20, 1);
+    expect(sim.distance / turned).toBeCloseTo(10.5 / TURN_RATE, 1);
+  });
+  it("aims the drawn glider back at the flight direction once the fast turn ends", () => {
+    const sim = newSim();
+    const yaw: VisualYaw = { vis: 0, lag: 0 };
+    const dt = 0.05;
+    for (let i = 0; i < 20; i++) {
+      const rot = steer(sim, { left: false, right: true, accel: false }, dt, HOLD_BOOST_FACTOR);
+      stepVisualYaw(yaw, sim.heading, rot, dt, false);
+    }
+    // Flying straight for one second: the nose swings back at one turn per second.
+    let fastest = 0, prev = yaw.vis;
+    for (let i = 0; i < 20; i++) {
+      const rot = steer(sim, { left: false, right: false, accel: false }, dt, 1);
+      stepVisualYaw(yaw, sim.heading, rot, dt, false);
+      fastest = Math.max(fastest, Math.abs(shortestAngle(yaw.vis - prev)));
+      prev = yaw.vis;
+    }
+    expect(shortestAngle(yaw.vis - sim.heading)).toBeCloseTo(0, 6);
+    expect(fastest).toBeLessThanOrEqual(Math.PI * 2 * dt + 1e-9);
+  });
+  it("draws the true heading when turning slower than one turn per second or on the speed bar", () => {
+    const sim = newSim();
+    const yaw: VisualYaw = { vis: 0, lag: 0 };
+    for (let i = 0; i < 20; i++) {
+      // 128°/s at ×1 is below the one turn per second cap.
+      const rot = steer(sim, { left: false, right: true, accel: false }, 0.05, 1);
+      stepVisualYaw(yaw, sim.heading, rot, 0.05, false);
+      expect(shortestAngle(yaw.vis - sim.heading)).toBeCloseTo(0, 6);
+    }
+    for (let i = 0; i < 10; i++) {
+      const rot = steer(sim, { left: false, right: true, accel: true, steer: 1 }, 0.05, 1, ACCEL_TIME_FACTOR);
+      stepVisualYaw(yaw, sim.heading, rot, 0.05, true);
+      expect(shortestAngle(yaw.vis - sim.heading)).toBeCloseTo(0, 6);
+    }
   });
 });

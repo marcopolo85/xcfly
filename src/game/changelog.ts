@@ -1,6 +1,14 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-06a",
+    date: "6. Nov 2026",
+    items: [
+      "Gleitschirm dreht im Thermikmodus ruhig mit maximal 1 Umdrehung pro Sekunde",
+      "Steigwert und Kurvenradius bleiben gleich – es sieht nur langsamer aus",
+    ],
+  },
+  {
     id: "2026-11-05e",
     date: "5. Nov 2026",
     items: [
