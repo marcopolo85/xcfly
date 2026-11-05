@@ -96,7 +96,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
-            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date}-{fmtStamp(entry.created_at).time}</p>
+            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date} - {fmtStamp(entry.created_at).time}</p>
           </div>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
@@ -169,7 +169,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                         <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
                       </td>
                       {overall && <td className="max-w-0 break-words px-1 py-1 text-muted-foreground">{e.site_name}</td>}
-                      <td className="whitespace-nowrap px-1 py-1 text-right font-mono text-[10px] text-muted-foreground">{st.date}-{st.time}</td>
+                      <td className="whitespace-nowrap px-1 py-1 text-right font-mono text-[10px] text-muted-foreground">{st.date} - {st.time}</td>
                       <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
                       <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>
                       <td className="py-1 text-right font-mono">{xcSpeed(e).toFixed(1)}</td>
