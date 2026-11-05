@@ -1,3 +1,4 @@
+import { isKk7Url, kk7Slot } from "./kk7Limiter";
 import { MAX_OFFLINE_TILES, OFFLINE_DATA_CACHE, OFFLINE_KEY, OFFLINE_PAGE_CACHE } from "./offline-policy";
 
 export function offlineEnabled() {
@@ -14,6 +15,7 @@ export async function saveTile(url: string, signal?: AbortSignal): Promise<Respo
   const cache = await caches.open(OFFLINE_DATA_CACHE);
   const existing = await cache.match(url);
   if (existing) return existing;
+  if (isKk7Url(url)) await kk7Slot();
   const response = await fetch(url, { mode: "cors", signal: signal ?? null });
   if (!response.ok || response.type === "opaque") throw new Error("Karten- oder Flugdaten nicht erreichbar.");
   if ((await cache.keys()).length >= MAX_OFFLINE_TILES) throw new Error("Offline-Speicher voll. Gespeicherte Daten zuerst löschen.");
@@ -31,6 +33,7 @@ export async function tileResponse(url: string) {
       // Storage denial must not prevent normal online flight.
     }
   }
+  if (isKk7Url(url)) await kk7Slot();
   const response = await fetch(url, { mode: "cors" });
   if (!response.ok) throw new Error("Kachel nicht erreichbar");
   return response;

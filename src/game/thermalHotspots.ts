@@ -1,4 +1,5 @@
 import type { Site } from "./sites";
+import { kk7Slot } from "@/lib/kk7Limiter";
 import { mapOrigin } from "./swissMap";
 import { EXTENT, normalAt, type Terrain } from "./terrain";
 import type { Thermal, ThermalField } from "./thermals";
@@ -47,6 +48,7 @@ const cache = new Map<string, Hotspot[]>();
 export async function loadThermalHotspots(site: Site): Promise<Hotspot[]> {
   const cached = cache.get(site.id);
   if (cached) return cached;
+  await kk7Slot();
   const response = await fetch(hotspotUrl(site), { signal: AbortSignal.timeout(20000) });
   if (!response.ok) throw new Error("KK7-Thermikdaten nicht erreichbar");
   const points = parseHotspots(await response.json());

@@ -29,7 +29,7 @@ import { Button } from "./ui/button";
 import { TrackOverview } from "./TrackOverview";
 import { needsFlightCoverage, flightCoverageReady, nextCoverageCenter } from "@/game/flightCoverage";
 import { offlineEnabled } from "@/lib/offline-data";
-import { loadThermalRegion, type ThermalProgress } from "@/game/loadThermalRegion";
+import { loadThermalRegion, requestTilesAround, type ThermalProgress } from "@/game/loadThermalRegion";
 import { inThermalRegion } from "@/game/thermalRegion";
 import { addGlideSample, averageGlideVz } from "@/game/glideBoundary";
 import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
@@ -130,7 +130,7 @@ export function FlightGame() {
       let airspaces: Airspace[] | null = null;
       loadAirspace(config.site).then((a) => { airspaces = a; }).catch(() => {});
       const thermals: ThermalField = { grid: new Map(), count: 0, raster: thermalMap.raster };
-      let coveragePending = false, retryAfter = 0;
+      let coveragePending = false, retryAfter = 0, lastTileRequest = -Infinity;
       const updateCoverage = (x: number, y: number, now: number) => {
         if (coveragePending || !needsFlightCoverage(terrain, x, y)) return;
         if (!coverageRetry.current && now < retryAfter) return;
@@ -216,6 +216,7 @@ export function FlightGame() {
           return;
         }
         updateCoverage(sim.x, sim.y, now);
+        if (thermalMap.regionalTiles && now - lastTileRequest > 1000) { lastTileRequest = now; requestTilesAround(config.site, sim.x, sim.y); }
         if (!flightCoverageReady(terrain, sim.x, sim.y)) {
           vario.current?.update(0);
           raf = requestAnimationFrame(loop);
