@@ -51,6 +51,11 @@ describe("game rules", () => {
     expect(holdBoost(input, starts, 1000 + 5000)).toBe(1);
     expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
   });
+  it("turns at 64° per simulated second in normal mode", () => {
+    const sim = newSim();
+    steer(sim, { left: false, right: true, accel: false }, 1, 1);
+    expect(sim.heading).toBeCloseTo((64 * Math.PI) / 180, 6);
+  });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {
       const sim = newSim();
