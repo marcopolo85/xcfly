@@ -64,8 +64,8 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 /** Row skeleton: symbol, pilot, startplatz (overall only), date, km, points, speed. One shared grid with
  *  every column exactly as wide as its content, so pilot → date is as far apart as date → km, km → pkt
  *  and pkt → km/h. No column stretches, so no gutter can grow. */
-const ROW_COLS = (overall: boolean) =>
-  `grid-cols-[1rem_minmax(0,max-content)_${overall ? "max-content_" : ""}max-content_max-content_max-content_max-content]`;
+const ROW_COLS = "grid-cols-[1rem_minmax(0,max-content)_max-content_max-content_max-content_max-content]";
+const ROW_COLS_OVERALL = "grid-cols-[1rem_minmax(0,max-content)_max-content_max-content_max-content_max-content_max-content]";
 /** Continuous separator under every data row; the 8px gutter lives inside the cells so the line stays unbroken. */
 const LINE = "border-t border-border/50 py-1.5";
 const CELL = `${LINE} min-w-0 pl-2`;
@@ -158,7 +158,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
           {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
           {!error && entries !== null && entries.length > 0 && (
-            <div className={`grid items-center text-xs ${ROW_COLS(overall)}`}>
+            <div className={`grid items-center text-xs ${overall ? ROW_COLS_OVERALL : ROW_COLS}`}>
               <span className="py-1" />
               <span className={HEAD}>Pilot</span>
               {overall && <span className={HEAD}>Startplatz</span>}
