@@ -5,6 +5,7 @@ import { SITES } from "@/game/sites";
 import { hotspotLocal } from "@/game/thermalHotspots";
 import { localToCoordinates, selectedLaunch } from "@/game/launchSelection";
 import { loadLaunchAltitude } from "@/game/realTerrain";
+import { inThermalRegion } from "@/game/thermalRegion";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { drawSwissRelief } from "./SwissRelief";
 import { ZoomControls } from "./ZoomControls";
@@ -80,6 +81,11 @@ export function LaunchMapPicker({ initial, onSelect, onClose }: { initial?: Site
     const y = (rect.height * 0.55 - view.invertY(clientY - rect.top)) / SCALE;
     const point = localToCoordinates(center, x, y);
     const id = ++request.current;
+    if (!inThermalRegion(point.lat, point.lon)) {
+      setSelected(null); setLoading(false);
+      setError("Startplätze sind nur in der Schweiz und den angrenzenden Regionen möglich.");
+      return;
+    }
     setLoading(true); setError("");
     setSelected(selectedLaunch(center, point.lat, point.lon, 0));
     try {

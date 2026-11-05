@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicJobsKk7RefreshRouteImport } from './routes/api/public/jobs/kk7-refresh'
+import { Route as ApiPublicKk7SplatRouteImport } from './routes/api/public/kk7/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJobsKk7RefreshRoute = ApiPublicJobsKk7RefreshRouteImport.update({
+  id: '/api/public/jobs/kk7-refresh',
+  path: '/api/public/jobs/kk7-refresh',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicKk7SplatRoute = ApiPublicKk7SplatRouteImport.update({
+  id: '/api/public/kk7/$',
+  path: '/api/public/kk7/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/jobs/kk7-refresh': typeof ApiPublicJobsKk7RefreshRoute
+  '/api/public/kk7/$': typeof ApiPublicKk7SplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/jobs/kk7-refresh': typeof ApiPublicJobsKk7RefreshRoute
+  '/api/public/kk7/$': typeof ApiPublicKk7SplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/jobs/kk7-refresh': typeof ApiPublicJobsKk7RefreshRoute
+  '/api/public/kk7/$': typeof ApiPublicKk7SplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/jobs/kk7-refresh' | '/api/public/kk7/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/jobs/kk7-refresh' | '/api/public/kk7/$'
+  id: '__root__' | '/' | '/api/public/jobs/kk7-refresh' | '/api/public/kk7/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicJobsKk7RefreshRoute: typeof ApiPublicJobsKk7RefreshRoute
+  ApiPublicKk7SplatRoute: typeof ApiPublicKk7SplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/jobs/kk7-refresh': {
+      id: '/api/public/jobs/kk7-refresh'
+      path: '/api/public/jobs/kk7-refresh'
+      fullPath: '/api/public/jobs/kk7-refresh'
+      preLoaderRoute: typeof ApiPublicJobsKk7RefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/kk7/$': {
+      id: '/api/public/kk7/$'
+      path: '/api/public/kk7/$'
+      fullPath: '/api/public/kk7/$'
+      preLoaderRoute: typeof ApiPublicKk7SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicJobsKk7RefreshRoute: ApiPublicJobsKk7RefreshRoute,
+  ApiPublicKk7SplatRoute: ApiPublicKk7SplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
