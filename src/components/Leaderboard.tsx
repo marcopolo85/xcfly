@@ -102,7 +102,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
 
 
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
+    <div className="absolute inset-0 z-40 grid grid-cols-1 place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
       <div className="w-full max-w-sm rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
