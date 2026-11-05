@@ -51,6 +51,11 @@ describe("game rules", () => {
     expect(holdBoost(input, starts, 1000 + 5000)).toBe(1);
     expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
   });
+  it("turns at 64° per simulated second in normal mode", () => {
+    const sim = newSim();
+    steer(sim, { left: false, right: true, accel: false }, 1, 1);
+    expect(sim.heading).toBeCloseTo((64 * Math.PI) / 180, 6);
+  });
   it("turn radius is the same at any simulation speed", () => {
     const turnAt = (simSpeed: number) => {
       const sim = newSim();
@@ -162,8 +167,8 @@ describe("game rules", () => {
       drawn += shortestAngle(yaw.vis - prev);
       prev = yaw.vis;
     }
-    // Physics keep spinning: 128°/s × 20 = 2560° in one real second.
-    expect(turned).toBeCloseTo((2560 * Math.PI) / 180, 1);
+    // Physics keep spinning: 64°/s × 20 = 1280° in one real second.
+    expect(turned).toBeCloseTo((1280 * Math.PI) / 180, 1);
     // The drawn symbol completes exactly one revolution per real second.
     expect(drawn).toBeCloseTo(Math.PI * 2, 3);
     // Climb rate and turn radius are the same as before the visual slowdown.
@@ -193,7 +198,7 @@ describe("game rules", () => {
     const sim = newSim();
     const yaw: VisualYaw = { vis: 0, lag: 0 };
     for (let i = 0; i < 20; i++) {
-      // 128°/s at ×1 is below the one turn per second cap.
+      // 64°/s at ×1 is below the one turn per second cap.
       const rot = steer(sim, { left: false, right: true, accel: false }, 0.05, 1);
       stepVisualYaw(yaw, sim.heading, rot, 0.05, false);
       expect(shortestAngle(yaw.vis - sim.heading)).toBeCloseTo(0, 6);

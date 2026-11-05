@@ -5,7 +5,7 @@ export const POLAR = {
   trim: { v: 10.5, sink: 1.1 }, // ~38 km/h, L/D ≈ 9.5
   accel: { v: 14.5, sink: 2.05 }, // ~52 km/h, L/D ≈ 7.1
 };
-export const TURN_RATE = (128 * Math.PI) / 180; // rad per simulated second
+export const TURN_RATE = (64 * Math.PI) / 180; // rad per simulated second
 /** Slide steering on the speed button turns at a fraction of the full turn rate. */
 export const STEER_ANALOG_FACTOR = 0.125;
 export const TURN_SINK = 0.45;
