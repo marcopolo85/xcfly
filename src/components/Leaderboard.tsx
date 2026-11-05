@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
 import type { RouteType } from "@/game/xcScore";
@@ -61,9 +61,15 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Row skeleton: symbol, pilot, startplatz + date, km, points, speed – equal gaps, aligned columns. */
-const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_7rem_2.4rem_2.6rem_2.4rem]";
-const META = "min-w-0 text-right leading-tight";
+/** Row skeleton: symbol, pilot, startplatz (overall only), date, km, points, speed. One shared grid with
+ *  every column exactly as wide as its content, so pilot → date is as far apart as date → km, km → pkt
+ *  and pkt → km/h. No column stretches, so no gutter can grow. */
+const ROW_COLS = "grid-cols-[1rem_minmax(min-content,max-content)_max-content_max-content_max-content_max-content]";
+const ROW_COLS_OVERALL = "grid-cols-[1rem_minmax(min-content,max-content)_max-content_max-content_max-content_max-content_max-content]";
+/** Continuous separator under every data row; the 8px gutter lives inside the cells so the line stays unbroken. */
+const LINE = "border-t border-border/50 py-1.5";
+const CELL = `${LINE} min-w-0 pl-2`;
+const HEAD = "min-w-0 py-1 pl-2 hud-label";
 const NUM = "text-right font-mono";
 
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
@@ -96,7 +102,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
 
 
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
+    <div className="absolute inset-0 z-40 grid grid-cols-1 place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
       <div className="w-full max-w-sm rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -141,8 +147,8 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
   }, [site]);
 
   return (
-    <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
-      <div className={`flex max-h-[85dvh] w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4 ${overall ? "max-w-2xl" : "max-w-lg"}`}>
+    <div className="absolute inset-0 z-30 grid grid-cols-1 place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
+      <div className="flex max-h-[85dvh] w-fit max-w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
@@ -152,29 +158,26 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
           {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
           {!error && entries !== null && entries.length > 0 && (
-            <div className="text-xs">
-              <div className={`grid items-end gap-x-2 ${ROW_COLS} hud-label pb-1`}>
-                <span className="w-4" />
-                <span className="min-w-0">Pilot</span>
-                <span className={`${META} text-[10px]`}>{overall ? "Startplatz · Datum" : "Datum"}</span>
-                <span className="text-right">Km</span>
-                <span className="text-right">Pkt</span>
-                <span className="text-right">km/h</span>
-              </div>
+            <div className={`grid items-center text-xs ${overall ? ROW_COLS_OVERALL : ROW_COLS}`}>
+              <span className="py-1" />
+              <span className={HEAD}>Pilot</span>
+              {overall && <span className={HEAD}>Startplatz</span>}
+              <span className={HEAD}>Datum</span>
+              <span className={`${HEAD} text-right`}>Km</span>
+              <span className={`${HEAD} text-right`}>Pkt</span>
+              <span className={`${HEAD} text-right`}>km/h</span>
               {entries.map((e) => {
                 const st = fmtStamp(e.created_at);
                 return (
-                  <div key={e.id} className={`grid items-center gap-x-2 border-t border-border/50 py-1.5 ${ROW_COLS}`}>
-                    <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
-                    <button className="min-w-0 text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                    <div className={META}>
-                      {overall && <div className="text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
-                      <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
-                    </div>
-                    <span className={NUM}>{e.distance_km.toFixed(1)}</span>
-                    <span className={`${NUM} font-bold`}>{e.points.toFixed(1)}</span>
-                    <span className={`${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
-                  </div>
+                  <Fragment key={e.id}>
+                    <span className={`${LINE} flex items-center`}><RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" /></span>
+                    <button className={`${CELL} max-w-[10rem] text-left font-semibold leading-tight [overflow-wrap:break-word] hover:underline`} title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                    {overall && <span className={`${CELL} text-[11px] leading-tight text-muted-foreground [overflow-wrap:break-word]`}>{e.site_name}</span>}
+                    <span className={`${CELL} font-mono text-[10px] leading-tight text-muted-foreground`}>{st.date}</span>
+                    <span className={`${CELL} ${NUM}`}>{e.distance_km.toFixed(1)}</span>
+                    <span className={`${CELL} ${NUM} font-bold`}>{e.points.toFixed(1)}</span>
+                    <span className={`${CELL} ${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
+                  </Fragment>
                 );
               })}
             </div>
