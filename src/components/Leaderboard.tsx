@@ -59,6 +59,18 @@ function fmtTime(s: number) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
+export function fmtStamp(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: "–", time: "" };
+  return {
+    date: `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${pad2(d.getFullYear() % 100)}`,
+    time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`,
+  };
+}
+
 function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   const [track, setTrack] = useState<[number, number][] | null>(null);
   const [missing, setMissing] = useState(false);
