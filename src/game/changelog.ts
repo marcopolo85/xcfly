@@ -1,12 +1,7 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-05b",
-    date: "5. Nov 2026",
-    items: ["Karte zoomen mit Taste A (rein) und Q (raus)"],
-  },
-  {
-    id: "2026-11-05",
+    id: "2026-11-05c",
     date: "5. Nov 2026",
     items: [
       "Thermikkarte in der App gespeichert – lädt nur 1× pro Gerät",
@@ -14,6 +9,9 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
       "Thermikkarte wird alle 3 Monate aktualisiert",
       "Startplätze nur noch in der Schweiz und Grenzregion",
       "Neu: Changelog-Button",
+      "Karte zoomen mit Taste A (rein) und Q (raus)",
+      "Einstellbare Standard-Zoomstufen und automatischer Zoomwechsel Thermik ↔ Speed",
+      "Fliessende Zoomübergänge",
     ],
   },
 ];
