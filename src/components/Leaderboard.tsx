@@ -61,10 +61,11 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Row skeleton: symbol, pilot, startplatz + date, km, points, speed. One shared grid, every column as
- *  wide as its content, so pilot → date is exactly as far apart as date → km, km → pkt, pkt → km/h.
- *  A flexible tail column swallows the remaining width instead of inflating the pilot column. */
-const ROW_COLS = "grid-cols-[1rem_minmax(0,max-content)_max-content_max-content_max-content_max-content_1fr]";
+/** Row skeleton: symbol, pilot, startplatz (overall only), date, km, points, speed. One shared grid with
+ *  every column exactly as wide as its content, so pilot → date is as far apart as date → km, km → pkt
+ *  and pkt → km/h. No column stretches, so no gutter can grow. */
+const ROW_COLS = (overall: boolean) =>
+  `grid-cols-[1rem_minmax(0,max-content)_${overall ? "max-content_" : ""}max-content_max-content_max-content_max-content]`;
 /** Continuous separator under every data row; the 8px gutter lives inside the cells so the line stays unbroken. */
 const LINE = "border-t border-border/50 py-1.5";
 const CELL = `${LINE} min-w-0 pl-2`;
@@ -148,7 +149,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
 
   return (
     <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
-      <div className={`flex max-h-[85dvh] w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4 ${overall ? "max-w-2xl" : "max-w-lg"}`}>
+      <div className="flex max-h-[85dvh] w-fit max-w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
