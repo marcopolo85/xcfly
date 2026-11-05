@@ -31,5 +31,10 @@ export function useCanvasZoom(min = 0.3, max = 8, active = true) {
     const canvas = canvasRef.current, control = behavior.current;
     if (canvas && control) select<HTMLCanvasElement, unknown>(canvas).call(control.transform, zoomIdentity);
   };
-  return { canvasRef, transform, scale, change, reset };
+  /** Zoom to an absolute scale around the canvas centre. */
+  const zoomTo = (k: number) => {
+    const canvas = canvasRef.current, control = behavior.current;
+    if (canvas && control) select<HTMLCanvasElement, unknown>(canvas).call(control.scaleTo, k);
+  };
+  return { canvasRef, transform, scale, change, reset, zoomTo };
 }
