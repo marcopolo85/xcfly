@@ -41,10 +41,23 @@ const failedAt = new Map<string, number>();
 let scratch: CanvasRenderingContext2D | null = null;
 
 export const KK7_BUNDLE_CACHE = "xcfly-kk7-bundle-v1";
-/** Bundled KK7 tiles: downloaded from this app once per device, then served from Cache Storage. */
+let version: Promise<string | null> | undefined;
+/** Latest quarterly copy, if the scheduled refresh has completed; otherwise the bundled tiles. */
+function refreshedVersion() {
+  version ??= fetch("/api/public/kk7/manifest.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((m: { version?: unknown } | null) => (typeof m?.version === "string" && /^\d{4}-Q[1-4]$/.test(m.version) ? m.version : null))
+    .catch(() => null);
+  return version;
+}
+
+/** KK7 tiles from this app: downloaded once per device (per quarterly version), then served from Cache Storage. */
 async function bundledTile(x: number, y: number): Promise<Response> {
-  const url = bundledThermalTileUrl(x, y);
-  const cache = typeof caches !== "undefined" ? await caches.open(KK7_BUNDLE_CACHE).catch(() => undefined) : undefined;
+  const v = await refreshedVersion();
+  const url = v ? `/api/public/kk7/12/${x}/${y}.png?v=${v}` : bundledThermalTileUrl(x, y);
+  const cacheName = v ? `xcfly-kk7-${v}` : KK7_BUNDLE_CACHE;
+  const cache = typeof caches !== "undefined" ? await caches.open(cacheName).catch(() => undefined) : undefined;
+  if (v && cache) void caches.keys().then((names) => names.filter((n) => n.startsWith("xcfly-kk7-") && n !== cacheName).forEach((n) => void caches.delete(n)));
   const saved = await cache?.match(url);
   if (saved) return saved;
   const response = await fetch(url);

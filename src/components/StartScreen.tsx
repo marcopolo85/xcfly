@@ -1,3 +1,4 @@
+import { inThermalRegion } from "@/game/thermalRegion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
@@ -132,7 +133,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <Button variant="outline" className="mt-2 h-9 w-full text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
             {site?.id.startsWith("map-") && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
-          <button disabled={!site} onClick={() => { if (site) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode }); }} className="w-full rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode }); }} className="w-full rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             Starten
           </button>
           {!site && <p className="text-center text-xs text-muted-foreground">Bitte einen Startplatz wählen</p>}
