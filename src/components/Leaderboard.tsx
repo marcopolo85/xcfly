@@ -70,7 +70,6 @@ const ROW_COLS = (overall: boolean) =>
 const LINE = "border-t border-border/50 py-1.5";
 const CELL = `${LINE} min-w-0 pl-2`;
 const HEAD = "min-w-0 py-1 pl-2 hud-label";
-const META = "min-w-0 leading-tight";
 const NUM = "text-right font-mono";
 
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
@@ -159,31 +158,25 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
           {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
           {!error && entries !== null && entries.length > 0 && (
-            <div className={`grid items-center text-xs ${ROW_COLS}`}>
+            <div className={`grid items-center text-xs ${ROW_COLS(overall)}`}>
               <span className="py-1" />
               <span className={HEAD}>Pilot</span>
-              <span className={HEAD}>
-                {overall && <span className="block">Startplatz</span>}
-                <span className="block">Datum</span>
-              </span>
+              {overall && <span className={HEAD}>Startplatz</span>}
+              <span className={HEAD}>Datum</span>
               <span className={`${HEAD} text-right`}>Km</span>
               <span className={`${HEAD} text-right`}>Pkt</span>
               <span className={`${HEAD} text-right`}>km/h</span>
-              <span />
               {entries.map((e) => {
                 const st = fmtStamp(e.created_at);
                 return (
                   <Fragment key={e.id}>
                     <span className={`${LINE} flex items-center`}><RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" /></span>
                     <button className={`${CELL} text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline`} title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                    <div className={`${CELL} ${META}`}>
-                      {overall && <div className="text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
-                      <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
-                    </div>
+                    {overall && <span className={`${CELL} text-[11px] leading-tight text-muted-foreground [overflow-wrap:anywhere]`}>{e.site_name}</span>}
+                    <span className={`${CELL} font-mono text-[10px] leading-tight text-muted-foreground`}>{st.date}</span>
                     <span className={`${CELL} ${NUM}`}>{e.distance_km.toFixed(1)}</span>
                     <span className={`${CELL} ${NUM} font-bold`}>{e.points.toFixed(1)}</span>
                     <span className={`${CELL} ${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
-                    <span className={LINE} />
                   </Fragment>
                 );
               })}
