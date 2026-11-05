@@ -153,6 +153,20 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             Starten
           </button>
           {!site && <p className="text-center text-xs text-muted-foreground">Bitte einen Startplatz wählen</p>}
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="flex h-full flex-col justify-center rounded-md border border-border bg-card/60 p-2 text-[9px] leading-tight text-muted-foreground">
+              <span className="hud-label mb-0.5">Quellen</span>
+              <a href="https://www.swisstopo.admin.ch/de/nutzungsbedingungen" target="_blank" rel="noopener noreferrer" className="underline">© swisstopo</a>
+              <a href="https://thermal.kk7.ch/" target="_blank" rel="noopener noreferrer" className="underline">Thermik: M. von Känel · KK7 (CC BY-NC-SA)</a>
+              <a href="https://www.bazl.admin.ch/" target="_blank" rel="noopener noreferrer" className="underline">Lufträume: © BAZL</a>
+              <span>Gelände: Terrarium DEM · © OSM</span>
+            </div>
+            <div className="flex h-full flex-col items-center justify-center gap-1 rounded-md border border-border bg-card/60 p-2 text-center">
+              <a href="https://buymeacoffee.com/marcopolo85" target="_blank" rel="noopener noreferrer" className="w-full rounded-md bg-sun px-2 py-1.5 text-xs font-bold text-background transition hover:brightness-110">🍺 Buy me a beer</a>
+              <span className="text-[9px] text-muted-foreground">Marco Bürgisser</span>
+              <span className="text-[9px] leading-tight text-muted-foreground">Damit werden die AI-Credits und der Alkoholpegel des Entwicklers finanziert.</span>
+            </div>
+          </div>
           <p className="text-center text-[10px] text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
           <FlightStats />
         </div>
