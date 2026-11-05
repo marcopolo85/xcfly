@@ -61,6 +61,10 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
+/** Row skeleton: symbol, flexible text column, fixed-width numbers. */
+const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_auto]";
+const NUM_COLS = "grid grid-cols-[2.5rem_2.75rem_2.5rem] shrink-0 items-baseline gap-x-1";
+
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
 export function fmtStamp(iso: string) {
   const d = new Date(iso);
@@ -92,7 +96,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
 
   return (
     <div className="absolute inset-0 z-40 grid place-items-center bg-background/80 p-4 backdrop-blur-sm" role="dialog" aria-label={`Track von ${entry.pilot_name}`}>
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-4">
+      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
