@@ -64,8 +64,8 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 /** Row skeleton: symbol, pilot, startplatz (overall only), date, km, points, speed. One shared grid with
  *  every column exactly as wide as its content, so pilot → date is as far apart as date → km, km → pkt
  *  and pkt → km/h. No column stretches, so no gutter can grow. */
-const ROW_COLS = "grid-cols-[1rem_minmax(4rem,max-content)_max-content_max-content_max-content_max-content]";
-const ROW_COLS_OVERALL = "grid-cols-[1rem_minmax(4rem,max-content)_minmax(4.5rem,max-content)_max-content_max-content_max-content_max-content]";
+const ROW_COLS = "grid-cols-[1rem_auto_max-content_max-content_max-content_max-content]";
+const ROW_COLS_OVERALL = "grid-cols-[1rem_auto_max-content_max-content_max-content_max-content_max-content]";
 /** Continuous separator under every data row; the 8px gutter lives inside the cells so the line stays unbroken. */
 const LINE = "border-t border-border/50 py-1.5";
 const CELL = `${LINE} min-w-0 pl-2`;
@@ -171,7 +171,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                 return (
                   <Fragment key={e.id}>
                     <span className={`${LINE} flex items-center`}><RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" /></span>
-                    <button className={`${CELL} text-left font-semibold leading-tight [overflow-wrap:break-word] hover:underline`} title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                    <button className={`${CELL} max-w-[10rem] text-left font-semibold leading-tight [overflow-wrap:break-word] hover:underline`} title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
                     {overall && <span className={`${CELL} text-[11px] leading-tight text-muted-foreground [overflow-wrap:break-word]`}>{e.site_name}</span>}
                     <span className={`${CELL} font-mono text-[10px] leading-tight text-muted-foreground`}>{st.date}</span>
                     <span className={`${CELL} ${NUM}`}>{e.distance_km.toFixed(1)}</span>
