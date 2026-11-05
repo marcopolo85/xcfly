@@ -21,6 +21,8 @@ export default defineConfig({
         cacheId: "xcfly",
         globDirectory: "dist/client",
         globPatterns: ["**/*.{js,css,png,jpg,jpeg,webp,woff2}"],
+        // Bundled KK7 tiles are cached on demand by the app (Cache Storage), not precached.
+        globIgnores: ["kk7/**"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: null,
         runtimeCaching: [
