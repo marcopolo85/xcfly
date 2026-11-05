@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { timeScale, steer, stepPhysics, TURN_RATE, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, setTurnInput, stepVisualYaw, type HoldStarts, type Sim, type VisualYaw } from "./physicsEngine";
+import { timeScale, steer, stepPhysics, TURN_RATE, TURN_SINK, ACCEL_TIME_FACTOR, STEER_ANALOG_FACTOR, holdBoost, HOLD_BOOST_FACTOR, setTurnInput, stepVisualYaw, type HoldStarts, type Sim, type VisualYaw } from "./physicsEngine";
 import { cloudbaseAt, cloudbaseFromPeak, finalizeTerrain, heightAt, N } from "./terrain";
 import { SITES } from "./sites";
 import { mulberry32 } from "./rng";
