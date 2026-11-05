@@ -12,7 +12,24 @@ const { insert, from, query } = vi.hoisted(() => {
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from } }));
 
-import { loadLeaderboardEntries, submitFlight } from "./Leaderboard";
+import { fmtStamp, loadLeaderboardEntries, submitFlight } from "./Leaderboard";
+
+describe("flight timestamp", () => {
+  const p = (n: number) => String(n).padStart(2, "0");
+
+  it("formats an entry as local day.month.year and 24-hour clock", () => {
+    const iso = "2026-11-05T20:39:00.000Z";
+    const d = new Date(iso);
+    expect(fmtStamp(iso)).toEqual({
+      date: `${p(d.getDate())}.${p(d.getMonth() + 1)}.${p(d.getFullYear() % 100)}`,
+      time: `${p(d.getHours())}:${p(d.getMinutes())}`,
+    });
+  });
+
+  it("shows a dash instead of an unusable timestamp", () => {
+    expect(fmtStamp("not-a-date")).toEqual({ date: "–", time: "" });
+  });
+});
 
 describe("XC leaderboard submission", () => {
   beforeEach(() => {

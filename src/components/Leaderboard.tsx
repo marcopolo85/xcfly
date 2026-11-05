@@ -59,6 +59,18 @@ function fmtTime(s: number) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
+export function fmtStamp(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: "–", time: "" };
+  return {
+    date: `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${pad2(d.getFullYear() % 100)}`,
+    time: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`,
+  };
+}
+
 function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   const [track, setTrack] = useState<[number, number][] | null>(null);
   const [missing, setMissing] = useState(false);
@@ -84,7 +96,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-lg font-bold text-foreground">{entry.pilot_name}</h3>
-            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]}</p>
+            <p className="text-xs text-muted-foreground">{entry.site_name} · {ROUTE_LABEL[asRoute(entry.route_type)]} · {fmtStamp(entry.created_at).date} {fmtStamp(entry.created_at).time}</p>
           </div>
           <button aria-label="Schliessen" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
@@ -141,24 +153,32 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                   <th className="w-6 py-1"></th>
                   <th className="py-1 pr-1">Pilot</th>
                   {overall && <th className="py-1 px-1">Startplatz</th>}
+                  <th className="py-1 px-1 text-right">Zeit</th>
                   <th className="py-1 text-right">Km</th>
                   <th className="py-1 text-right">Punkte</th>
                   <th className="py-1 text-right">km/h</th>
                 </tr>
               </thead>
               <tbody>
-                {entries.map((e) => (
-                  <tr key={e.id} className="border-t border-border/50 text-foreground">
-                    <td className="py-1"><RouteIcon type={asRoute(e.route_type)} /></td>
-                    <td className="max-w-0 truncate py-1 pr-1">
-                      <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                    </td>
-                    {overall && <td className="max-w-0 break-words px-1 py-1 text-muted-foreground">{e.site_name}</td>}
-                    <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
-                    <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>
-                    <td className="py-1 text-right font-mono">{xcSpeed(e).toFixed(1)}</td>
-                  </tr>
-                ))}
+                {entries.map((e) => {
+                  const st = fmtStamp(e.created_at);
+                  return (
+                    <tr key={e.id} className="border-t border-border/50 text-foreground">
+                      <td className="py-1"><RouteIcon type={asRoute(e.route_type)} /></td>
+                      <td className="max-w-0 truncate py-1 pr-1">
+                        <button className="max-w-full truncate font-semibold hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                      </td>
+                      {overall && <td className="max-w-0 break-words px-1 py-1 text-muted-foreground">{e.site_name}</td>}
+                      <td className="px-1 py-1 text-right font-mono text-[10px] leading-tight text-muted-foreground">
+                        <span className="block">{st.date}</span>
+                        <span className="block">{st.time}</span>
+                      </td>
+                      <td className="py-1 text-right font-mono">{e.distance_km.toFixed(1)}</td>
+                      <td className="py-1 text-right font-mono font-bold">{e.points.toFixed(1)}</td>
+                      <td className="py-1 text-right font-mono">{xcSpeed(e).toFixed(1)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
