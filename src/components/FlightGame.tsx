@@ -23,6 +23,7 @@ import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
 import { FlightSettings } from "./FlightSettings";
+import { DEFAULT_SIM_PREFS, loadSimPrefs, type SimPrefs } from "@/game/simPrefs";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
 import { TrackOverview } from "./TrackOverview";
@@ -73,6 +74,11 @@ export function FlightGame() {
   const showAirspaceLabelsRef = useRef(true);
   showAirspaceLabelsRef.current = showAirspaceLabels;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [simPrefs, setSimPrefs] = useState<SimPrefs>(DEFAULT_SIM_PREFS);
+  const simPrefsRef = useRef(simPrefs);
+  simPrefsRef.current = simPrefs;
+  useEffect(() => { setSimPrefs(loadSimPrefs()); }, []);
+  const updateSimPrefs = (p: SimPrefs) => { setSimPrefs(p); localStorage.setItem("simPrefs", JSON.stringify(p)); };
   const vario = useRef<AudioVario | null>(null);
   const [paused, setPaused] = useState(false);
   const [boss, setBoss] = useState(false);
@@ -200,6 +206,7 @@ export function FlightGame() {
       setPhase("flying");
       window.__lovableEvents?.track?.("project.flight_started", { mode: config.mode });
 
+      let zoomAccel: boolean | null = null;
       const loop = (now: number) => {
         const dtReal = Math.min(0.05, (now - last) / 1000);
         last = now;
@@ -216,9 +223,14 @@ export function FlightGame() {
         }
         const inp = input.current;
         const boost = holdBoost(inp, holdStart.current, now);
-        const effSimSpeed = boost;
-        steer(sim, inp, dtReal, effSimSpeed);
-        const simDt = dtReal * timeScale(inp.accel, effSimSpeed);
+        const prefs = simPrefsRef.current;
+        if (zoomAccel === null || (prefs.autoZoom && zoomAccel !== inp.accel)) {
+          mapZoom.zoomTo(inp.accel ? prefs.zoomAccel : prefs.zoomThermal);
+        }
+        zoomAccel = inp.accel;
+        const effSimSpeed = boost * (inp.accel ? 1 : prefs.normalSpeed);
+        steer(sim, inp, dtReal, effSimSpeed, prefs.accelSpeed);
+        const simDt = dtReal * timeScale(inp.accel, effSimSpeed, prefs.accelSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
         const sv = sunVector(sp);
         const steps = Math.ceil(simDt / 0.05);
@@ -356,7 +368,7 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <MapCanvas ref={canvasRef} />
-      {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} />}
+      {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
       {phase === "flying" && boss && <button aria-label="Fortsetzen" onClick={() => { setBoss(false); setPaused(false); }} className="fixed inset-0 z-[100] cursor-default bg-background"><img src={bossSheet} alt="" className="h-full w-full object-cover object-left-top" /></button>}
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
       {phase === "flying" && paused && <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center"><span className="rounded-md border border-border bg-card/95 px-4 py-2 font-display text-2xl font-bold text-foreground">Pause</span></div>}

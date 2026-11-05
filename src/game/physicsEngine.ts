@@ -12,8 +12,8 @@ export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 40;
 
 /** Game-time factor: base simulation speed, multiplied by 40 on speedbar. */
-export function timeScale(accel: boolean, simSpeed = 1) {
-  return simSpeed * (accel ? ACCEL_TIME_FACTOR : 1);
+export function timeScale(accel: boolean, simSpeed = 1, accelFactor = ACCEL_TIME_FACTOR) {
+  return simSpeed * (accel ? accelFactor : 1);
 }
 
 export const HOLD_BOOST_MS = 2000;
@@ -85,10 +85,10 @@ export interface Input { left: boolean; right: boolean; accel: boolean; steer?: 
  * On the speed bar the arrows turn at a fixed gentle 2°/s real time instead of
  * scaling with the accelerated simulation rate; slide steering is unchanged.
  */
-export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1) {
+export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1, accelFactor = ACCEL_TIME_FACTOR) {
   const dirDigital = (input.right ? 1 : 0) - (input.left ? 1 : 0);
   const dirAnalog = (input.steer ?? 0) * STEER_ANALOG_FACTOR;
-  const dtSim = dtReal * timeScale(input.accel, simSpeed);
+  const dtSim = dtReal * timeScale(input.accel, simSpeed, accelFactor);
   const rot = input.accel
     ? dirDigital * ACCEL_TURN_RATE * dtReal + dirAnalog * TURN_RATE * dtSim
     : (dirDigital + dirAnalog) * TURN_RATE * dtSim;

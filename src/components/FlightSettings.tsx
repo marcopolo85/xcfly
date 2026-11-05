@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 import { MAP_STYLES, setMapStyle, type MapStyle } from "./SwissRelief";
+import type { SimPrefs } from "@/game/simPrefs";
 import { memo, useEffect, useState } from "react";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -15,7 +16,20 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange }: {
+function PrefSlider({ label, unit, value, min, max, step, onChange }: { label: string; unit: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>{label}</span><span>{value}{unit}</span>
+      </div>
+      <Slider value={[value]} min={min} max={max} step={step} onValueChange={(v) => onChange(v[0])} aria-label={label} />
+    </div>
+  );
+}
+
+export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange, simPrefs, onSimPrefs }: {
+  simPrefs: SimPrefs;
+  onSimPrefs: (p: SimPrefs) => void;
   thermalOpacity: number;
   onThermalOpacity: (v: number) => void;
   showProfile: boolean;
@@ -55,6 +69,18 @@ export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onT
                     {m.label}
                   </button>
                 ))}
+              </div>
+            </Section>
+            <Section title="Simulation">
+              <PrefSlider label="Tempo normal" unit="×" value={simPrefs.normalSpeed} min={1} max={5} step={1} onChange={(v) => onSimPrefs({ ...simPrefs, normalSpeed: v })} />
+              <PrefSlider label="Tempo beschleunigt" unit="×" value={simPrefs.accelSpeed} min={10} max={40} step={1} onChange={(v) => onSimPrefs({ ...simPrefs, accelSpeed: v })} />
+            </Section>
+            <Section title="Zoom">
+              <PrefSlider label="Thermikmodus" unit="×" value={simPrefs.zoomThermal} min={0.25} max={4} step={0.25} onChange={(v) => onSimPrefs({ ...simPrefs, zoomThermal: v })} />
+              <PrefSlider label="Beschleunigt" unit="×" value={simPrefs.zoomAccel} min={0.25} max={4} step={0.25} onChange={(v) => onSimPrefs({ ...simPrefs, zoomAccel: v })} />
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Automatisch umschalten</span>
+                <Switch checked={simPrefs.autoZoom} onCheckedChange={(v) => onSimPrefs({ ...simPrefs, autoZoom: v })} aria-label="Zoom automatisch umschalten" />
               </div>
             </Section>
             <Section title="Thermikkarte">
