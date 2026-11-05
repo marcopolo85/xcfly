@@ -155,7 +155,8 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
             <div className="text-xs">
               <div className={`grid items-end gap-x-2 ${ROW_COLS} hud-label pb-1`}>
                 <span className="w-4" />
-                <span className="min-w-0">{overall ? "Pilot · Startplatz" : "Pilot"}</span>
+                <span className="min-w-0">Pilot</span>
+                <span className={`${META_COLS} text-[10px]`}>{overall ? "Startplatz · Datum" : "Datum"}</span>
                 <span className={NUM_COLS}>
                   <span className="text-right">Km</span>
                   <span className="text-right">Pkt</span>
@@ -167,10 +168,10 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                 return (
                   <div key={e.id} className={`grid items-center gap-x-2 border-t border-border/50 py-1.5 ${ROW_COLS}`}>
                     <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
-                    <div className="min-w-0">
-                      <button className="block max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                      {overall && <div className="leading-tight text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
-                      <div className="font-mono text-[10px] leading-tight text-muted-foreground">{st.date}</div>
+                    <button className="min-w-0 max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                    <div className={META_COLS}>
+                      {overall && <div className="text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
+                      <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
                     </div>
                     <div className={NUM_COLS}>
                       <span className="text-right font-mono">{e.distance_km.toFixed(1)}</span>
