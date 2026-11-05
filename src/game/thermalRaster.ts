@@ -19,6 +19,11 @@ export function thermalTileUrl(x: number, y: number, source: string, z = THERMAL
   return `https://thermal.kk7.ch/tiles/thermals_${THERMAL_DATASET}/${z}/${x}/${2 ** z - 1 - y}.png?src=${encodeURIComponent(source)}`;
 }
 
+/** Same KK7 tile, bundled with the app (XYZ rows, region only); see public/kk7. */
+export function bundledThermalTileUrl(x: number, y: number) {
+  return `/kk7/${THERMAL_ZOOM}/${x}/${y}.png`;
+}
+
 /** Relative heat from KK7's rainbow palette, not a calibrated m/s forecast.
  * Transparent pixels mean no provider data. Lift strength follows the color
  * scale: blue is weak climb, rising through cyan/green/yellow to dark red,

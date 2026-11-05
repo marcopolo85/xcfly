@@ -1,9 +1,8 @@
 import type { Site } from "./sites";
 import type { ThermalMap } from "./loadThermalRaster";
 import { thermalRegionBounds } from "./thermalRegion";
-import { thermalHeat, thermalTileUrl, THERMAL_ZOOM } from "./thermalRaster";
+import { thermalHeat, bundledThermalTileUrl, THERMAL_ZOOM } from "./thermalRaster";
 import { localToPixel } from "./realTerrain";
-import { tileResponse } from "@/lib/offline-data";
 
 export interface RegionalTile { x: number; y: number; blob: Blob; preview: ImageBitmap; image?: ImageBitmap | undefined; pending?: boolean }
 export interface ThermalProgress { loaded: number; total: number }
@@ -41,9 +40,22 @@ const inflight = new Map<string, Promise<void>>();
 const failedAt = new Map<string, number>();
 let scratch: CanvasRenderingContext2D | null = null;
 
+export const KK7_BUNDLE_CACHE = "xcfly-kk7-bundle-v1";
+/** Bundled KK7 tiles: downloaded from this app once per device, then served from Cache Storage. */
+async function bundledTile(x: number, y: number): Promise<Response> {
+  const url = bundledThermalTileUrl(x, y);
+  const cache = typeof caches !== "undefined" ? await caches.open(KK7_BUNDLE_CACHE).catch(() => undefined) : undefined;
+  const saved = await cache?.match(url);
+  if (saved) return saved;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Thermikkachel nicht erreichbar");
+  await cache?.put(url, response.clone()).catch(() => {});
+  return response;
+}
+
 async function fetchTile(x: number, y: number) {
   const key = `${x},${y}`;
-  const response = await tileResponse(thermalTileUrl(x, y, window.location.hostname));
+  const response = await bundledTile(x, y);
   const blob = await response.blob();
   const image = await createImageBitmap(blob);
   try {
