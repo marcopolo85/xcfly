@@ -1,4 +1,5 @@
 # Aufgaben
+- [ ] Leeren Platz zwischen Pilotenname und Datum verkleinern: Datum soll direkt neben dem Pilotennamen stehen.
 - [x] Scrollbalken in der Rangliste ausgeblendet (scrollbar-width none, Webkit-Scrollbar versteckt); Scrollen im Browser geprüft, Ranglistentests bestanden.
 - [x] Startplatz und Datum in der Rangliste rechts neben den Pilotennamen gestellt (Datum unter dem Startplatz); bei 390 px Breite ohne Überlauf, ohne abgeschnittene Namen und ohne sichtbaren Scrollbalken im Browser geprüft.
 - [x] Rangliste auf Handybildschirmeite umbaut (390 px): Pilotenname wird nicht abgeschnitten, Startplatz und Datum unter dem Namen, nur noch das Datum ohne Uhrzeit; 7 Ranglistentests bestanden, Gesamtrangliste (66 Einträge) und Gummen-Rangliste (5 Einträge) im Browser ohne Überlauf und ohne abgeschnittene Namen geprüft.
