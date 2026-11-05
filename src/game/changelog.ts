@@ -5,7 +5,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
     date: "6. Nov 2026",
     items: [
       "Drehgeschwindigkeit im Thermikmodus verdoppelt",
-      "Kein Zurückdrehen mehr beim Loslassen des Kurvenknopfs",
+      "Drehung stoppt sofort beim Loslassen des Kurvenknopfs",
       "Gleitschirm dreht im Thermikmodus ruhig mit maximal 1 Umdrehung pro Sekunde",
       "Steigwert und Kurvenradius bleiben gleich – es sieht nur langsamer aus",
     ],

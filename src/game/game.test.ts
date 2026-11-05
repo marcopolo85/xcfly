@@ -175,7 +175,7 @@ describe("game rules", () => {
     expect(sim.climbTotal).toBeCloseTo((4 - (1.1 + TURN_SINK)) * 20, 1);
     expect(sim.distance / turned).toBeCloseTo(10.5 / TURN_RATE, 1);
   });
-  it("aims the drawn glider back at the flight direction once the fast turn ends", () => {
+  it("stops the drawn rotation immediately when the turn button is released", () => {
     const sim = newSim();
     const yaw: VisualYaw = { vis: 0, lag: 0 };
     const dt = 0.05;
@@ -183,16 +183,12 @@ describe("game rules", () => {
       const rot = steer(sim, { left: false, right: true, accel: false }, dt, HOLD_BOOST_FACTOR);
       stepVisualYaw(yaw, sim.heading, rot, dt, false);
     }
-    // Flying straight for one second: the nose swings back at one turn per second.
-    let fastest = 0, prev = yaw.vis;
-    for (let i = 0; i < 20; i++) {
-      const rot = steer(sim, { left: false, right: false, accel: false }, dt, 1);
-      stepVisualYaw(yaw, sim.heading, rot, dt, false);
-      fastest = Math.max(fastest, Math.abs(shortestAngle(yaw.vis - prev)));
-      prev = yaw.vis;
-    }
-    expect(shortestAngle(yaw.vis - sim.heading)).toBeCloseTo(0, 6);
-    expect(fastest).toBeLessThanOrEqual(Math.PI * 2 * dt + 1e-9);
+    const rot = steer(sim, { left: false, right: false, accel: false }, dt, 1);
+    stepVisualYaw(yaw, sim.heading, rot, dt, false);
+    const held = yaw.vis;
+    for (let i = 0; i < 10; i++) stepVisualYaw(yaw, sim.heading, steer(sim, { left: false, right: false, accel: false }, dt, 1), dt, false);
+    expect(yaw.vis).toBe(held);
+    expect(yaw.vis).toBeCloseTo(sim.heading, 9);
   });
   it("draws the true heading when turning slower than one turn per second or on the speed bar", () => {
     const sim = newSim();

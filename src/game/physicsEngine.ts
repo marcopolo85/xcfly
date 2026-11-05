@@ -119,7 +119,8 @@ export interface VisualYaw { vis: number; lag: number }
  * On the speed bar the symbol points exactly along the flight direction.
  */
 export function stepVisualYaw(yaw: VisualYaw, heading: number, rot: number, dtReal: number, accel: boolean) {
-  if (accel) { yaw.vis = heading; yaw.lag = 0; return yaw; }
+  // Releasing the turn button stops the drawn rotation at once.
+  if (accel || rot === 0) { yaw.vis = heading; yaw.lag = 0; return yaw; }
   const cap = SYMBOL_MAX_RATE * dtReal;
   const shown = rot > cap ? cap : rot < -cap ? -cap : rot;
   yaw.lag += rot - shown;
