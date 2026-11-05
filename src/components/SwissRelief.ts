@@ -42,7 +42,7 @@ function composedTile(key: string, layers: Tile[]) {
   composites.set(key, { sources, surface });
   if (composites.size > 64) {
     const oldest = composites.keys().next().value;
-    if (oldest !== undefined) composites.delete(oldest);
+    if (oldest !== undefined) { const old = composites.get(oldest); composites.delete(oldest); if (old) { old.surface.width = 0; old.surface.height = 0; } }
   }
   return surface;
 }
@@ -123,9 +123,14 @@ function tileImage(url: string, filter = "none", tint = "", underlayUrl?: string
     tile.loaded = true;
   }, () => { tile.failedAt = Date.now(); });
   cache.set(key, tile);
-  if (cache.size > 256) {
+  if (cache.size > 160) {
     const oldest = cache.keys().next().value;
-    if (oldest !== undefined) cache.delete(oldest);
+    if (oldest !== undefined) {
+      // Free GPU/bitmap memory immediately; mobile Chrome crashes when it piles up on long flights.
+      const old = cache.get(oldest); cache.delete(oldest);
+      if (old?.surface) { old.surface.width = 0; old.surface.height = 0; }
+      if (old?.image) old.image.src = "";
+    }
   }
   return tile;
 }

@@ -4,7 +4,7 @@ import { thermalRegionBounds } from "./thermalRegion";
 import { thermalHeat, thermalTileUrl } from "./thermalRaster";
 import { tileResponse } from "@/lib/offline-data";
 
-export interface RegionalTile { x: number; y: number; blob: Blob; preview: HTMLCanvasElement; image?: ImageBitmap | undefined; pending?: boolean }
+export interface RegionalTile { x: number; y: number; blob: Blob; preview: ImageBitmap; image?: ImageBitmap | undefined; pending?: boolean }
 export interface ThermalProgress { loaded: number; total: number }
 const tiles = new Map<string, RegionalTile>();
 const heat = new Map<string, Uint8Array>();
@@ -75,11 +75,8 @@ async function fetchRegion() {
             if (strength[i]) hasHeat = true;
           }
           if (hasHeat) heat.set(key, strength);
-          const preview = document.createElement("canvas");
-          preview.width = 32; preview.height = 32;
-          const previewContext = preview.getContext("2d");
-          if (!previewContext) throw new Error("Thermikkarte nicht lesbar");
-          previewContext.drawImage(image, 0, 0, 32, 32);
+          // Thousands of tiny canvases exhaust mobile Chrome's canvas memory; bitmaps are cheap.
+          const preview = await createImageBitmap(image, { resizeWidth: 32, resizeHeight: 32 });
           tiles.set(key, { ...job, blob, preview });
           loaded++;
           report();
