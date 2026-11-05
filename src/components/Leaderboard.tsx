@@ -61,10 +61,10 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Row skeleton: symbol, pilot name with startplatz + date right beside it, fixed-width numbers. */
-const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_auto]";
-const META_COLS = "shrink-0 text-left leading-tight";
-const NUM_COLS = "grid grid-cols-[2.5rem_2.75rem_2.5rem] shrink-0 items-baseline gap-x-1";
+/** Row skeleton: symbol, pilot, startplatz + date, km, points, speed – equal gaps, aligned columns. */
+const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_7rem_2.4rem_2.6rem_2.4rem]";
+const META = "min-w-0 text-right leading-tight";
+const NUM = "text-right font-mono";
 
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
 export function fmtStamp(iso: string) {
@@ -155,30 +155,25 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
             <div className="text-xs">
               <div className={`grid items-end gap-x-2 ${ROW_COLS} hud-label pb-1`}>
                 <span className="w-4" />
-                <span className="min-w-0">{overall ? "Pilot · Startplatz · Datum" : "Pilot · Datum"}</span>
-                <span className={NUM_COLS}>
-                  <span className="text-right">Km</span>
-                  <span className="text-right">Pkt</span>
-                  <span className="text-right">km/h</span>
-                </span>
+                <span className="min-w-0">Pilot</span>
+                <span className={`${META} text-[10px]`}>{overall ? "Startplatz · Datum" : "Datum"}</span>
+                <span className="text-right">Km</span>
+                <span className="text-right">Pkt</span>
+                <span className="text-right">km/h</span>
               </div>
               {entries.map((e) => {
                 const st = fmtStamp(e.created_at);
                 return (
                   <div key={e.id} className={`grid items-center gap-x-2 border-t border-border/50 py-1.5 ${ROW_COLS}`}>
                     <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <button className="min-w-0 max-w-full text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                      <div className={META_COLS}>
-                        {overall && <div className="max-w-[7rem] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
-                        <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
-                      </div>
+                    <button className="min-w-0 text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                    <div className={META}>
+                      {overall && <div className="text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
+                      <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
                     </div>
-                    <div className={NUM_COLS}>
-                      <span className="text-right font-mono">{e.distance_km.toFixed(1)}</span>
-                      <span className="text-right font-mono font-bold">{e.points.toFixed(1)}</span>
-                      <span className="text-right font-mono text-muted-foreground">{xcSpeed(e).toFixed(1)}</span>
-                    </div>
+                    <span className={NUM}>{e.distance_km.toFixed(1)}</span>
+                    <span className={`${NUM} font-bold`}>{e.points.toFixed(1)}</span>
+                    <span className={`${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
                   </div>
                 );
               })}

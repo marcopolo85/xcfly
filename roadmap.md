@@ -1,4 +1,5 @@
 # Aufgaben
+- [x] Datum in feste, rechtsbündige Spalte gestellt (bei 390 px alle Daten in einer senkrechten Flucht), Spaltenabstände überall gleich 8 px; 66 Gesamtranglisten- und 5 Gummen-Einträge ohne Überlauf, ohne abgeschnittene Namen, ohne um-brechende Startplätze und ohne sichtbaren Scrollbalken geprüft; 7 Ranglistentests bestanden.
 - [x] Leeren Platz zwischen Pilotenname und Datum verkleinert (6 px Abstand, Datum direkt neben dem Namen); bei 390 px und 1041 px Breite im Browser geprüft, 7 Ranglistentests bestanden, kein Überlauf und keine abgeschnittenen Namen.
 - [x] Scrollbalken in der Rangliste ausgeblendet (scrollbar-width none, Webkit-Scrollbar versteckt); Scrollen im Browser geprüft, Ranglistentests bestanden.
 - [x] Startplatz und Datum in der Rangliste rechts neben den Pilotennamen gestellt (Datum unter dem Startplatz); bei 390 px Breite ohne Überlauf, ohne abgeschnittene Namen und ohne sichtbaren Scrollbalken im Browser geprüft.
