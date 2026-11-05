@@ -158,29 +158,32 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
           {!error && entries === null && <p className="py-6 text-center font-mono text-sm text-muted-foreground">Lade…</p>}
           {!error && entries !== null && entries.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Noch keine Einträge.</p>}
           {!error && entries !== null && entries.length > 0 && (
-            <div className="text-xs">
-              <div className={`grid items-end gap-x-2 ${ROW_COLS} hud-label pb-1`}>
-                <span className="w-4" />
-                <span className="min-w-0">Pilot</span>
-                <span className={`${META} text-[10px]`}>{overall ? "Startplatz · Datum" : "Datum"}</span>
-                <span className="text-right">Km</span>
-                <span className="text-right">Pkt</span>
-                <span className="text-right">km/h</span>
-              </div>
+            <div className={`grid items-center text-xs ${ROW_COLS}`}>
+              <span className="py-1" />
+              <span className={HEAD}>Pilot</span>
+              <span className={HEAD}>
+                {overall && <span className="block">Startplatz</span>}
+                <span className="block">Datum</span>
+              </span>
+              <span className={`${HEAD} text-right`}>Km</span>
+              <span className={`${HEAD} text-right`}>Pkt</span>
+              <span className={`${HEAD} text-right`}>km/h</span>
+              <span />
               {entries.map((e) => {
                 const st = fmtStamp(e.created_at);
                 return (
-                  <div key={e.id} className={`grid items-center gap-x-2 border-t border-border/50 py-1.5 ${ROW_COLS}`}>
-                    <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
-                    <button className="min-w-0 text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
-                    <div className={META}>
+                  <Fragment key={e.id}>
+                    <span className={`${LINE} flex items-center`}><RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" /></span>
+                    <button className={`${CELL} text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline`} title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
+                    <div className={`${CELL} ${META}`}>
                       {overall && <div className="text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
                       <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
                     </div>
-                    <span className={NUM}>{e.distance_km.toFixed(1)}</span>
-                    <span className={`${NUM} font-bold`}>{e.points.toFixed(1)}</span>
-                    <span className={`${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
-                  </div>
+                    <span className={`${CELL} ${NUM}`}>{e.distance_km.toFixed(1)}</span>
+                    <span className={`${CELL} ${NUM} font-bold`}>{e.points.toFixed(1)}</span>
+                    <span className={`${CELL} ${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
+                    <span className={LINE} />
+                  </Fragment>
                 );
               })}
             </div>
