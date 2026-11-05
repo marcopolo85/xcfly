@@ -3,7 +3,6 @@ import type { ThermalMap } from "./loadThermalRaster";
 import { thermalRegionBounds } from "./thermalRegion";
 import { thermalHeat, bundledThermalTileUrl, THERMAL_ZOOM } from "./thermalRaster";
 import { localToPixel } from "./realTerrain";
-import { tileResponse } from "@/lib/offline-data";
 
 export interface RegionalTile { x: number; y: number; blob: Blob; preview: ImageBitmap; image?: ImageBitmap | undefined; pending?: boolean }
 export interface ThermalProgress { loaded: number; total: number }
