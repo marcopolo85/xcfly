@@ -87,7 +87,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               </div>
               <div className="flex items-center gap-1.5">
                 <button type="button" title="Changelog" aria-label={unseenChanges ? "Changelog – neue Updates" : "Changelog"} onClick={openChangelog}
-                  className={`grid h-6 w-6 place-items-center rounded-md border bg-card/95 active:bg-accent ${unseenChanges ? "animate-pulse border-climb text-climb shadow-[0_0_10px_var(--climb)]" : "border-border text-muted-foreground"}`}>
+                  className={`grid h-6 w-6 place-items-center rounded-md border bg-card/95 active:bg-accent ${unseenChanges ? "border-climb text-climb" : "border-border text-muted-foreground"}`}>
                   <ScrollText className="h-3.5 w-3.5" />
                 </button>
                 <button type="button" title="Info" aria-label="Info" onClick={() => setInfoOpen(true)} className="grid h-6 w-6 place-items-center rounded-md border border-border bg-card/95 text-muted-foreground active:bg-accent">
