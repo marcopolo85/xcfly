@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
 import type { RouteType } from "@/game/xcScore";
@@ -61,9 +61,15 @@ function fmtTime(s: number) {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** Row skeleton: symbol, pilot, startplatz + date, km, points, speed – equal gaps, aligned columns. */
-const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_7rem_2.4rem_2.6rem_2.4rem]";
-const META = "min-w-0 text-right leading-tight";
+/** Row skeleton: symbol, pilot, startplatz + date, km, points, speed. One shared grid, every column as
+ *  wide as its content, so pilot → date is exactly as far apart as date → km, km → pkt, pkt → km/h.
+ *  A flexible tail column swallows the remaining width instead of inflating the pilot column. */
+const ROW_COLS = "grid-cols-[1rem_minmax(0,max-content)_max-content_max-content_max-content_max-content_1fr]";
+/** Continuous separator under every data row; the 8px gutter lives inside the cells so the line stays unbroken. */
+const LINE = "border-t border-border/50 py-1.5";
+const CELL = `${LINE} min-w-0 pl-2`;
+const HEAD = "min-w-0 py-1 pl-2 hud-label";
+const META = "min-w-0 leading-tight";
 const NUM = "text-right font-mono";
 
 /** Local date and time of a flight entry, e.g. "05.11.26" and "21:39". */
