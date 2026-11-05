@@ -6,7 +6,9 @@ import { sunTimes } from "@/game/sun";
 import { MODES, type FlightMode } from "@/game/modes";
 import heroImg from "@/assets/hero-alps.jpg";
 import logoImg from "@/assets/xcfly-logo.png";
-import { Info, MapPin, Trophy } from "lucide-react";
+import { Info, MapPin, ScrollText, Trophy } from "lucide-react";
+import { ChangelogDialog } from "./ChangelogDialog";
+import { CHANGELOG, CHANGELOG_SEEN_KEY, hasUnseenChangelog } from "@/game/changelog";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { RouteIcon } from "./RouteIcon";
@@ -46,6 +48,14 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [overallRanking, setOverallRanking] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [unseenChanges, setUnseenChanges] = useState(false);
+  useEffect(() => { setUnseenChanges(hasUnseenChangelog(localStorage.getItem(CHANGELOG_SEEN_KEY))); }, []);
+  const openChangelog = () => {
+    setChangelogOpen(true);
+    setUnseenChanges(false);
+    if (CHANGELOG[0]) localStorage.setItem(CHANGELOG_SEEN_KEY, CHANGELOG[0].id);
+  };
   useEffect(() => {
     if (navigator.onLine) return;
     try {
@@ -75,9 +85,15 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
                   <Trophy />
                 </Button>
               </div>
-              <button type="button" title="Info" aria-label="Info" onClick={() => setInfoOpen(true)} className="grid h-6 w-6 place-items-center rounded-md border border-border bg-card/95 text-muted-foreground active:bg-accent">
-                <Info className="h-3.5 w-3.5" />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button type="button" title="Changelog" aria-label={unseenChanges ? "Changelog – neue Updates" : "Changelog"} onClick={openChangelog}
+                  className={`grid h-6 w-6 place-items-center rounded-md border bg-card/95 active:bg-accent ${unseenChanges ? "animate-pulse border-climb text-climb shadow-[0_0_10px_var(--climb)]" : "border-border text-muted-foreground"}`}>
+                  <ScrollText className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" title="Info" aria-label="Info" onClick={() => setInfoOpen(true)} className="grid h-6 w-6 place-items-center rounded-md border border-border bg-card/95 text-muted-foreground active:bg-accent">
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {MODES.map((m) => (
@@ -145,6 +161,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
       {overallRanking && <Leaderboard overall onClose={() => setOverallRanking(false)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
+      <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
