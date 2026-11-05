@@ -147,7 +147,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
   }, [site]);
 
   return (
-    <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
+    <div className="absolute inset-0 z-30 grid grid-cols-1 place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
       <div className="flex max-h-[85dvh] w-fit max-w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
