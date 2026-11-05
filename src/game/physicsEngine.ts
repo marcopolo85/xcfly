@@ -101,6 +101,37 @@ export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1, acce
     }
   } else sim.turnAcc = 0;
   sim.heading = (sim.heading + rot + Math.PI * 2) % (Math.PI * 2);
+  return rot;
+}
+
+/** Drawn glider rotation: at most one revolution per real second while thermalling. */
+export const SYMBOL_MAX_RATE = Math.PI * 2;
+const TAU = Math.PI * 2;
+
+/** The rotation currently drawn for the glider, plus the turn it could not show yet. */
+export interface VisualYaw { vis: number; lag: number }
+
+/**
+ * Slows down only the *drawn* rotation to SYMBOL_MAX_RATE while thermalling: the
+ * physics keep the true heading, so climb rate and turn radius are untouched and
+ * the flight merely looks calmer. Rotation the display could not show is kept as
+ * `lag` and made up at the same capped rate as soon as the glider flies straight.
+ * On the speed bar the symbol points exactly along the flight direction.
+ */
+export function stepVisualYaw(yaw: VisualYaw, heading: number, rot: number, dtReal: number, accel: boolean) {
+  if (accel) { yaw.vis = heading; yaw.lag = 0; return yaw; }
+  const cap = SYMBOL_MAX_RATE * dtReal;
+  const shown = rot > cap ? cap : rot < -cap ? -cap : rot;
+  yaw.lag += rot - shown;
+  // Keeping the shortfall within one turn never changes the drawn angle.
+  yaw.lag = ((((yaw.lag + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
+  const spare = cap - Math.abs(shown);
+  if (spare > 0 && yaw.lag !== 0) {
+    const back = Math.min(Math.abs(yaw.lag), spare);
+    yaw.lag += yaw.lag > 0 ? -back : back;
+  }
+  yaw.vis = heading - yaw.lag;
+  return yaw;
 }
 
 export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift: number) {
