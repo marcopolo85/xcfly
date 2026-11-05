@@ -28,7 +28,7 @@ describe("xc triangle", () => {
     const pts: Pt[] = [{ x: 0, y: 0 }];
     for (let i = 0; i < xs.length; i += Math.ceil(xs.length / 70)) pts.push({ x: xs[i], y: ys[i] });
     pts.push(cur);
-    const distance = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
+    const distance = (a: Pt, b: Pt) => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
     let expected: XcTriangle | null = null, bestScore = 0;
     for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) for (let k = j + 1; k < pts.length; k++) {
       const a = pts[i], b = pts[j], c = pts[k];

@@ -19,7 +19,7 @@ export function xcScore(xs: number[], ys: number[]): XcScore {
   if (xs.length) { px.push(xs[xs.length - 1]); py.push(ys[ys.length - 1]); }
   const m = px.length;
   const D = new Float64Array(m * m);
-  for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) D[i * m + j] = D[j * m + i] = Math.hypot(px[i] - px[j], py[i] - py[j]);
+  for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) D[i * m + j] = D[j * m + i] = Math.sqrt((px[i] - px[j]) ** 2 + (py[i] - py[j]) ** 2);
 
   // Free distance: 5 points (start, 3 TPs, end) in track order, maximised by DP.
   let prev = new Float64Array(m);

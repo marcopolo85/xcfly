@@ -1,4 +1,5 @@
 import { EXTENT, cloudbaseAt, normalAt, heightAt, gradientAt, type Terrain } from "./terrain";
+import { fastExpNeg } from "./fastMath";
 import { rasterHeatAt, type ThermalRaster } from "./thermalRaster";
 
 export interface Thermal {
@@ -82,7 +83,7 @@ export function peakLift(t: Terrain, x: number, y: number) {
       const d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
       if (d2 > 640000) continue;
       const core = 3 + 3 * peakRandom(p.x, p.y);
-      const v = core * Math.exp(-d2 / (250 * 250));
+      const v = core * fastExpNeg(-d2 / (250 * 250));
       if (v > best) best = v;
     }
   }
@@ -161,6 +162,23 @@ export function slopeTrigger(n: { x: number; y: number; z: number }, s: { x: num
   return Math.max(0, Math.min(1, (irr - 0.45) / 0.5));
 }
 
+const surfaceCache = new WeakMap<Terrain, { sunKey: number; cells: Map<number, number> }>();
+/** Exposure (0 when below threshold or shaded); expensive, so cached per cell. */
+function surfaceExposure(t: Terrain, px: number, py: number, sun: { x: number; y: number; z: number }, ox: number, oy: number) {
+  const exposure = slopeTrigger(normalAt(t, px, py), sun);
+  if (exposure < 0.6) return 0;
+  const horizontal = Math.sqrt(sun.x * sun.x + sun.y * sun.y);
+  if (horizontal > 0.01) {
+    const ground = heightAt(t, px, py);
+    for (const distance of [100, 250, 500, 1000, 2000]) {
+      const sx = px + sun.x / horizontal * distance, sy = py + sun.y / horizontal * distance;
+      if (Math.abs(sx - ox) > EXTENT || Math.abs(sy - oy) > EXTENT) return 0;
+      if (heightAt(t, sx, sy) > ground + 5 + distance * sun.z / horizontal) return 0;
+    }
+  }
+  return exposure;
+}
+
 /** Sparse, position-stable sources on well-lit surfaces, independent of KK7
  * and summit height. Evaluate only neighbouring cells in loaded terrain. */
 export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number, sun: { x: number; y: number; z: number }) {
@@ -170,6 +188,11 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
   const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
   if (fade === 0) return 0;
   const cell = 900, cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+  // Sun moves slowly: quantize so cached exposure stays valid for minutes.
+  const sunKey = Math.round(sun.x * 100) * 1e6 + Math.round(sun.y * 100) * 1e3 + Math.round(sun.z * 100);
+  let entry = surfaceCache.get(t);
+  if (!entry || entry.sunKey !== sunKey) surfaceCache.set(t, (entry = { sunKey, cells: new Map() }));
+  const cells = entry.cells;
   let best = 0;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
     const a = cx + dx, b = cy + dy;
@@ -180,22 +203,16 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
     const radius = 180 + 80 * peakRandom(a * 200 + 2600, b * 200 + 1800);
     const d2 = (x - px) ** 2 + (y - py) ** 2;
     if (d2 > 6.25 * radius * radius) continue;
-    const exposure = slopeTrigger(normalAt(t, px, py), sun);
-    if (exposure < 0.6) continue;
-    // Reject slopes hidden behind nearby terrain in the direction of the sun.
-    const horizontal = Math.hypot(sun.x, sun.y);
-    let shaded = false;
-    if (horizontal > 0.01) {
-      const ground = heightAt(t, px, py);
-      for (const distance of [100, 250, 500, 1000, 2000]) {
-        const sx = px + sun.x / horizontal * distance, sy = py + sun.y / horizontal * distance;
-        if (Math.abs(sx - ox) > EXTENT || Math.abs(sy - oy) > EXTENT) { shaded = true; break; }
-        if (heightAt(t, sx, sy) > ground + 5 + distance * sun.z / horizontal) { shaded = true; break; }
-      }
+    const ck = (a + 5000) * 10000 + (b + 5000);
+    let cached = cells.get(ck);
+    if (cached === undefined) {
+      cached = surfaceExposure(t, px, py, sun, ox, oy);
+      cells.set(ck, cached);
     }
-    if (shaded) continue;
+    const exposure = cached;
+    if (exposure === 0) continue;
     const core = 3 + 2 * peakRandom(a * 200 - 1800, b * 200 - 3000);
-    best = Math.max(best, core * exposure * Math.exp(-d2 / (radius * radius)));
+    best = Math.max(best, core * exposure * fastExpNeg(-d2 / (radius * radius)));
   }
   return best * fade;
 }
@@ -242,7 +259,7 @@ export function airLift(
         if (trig <= 0) continue;
         const pulse = 0.8 + 0.2 * Math.sin(simTime / th.period + th.phase);
         const core = sunAmp * th.power * trig * pulse;
-        lift += core * (1.3 * Math.exp(-d2 / r2) - 0.3 * Math.exp(-d2 / (4 * r2)));
+        lift += core * (1.3 * fastExpNeg(-d2 / r2) - 0.3 * fastExpNeg(-d2 / (4 * r2)));
       }
     }
   const cb = cloudbaseAt(t, x, y);
