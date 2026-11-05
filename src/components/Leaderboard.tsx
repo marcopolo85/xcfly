@@ -62,7 +62,7 @@ function fmtTime(s: number) {
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 /** Row skeleton: symbol, pilot, startplatz + date, km, points, speed – equal gaps, aligned columns. */
-const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_6rem_2.4rem_2.6rem_2.4rem]";
+const ROW_COLS = "grid-cols-[1rem_minmax(0,1fr)_7rem_2.4rem_2.6rem_2.4rem]";
 const META = "min-w-0 text-right leading-tight";
 const NUM = "text-right font-mono";
 
@@ -168,7 +168,7 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
                     <RouteIcon type={asRoute(e.route_type)} className="h-4 w-4 shrink-0" />
                     <button className="min-w-0 text-left font-semibold leading-tight [overflow-wrap:anywhere] hover:underline" title="Track anzeigen" onClick={() => setSelected(e)}>{e.pilot_name}</button>
                     <div className={META}>
-                      {overall && <div className="text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
+                      {overall && <div className="text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{e.site_name}</div>}
                       <div className="font-mono text-[10px] text-muted-foreground">{st.date}</div>
                     </div>
                     <span className={NUM}>{e.distance_km.toFixed(1)}</span>
