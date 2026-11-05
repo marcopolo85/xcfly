@@ -12,6 +12,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
       "Karte zoomen mit Taste A (rein) und Q (raus)",
       "Einstellbare Standard-Zoomstufen und automatischer Zoomwechsel Thermik ↔ Speed",
       "Fliessende Zoomübergänge",
+      "Datum und Uhrzeit in den Ranglisten",
     ],
   },
 ];
