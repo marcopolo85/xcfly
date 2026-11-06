@@ -37,6 +37,16 @@ export function holdBoost(input: Input, holdStart: HoldStarts, nowReal: number) 
   return longHold("left") || longHold("right") ? HOLD_BOOST_FACTOR : 1;
 }
 
+/**
+ * Simulation rates for one real frame. The long-hold boost speeds up climb,
+ * distance and flight time only: the heading keeps turning at the normal-mode
+ * rate, so thermalling turns as gently as normal flight yet gains height ×20 faster.
+ */
+export function frameSpeeds(input: Input, holdStart: HoldStarts, nowReal: number, normalSpeed: number) {
+  const base = input.accel ? 1 : normalSpeed;
+  return { turn: base, sim: base * holdBoost(input, holdStart, nowReal) };
+}
+
 export interface Sim {
   x: number; y: number; alt: number; heading: number;
   vz: number; airLift: number; speed: number;
