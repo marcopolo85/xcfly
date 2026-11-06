@@ -51,6 +51,33 @@ describe("game rules", () => {
     expect(holdBoost(input, starts, 1000 + 5000)).toBe(1);
     expect(holdBoost({ ...input, right: false }, starts, 1000 + 5000)).toBe(1);
   });
+  it("thermalling boost climbs ×20 faster while turning at the normal-mode rate", () => {
+    const input = { left: false, right: true, accel: false };
+    const starts: HoldStarts = { left: null, right: 1000 };
+    const { turn, sim: simSpeed } = frameSpeeds(input, starts, 1000 + HOLD_BOOST_MS, 1);
+    expect(turn).toBe(1);
+    expect(simSpeed).toBe(HOLD_BOOST_FACTOR);
+    const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
+    const boosted = newSim(2000, 0);
+    steer(boosted, input, 1, turn);
+    stepPhysics(boosted, input, simSpeed, flat, 4);
+    const plain = newSim(2000, 0);
+    steer(plain, input, 1, 1);
+    stepPhysics(plain, input, 1, flat, 4);
+    // One real second turns the glider exactly as far as in normal flight ...
+    expect(boosted.heading).toBeCloseTo(plain.heading, 9);
+    // ... but it gains twenty times the height and flies twenty times further.
+    expect(boosted.alt - 2000).toBeCloseTo(20 * (plain.alt - 2000), 3);
+    expect(boosted.distance).toBeCloseTo(20 * plain.distance, 1);
+    expect(boosted.flightTime).toBeCloseTo(20 * plain.flightTime, 6);
+  });
+  it("on the speed bar the boost never applies to turn or simulation rate", () => {
+    const input = { left: false, right: true, accel: true };
+    const starts: HoldStarts = { left: null, right: 1000 };
+    const { turn, sim } = frameSpeeds(input, starts, 1000 + HOLD_BOOST_MS, 3);
+    expect(turn).toBe(1);
+    expect(sim).toBe(1);
+  });
   it("turns at 128° per simulated second in normal mode", () => {
     const sim = newSim();
     steer(sim, { left: false, right: true, accel: false }, 1, 1);
