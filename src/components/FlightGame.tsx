@@ -54,7 +54,8 @@ export function FlightGame() {
   const finishedTrack = useRef<[number, number][]>([]);
   const statsRow = useRef<string | null>(null);
   const [runId, setRunId] = useState(0);
-  const mapZoom = useCanvasZoom(0.01, 8, phase !== "config");
+  const [showProfile, setShowProfile] = useState(false);
+  const mapZoom = useCanvasZoom(0.01, 8, phase !== "config", showProfile ? 1 / 3 : 1 / 2);
   const mapZoomChange = useRef(mapZoom.change);
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
@@ -66,7 +67,6 @@ export function FlightGame() {
   const [thermalOpacity, setThermalOpacity] = useState(0.3);
   const thermalOpacityRef = useRef(0.3);
   thermalOpacityRef.current = thermalOpacity;
-  const [showProfile, setShowProfile] = useState(false);
   const showProfileRef = useRef(false);
   showProfileRef.current = showProfile;
   const [showAirspaces, setShowAirspaces] = useState(false);
