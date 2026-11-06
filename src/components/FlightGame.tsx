@@ -226,14 +226,13 @@ export function FlightGame() {
           return;
         }
         const inp = input.current;
-        const boost = holdBoost(inp, holdStart.current, now);
         const prefs = simPrefsRef.current;
         if (zoomAccel === null || (prefs.autoZoom && zoomAccel !== inp.accel)) {
           mapZoom.zoomTo(inp.accel ? prefs.zoomAccel : prefs.zoomThermal);
         }
         zoomAccel = inp.accel;
-        const effSimSpeed = boost * (inp.accel ? 1 : prefs.normalSpeed);
-        const rot = steer(sim, inp, dtReal, effSimSpeed, prefs.accelSpeed);
+        const { turn, sim: effSimSpeed } = frameSpeeds(inp, holdStart.current, now, prefs.normalSpeed);
+        const rot = steer(sim, inp, dtReal, turn, prefs.accelSpeed);
         stepVisualYaw(visYaw, sim.heading, rot, dtReal, inp.accel);
         const simDt = dtReal * timeScale(inp.accel, effSimSpeed, prefs.accelSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
