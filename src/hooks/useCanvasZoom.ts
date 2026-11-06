@@ -44,11 +44,19 @@ export function useCanvasZoom(min = 0.3, max = 8, active = true) {
     anim.current = requestAnimationFrame(step);
   };
   const change = (factor: number) => animateTo(transform.current.k * factor);
+  /** Immediate centred scaling for continuous rate controls, without queued transitions. */
+  const scaleBy = (factor: number) => {
+    const canvas = canvasRef.current, control = behavior.current;
+    if (!canvas || !control) return;
+    cancelAnimationFrame(anim.current);
+    const target = Math.min(max, Math.max(min, transform.current.k * factor));
+    if (target !== transform.current.k) select<HTMLCanvasElement, unknown>(canvas).call(control.scaleTo, target);
+  };
   const reset = () => {
     const canvas = canvasRef.current, control = behavior.current;
     cancelAnimationFrame(anim.current);
     if (canvas && control) select<HTMLCanvasElement, unknown>(canvas).call(control.transform, zoomIdentity);
   };
   const zoomTo = animateTo;
-  return { canvasRef, transform, scale, change, reset, zoomTo };
+  return { canvasRef, transform, scale, change, scaleBy, reset, zoomTo };
 }

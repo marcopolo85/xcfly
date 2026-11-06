@@ -1,9 +1,10 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-06c",
+    id: "2026-11-06d",
     date: "6. Nov 2026",
     items: [
+      "Handy: stufenloser Zoomschieber rechts neben dem Vario – unten rein, oben raus",
       "Drehgeschwindigkeit im Thermikmodus verdoppelt",
       "Drehung stoppt sofort beim Loslassen des Kurvenknopfs",
       "Gleitschirm dreht im Thermikmodus ruhig mit maximal 1 Umdrehung pro Sekunde",

@@ -1,4 +1,5 @@
 # Aufgaben
+- [ ] Mobilen proportionalen Zoomschieber rechts neben Vario ergänzen und im laufenden Handyflug prüfen.
 - [x] Gleitschirm dreht im Thermikmodus sichtbar mit maximal 1 Umdrehung pro Sekunde (Steigwert und Kurvenradius gleich); im Browser bei 0,5-s-Abständen ~200° pro Aufnahme gemessen statt 2560°/s Physikdrehung, 116 Tests bestanden.
 - [x] Datum in feste, rechtsbündige Spalte gestellt (bei 390 px alle Daten in einer senkrechten Flucht), Spaltenabstände überall gleich 8 px; 66 Gesamtranglisten- und 5 Gummen-Einträge ohne Überlauf, ohne abgeschnittene Namen, ohne um-brechende Startplätze und ohne sichtbaren Scrollbalken geprüft; 7 Ranglistentests bestanden.
 - [x] Leeren Platz zwischen Pilotenname und Datum verkleinert (6 px Abstand, Datum direkt neben dem Namen); bei 390 px und 1041 px Breite im Browser geprüft, 7 Ranglistentests bestanden, kein Überlauf und keine abgeschnittenen Namen.

@@ -22,6 +22,7 @@ import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
+import { MobileZoomSlider } from "./MobileZoomSlider";
 import { FlightSettings } from "./FlightSettings";
 import { DEFAULT_SIM_PREFS, loadSimPrefs, type SimPrefs } from "@/game/simPrefs";
 import { SideProfile, drawSideProfile } from "./SideProfile";
@@ -390,7 +391,7 @@ export function FlightGame() {
       {phase === "flying" && coverageStatus !== "ready" && <div role="status" className="absolute left-3 top-16 max-w-[calc(100%-24px)] rounded-md border border-border bg-card/95 p-2 text-xs text-foreground">
         {coverageStatus === "loading" ? "Lade Gelände & Thermik entlang der Flugstrecke…" : <div className="flex flex-wrap items-center gap-2"><span>Gelände oder KK7-Thermik nicht erreichbar.</span><Button size="sm" variant="outline" onClick={() => { coverageRetry.current = true; }}>Erneut versuchen</Button></div>}
       </div>}
-      <div className="absolute left-3 top-3 rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md">
+      <div className="absolute left-3 top-3 hidden rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md sm:block">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
       {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
@@ -402,6 +403,7 @@ export function FlightGame() {
           <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>}
         <FlightHUD d={hud} />
+        <MobileZoomSlider scaleBy={mapZoom.scaleBy} scale={mapZoom.scale} active={phase === "flying" && !paused && !settingsOpen} />
       </div>}
       <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
