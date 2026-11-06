@@ -9,7 +9,7 @@ import { StartScreen, type FlightConfig } from "./StartScreen";
 import { generateTerrain, heightAt, gradientAt, cloudbaseAt, type Terrain } from "@/game/terrain";
 import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
-import { stepPhysics, steer, stepVisualYaw, timeScale, holdBoost, setTurnInput, type Sim, type Input, type HoldStarts, type VisualYaw } from "@/game/physicsEngine";
+import { stepPhysics, steer, stepVisualYaw, timeScale, frameSpeeds, setTurnInput, type Sim, type Input, type HoldStarts, type VisualYaw } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
 import { modeLabel, XC_TIME_LIMIT_S, type FlightMode } from "@/game/modes";
