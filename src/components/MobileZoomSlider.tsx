@@ -31,7 +31,7 @@ export function MobileZoomSlider({ scaleBy, scale, active }: { scaleBy: (factor:
       <span aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-1/2 border-t border-muted-foreground" />
       <Slider orientation="vertical" value={[value]} min={-1} max={1} step={0.01} disabled={!active}
         aria-label="Kartenzoom" aria-valuetext={value === 0 ? "Neutral" : value < 0 ? "Hineinzoomen" : "Herauszoomen"}
-        className="w-full px-3 [&_[data-slot=unused]]:hidden [&_span[role=slider]]:h-6 [&_span[role=slider]]:w-6"
+        className="w-full px-3 [&_span[role=slider]]:h-6 [&_span[role=slider]]:w-6"
         onValueChange={([v]) => { setValue(v); displacement.current = -v; }}
         onValueCommit={reset} onPointerUp={reset} onPointerCancel={reset} onLostPointerCapture={reset} onBlur={reset} onKeyUp={reset} />
     </div>
