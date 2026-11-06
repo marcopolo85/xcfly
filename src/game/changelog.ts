@@ -5,10 +5,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
     date: "6. Nov 2026",
     items: [
       "Handy: stufenloser Zoomschieber rechts neben dem Vario – unten rein, oben raus",
-      "Kurven im Thermikmodus gleich schnell wie im normalen Flug – nur das Steigen ist ×20 schneller",
-      "Drehung stoppt sofort beim Loslassen des Kurvenknopfs",
-      "Gleitschirm dreht im Thermikmodus ruhig mit maximal 1 Umdrehung pro Sekunde",
-      "Steigwert und Kurvenradius bleiben gleich – es sieht nur langsamer aus",
+      "Optimierung Drehgeschwindigkeit in der Thermik",
     ],
   },
   {
