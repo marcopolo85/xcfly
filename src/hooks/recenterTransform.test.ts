@@ -3,8 +3,8 @@ import { recenterTransform, flightAnchorFraction } from "./recenterTransform";
 
 describe("recenter flight view", () => {
   it("places the mobile pilot halfway between map top and instrument top", () => {
-    expect(flightAnchorFraction(844, 496, true, false) * 844).toBe(248);
-    expect(flightAnchorFraction(844, 496, true, true) * 844).toBe(248);
+    expect(flightAnchorFraction(844, 496, true, false) * 844).toBeCloseTo(248, 8);
+    expect(flightAnchorFraction(844, 496, true, true) * 844).toBeCloseTo(248, 8);
   });
   it("preserves desktop anchors", () => {
     expect(flightAnchorFraction(1800, 1500, false, false)).toBe(0.5);
