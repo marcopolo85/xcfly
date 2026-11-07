@@ -1,5 +1,5 @@
 # Aufgaben
-- [x] Thermikmodus: Long-Press-Boost ×20 beschleunigt nur Steigen, Distanz und Flugzeit – gedreht wird gleich schnell wie im normalen Modus; 124 Tests bestanden, echter Flug mit 4,6 s Langhalten (Flugdauer 0:01 → 0:45) ohne Seitenfehler geprüft.
+- [x] Thermikmodus: Long-Press-Boost ×20 beschleunigt Steigen und Flugzeit; normale Drehung und horizontale Bewegung erhalten den kleinen Kurvenradius. 21 Engine-Tests und echter Flug mit sechs Sekunden Langhalten ohne Seitenfehler geprüft.
 - [x] Mobiler proportionaler Zoomschieber rechts neben Vario: unten hinein, oben heraus, Loslassen zentriert und stoppt; echter Handyflug mit 100→139→110 % geprüft, Desktop-Steuerung unverändert, sieben Tests bestanden.
 - [x] Gleitschirm dreht im Thermikmodus sichtbar mit maximal 1 Umdrehung pro Sekunde (Steigwert und Kurvenradius gleich); im Browser bei 0,5-s-Abständen ~200° pro Aufnahme gemessen statt 2560°/s Physikdrehung, 116 Tests bestanden.
 - [x] Datum in feste, rechtsbündige Spalte gestellt (bei 390 px alle Daten in einer senkrechten Flucht), Spaltenabstände überall gleich 8 px; 66 Gesamtranglisten- und 5 Gummen-Einträge ohne Überlauf, ohne abgeschnittene Namen, ohne um-brechende Startplätze und ohne sichtbaren Scrollbalken geprüft; 7 Ranglistentests bestanden.
