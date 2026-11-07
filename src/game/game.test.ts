@@ -66,9 +66,9 @@ describe("game rules", () => {
     stepPhysics(plain, input, 1, flat, 4);
     // One real second turns the glider exactly as far as in normal flight ...
     expect(boosted.heading).toBeCloseTo(plain.heading, 9);
-    // ... but it gains twenty times the height and flies twenty times further.
+    // ... but it gains twenty times the height without enlarging the circle.
     expect(boosted.alt - 2000).toBeCloseTo(20 * (plain.alt - 2000), 3);
-    expect(boosted.distance).toBeCloseTo(20 * plain.distance, 1);
+    expect(boosted.distance).toBeCloseTo(plain.distance, 1);
     expect(boosted.flightTime).toBeCloseTo(20 * plain.flightTime, 6);
   });
   it("on the speed bar the boost never applies to turn or simulation rate", () => {
