@@ -39,12 +39,12 @@ export function holdBoost(input: Input, holdStart: HoldStarts, nowReal: number) 
 
 /**
  * Simulation rates for one real frame. The long-hold boost speeds up climb,
- * distance and flight time only: the heading keeps turning at the normal-mode
- * rate, so thermalling turns as gently as normal flight yet gains height ×20 faster.
+ * flight time only: heading and horizontal motion keep the normal-mode rate,
+ * preserving the small circle while gaining height ×20 faster.
  */
 export function frameSpeeds(input: Input, holdStart: HoldStarts, nowReal: number, normalSpeed: number) {
   const base = input.accel ? 1 : normalSpeed;
-  return { turn: base, sim: base * holdBoost(input, holdStart, nowReal) };
+  return { turn: base, motion: base, sim: base * holdBoost(input, holdStart, nowReal) };
 }
 
 export interface Sim {
@@ -145,7 +145,7 @@ export function stepVisualYaw(yaw: VisualYaw, heading: number, rot: number, dtRe
   return yaw;
 }
 
-export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift: number) {
+export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift: number, motionDt = dt) {
   const p = input.accel ? POLAR.accel : POLAR.trim;
   const turning = input.left !== input.right;
   sim.speed += (p.v - sim.speed) * Math.min(1, dt * 1.5);
@@ -156,8 +156,8 @@ export function stepPhysics(sim: Sim, input: Input, dt: number, t: Terrain, lift
   const lifting = lift > 0.5;
   if (lifting && !sim.inLift) sim.thermals++;
   sim.inLift = lifting;
-  const dx = Math.sin(sim.heading) * sim.speed * dt;
-  const dy = Math.cos(sim.heading) * sim.speed * dt;
+  const dx = Math.sin(sim.heading) * sim.speed * motionDt;
+  const dy = Math.cos(sim.heading) * sim.speed * motionDt;
   sim.x += dx; sim.y += dy;
   sim.distance += len(dx, dy);
   updateXc(sim);

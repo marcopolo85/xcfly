@@ -54,22 +54,37 @@ describe("game rules", () => {
   it("thermalling boost climbs ×20 faster while turning at the normal-mode rate", () => {
     const input = { left: false, right: true, accel: false };
     const starts: HoldStarts = { left: null, right: 1000 };
-    const { turn, sim: simSpeed } = frameSpeeds(input, starts, 1000 + HOLD_BOOST_MS, 1);
+    const { turn, motion, sim: simSpeed } = frameSpeeds(input, starts, 1000 + HOLD_BOOST_MS, 1);
     expect(turn).toBe(1);
     expect(simSpeed).toBe(HOLD_BOOST_FACTOR);
     const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
     const boosted = newSim(2000, 0);
     steer(boosted, input, 1, turn);
-    stepPhysics(boosted, input, simSpeed, flat, 4);
+    stepPhysics(boosted, input, simSpeed, flat, 4, motion);
     const plain = newSim(2000, 0);
     steer(plain, input, 1, 1);
     stepPhysics(plain, input, 1, flat, 4);
     // One real second turns the glider exactly as far as in normal flight ...
     expect(boosted.heading).toBeCloseTo(plain.heading, 9);
-    // ... but it gains twenty times the height and flies twenty times further.
+    // ... but it gains twenty times the height without enlarging the circle.
     expect(boosted.alt - 2000).toBeCloseTo(20 * (plain.alt - 2000), 3);
-    expect(boosted.distance).toBeCloseTo(20 * plain.distance, 1);
+    expect(boosted.distance).toBeCloseTo(plain.distance, 1);
     expect(boosted.flightTime).toBeCloseTo(20 * plain.flightTime, 6);
+  });
+  it("keeps the previous small thermalling radius at ×20 boost", () => {
+    const input = { left: false, right: true, accel: false };
+    const flat = { h: new Float32Array(N * N), cb: new Float32Array(16).fill(5000), cbN: 4, site: { x: 0, y: 0, alt: 0 } as never };
+    for (const normalSpeed of [1, 3, 5]) {
+      const rates = frameSpeeds(input, { left: null, right: 0 }, HOLD_BOOST_MS, normalSpeed);
+      const sim = newSim();
+      let turned = 0;
+      for (let i = 0; i < 120; i++) {
+        turned += steer(sim, input, 1 / 120, rates.turn);
+        stepPhysics(sim, input, rates.sim / 120, flat, 4, rates.motion / 120);
+      }
+      expect(sim.distance / turned).toBeCloseTo(10.5 / TURN_RATE, 6);
+      expect(sim.climbTotal).toBeCloseTo((4 - 1.1 - TURN_SINK) * 20 * normalSpeed, 6);
+    }
   });
   it("on the speed bar the boost never applies to turn or simulation rate", () => {
     const input = { left: false, right: true, accel: true };

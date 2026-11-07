@@ -1,11 +1,12 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-06f",
+    id: "2026-11-06g",
     date: "6. Nov 2026",
     items: [
       "Handy: stufenloser Zoomschieber rechts neben dem Vario – unten rein, oben raus",
       "Optimierung Drehgeschwindigkeit in der Thermik",
+      "Thermik: kleiner Kurvenradius bei unverändert schnellem Steigen",
       "Flugkarte zentrieren: Mausrad-Doppelklick oder Doppeltipp auf dem Handy",
     ],
   },
