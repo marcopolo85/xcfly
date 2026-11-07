@@ -34,6 +34,7 @@ import { loadThermalRegion, requestTilesAround, type ThermalProgress } from "@/g
 import { inThermalRegion } from "@/game/thermalRegion";
 import { addGlideSample, averageGlideVz } from "@/game/glideBoundary";
 import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
+import { flightAnchorFraction } from "@/hooks/recenterTransform";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
@@ -55,10 +56,26 @@ export function FlightGame() {
   const statsRow = useRef<string | null>(null);
   const [runId, setRunId] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
-  const mapZoom = useCanvasZoom(0.01, 8, phase !== "config", showProfile ? 1 / 3 : 1 / 2);
+  const instrumentRef = useRef<HTMLDivElement>(null);
+  const pilotAnchor = useRef(0.5);
+  const mapZoom = useCanvasZoom(0.01, 8, phase !== "config", () => pilotAnchor.current);
   const mapZoomChange = useRef(mapZoom.change);
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const update = () => {
+      const height = canvas.clientHeight;
+      const top = instrumentRef.current?.getBoundingClientRect().top ?? height;
+      pilotAnchor.current = flightAnchorFraction(height, top, canvas.clientWidth < 640, showProfile);
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(canvas);
+    if (instrumentRef.current) observer.observe(instrumentRef.current);
+    update();
+    return () => observer.disconnect();
+  }, [canvasRef, hud !== null, showProfile]);
   const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
   const lastSpaceTap = useRef(0);
@@ -257,7 +274,7 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
@@ -392,7 +409,7 @@ export function FlightGame() {
       <div className="absolute left-3 top-3 hidden rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md sm:block">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
-      {hud && <div className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
+      {hud && <div ref={instrumentRef} className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
         {showProfile && <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
             <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL</span>
