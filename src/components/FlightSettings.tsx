@@ -76,7 +76,6 @@ export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onT
               <PrefSlider label="Tempo beschleunigt" unit="×" value={simPrefs.accelSpeed} min={10} max={40} step={1} onChange={(v) => onSimPrefs({ ...simPrefs, accelSpeed: v })} />
             </Section>
             <Section title="Zoom">
-              <PrefSlider label="Thermikmodus" unit="×" value={simPrefs.zoomThermal} min={0.25} max={4} step={0.25} onChange={(v) => onSimPrefs({ ...simPrefs, zoomThermal: v })} />
               <PrefSlider label="Beschleunigt" unit="×" value={simPrefs.zoomAccel} min={0.25} max={4} step={0.25} onChange={(v) => onSimPrefs({ ...simPrefs, zoomAccel: v })} />
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>Automatisch umschalten</span>
