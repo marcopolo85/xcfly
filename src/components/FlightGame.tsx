@@ -231,16 +231,17 @@ export function FlightGame() {
           mapZoom.zoomTo(inp.accel ? prefs.zoomAccel : prefs.zoomThermal);
         }
         zoomAccel = inp.accel;
-        const { turn, sim: effSimSpeed } = frameSpeeds(inp, holdStart.current, now, prefs.normalSpeed);
+        const { turn, motion, sim: effSimSpeed } = frameSpeeds(inp, holdStart.current, now, prefs.normalSpeed);
         const rot = steer(sim, inp, dtReal, turn, prefs.accelSpeed);
         stepVisualYaw(visYaw, sim.heading, rot, dtReal, inp.accel);
         const simDt = dtReal * timeScale(inp.accel, effSimSpeed, prefs.accelSpeed);
+        const motionDt = dtReal * timeScale(inp.accel, motion, prefs.accelSpeed);
         const sp = sunPosition(config.site.lat, season.doy, sim.clock, season.dst);
         const sv = sunVector(sp);
         const steps = Math.ceil(simDt / 0.05);
         for (let i = 0; i < steps && !sim.landed; i++) {
           const lift = airLift(thermals, terrain, sim.x, sim.y, sim.alt, sim.flightTime + config.startHour * 3600, sv, season.maxLift);
-          stepPhysics(sim, inp, simDt / steps, terrain, lift);
+          stepPhysics(sim, inp, simDt / steps, terrain, lift, motionDt / steps);
           addGlideSample(glideAvg, sim.speed, sim.vz, lift, simDt / steps);
         }
         smoothVz += (sim.vz - smoothVz) * Math.min(1, dtReal * 4);
