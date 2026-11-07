@@ -24,7 +24,7 @@ import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
 import { MobileZoomSlider } from "./MobileZoomSlider";
 import { FlightSettings } from "./FlightSettings";
-import { DEFAULT_SIM_PREFS, loadSimPrefs, type SimPrefs } from "@/game/simPrefs";
+import { DEFAULT_SIM_PREFS, loadSimPrefs, flightZoomTarget, type FlightZoomState, type SimPrefs } from "@/game/simPrefs";
 import { SideProfile, drawSideProfile } from "./SideProfile";
 import { Button } from "./ui/button";
 import { TrackOverview } from "./TrackOverview";
@@ -209,7 +209,7 @@ export function FlightGame() {
       setPhase("flying");
       window.__lovableEvents?.track?.("project.flight_started", { mode: config.mode });
 
-      let zoomAccel: boolean | null = null;
+      const flightZoom: FlightZoomState = { accel: null, thermal: mapZoom.transform.current.k };
       const loop = (now: number) => {
         const dtReal = Math.min(0.05, (now - last) / 1000);
         last = now;
@@ -227,10 +227,8 @@ export function FlightGame() {
         }
         const inp = input.current;
         const prefs = simPrefsRef.current;
-        if (zoomAccel === null || (prefs.autoZoom && zoomAccel !== inp.accel)) {
-          mapZoom.zoomTo(inp.accel ? prefs.zoomAccel : prefs.zoomThermal);
-        }
-        zoomAccel = inp.accel;
+        const targetZoom = flightZoomTarget(flightZoom, inp.accel, mapZoom.transform.current.k, prefs);
+        if (targetZoom !== null) mapZoom.zoomTo(targetZoom);
         const { turn, motion, sim: effSimSpeed } = frameSpeeds(inp, holdStart.current, now, prefs.normalSpeed);
         const rot = steer(sim, inp, dtReal, turn, prefs.accelSpeed);
         stepVisualYaw(visYaw, sim.heading, rot, dtReal, inp.accel);
