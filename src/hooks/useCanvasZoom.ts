@@ -6,7 +6,7 @@ import { recenterTransform } from "./recenterTransform";
 const ANIM_MS = 350;
 
 /** D3 owns wheel normalization, cursor anchoring, drag and two-finger pinch. */
-export function useCanvasZoom(min = 0.3, max = 8, active = true, recenterAnchor?: number) {
+export function useCanvasZoom(min = 0.3, max = 8, active = true, recenterAnchor?: number | (() => number)) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const transform = useRef<ZoomTransform>(zoomIdentity);
   const behavior = useRef<ZoomBehavior<HTMLCanvasElement, unknown> | null>(null);
@@ -35,7 +35,8 @@ export function useCanvasZoom(min = 0.3, max = 8, active = true, recenterAnchor?
       if (anchorRef.current === undefined) return;
       if (lastTap && lastTap.kind === kind && now - lastTap.time <= 400 && Math.abs(x - lastTap.x) <= 24 && Math.abs(y - lastTap.y) <= 24) {
         cancelAnimationFrame(anim.current);
-        selection.call(control.transform, recenterTransform(transform.current.k, canvas.clientWidth, canvas.clientHeight, anchorRef.current));
+        const anchor = typeof anchorRef.current === "function" ? anchorRef.current() : anchorRef.current;
+        selection.call(control.transform, recenterTransform(transform.current.k, canvas.clientWidth, canvas.clientHeight, anchor));
         lastTap = null;
       } else lastTap = { time: now, x, y, kind };
     };
@@ -75,6 +76,8 @@ export function useCanvasZoom(min = 0.3, max = 8, active = true, recenterAnchor?
     };
   }, [min, max, active]);
 
+  const scaleAnchor = (canvas: HTMLCanvasElement): [number, number] => [canvas.clientWidth / 2, canvas.clientHeight * (typeof anchorRef.current === "function" ? anchorRef.current() : anchorRef.current ?? 0.5)];
+
   /** Smoothly animate to an absolute scale around the canvas centre (log-interpolated). */
   const animateTo = (target: number) => {
     const canvas = canvasRef.current, control = behavior.current;
@@ -85,7 +88,7 @@ export function useCanvasZoom(min = 0.3, max = 8, active = true, recenterAnchor?
     const t0 = performance.now(), lf = Math.log(from), lt = Math.log(to);
     const step = (now: number) => {
       const p = Math.min(1, (now - t0) / ANIM_MS), e = p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2;
-      if (behavior.current) select<HTMLCanvasElement, unknown>(canvas).call(behavior.current.scaleTo, Math.exp(lf + (lt - lf) * e));
+      if (behavior.current) select<HTMLCanvasElement, unknown>(canvas).call(behavior.current.scaleTo, Math.exp(lf + (lt - lf) * e), scaleAnchor(canvas));
       if (p < 1) anim.current = requestAnimationFrame(step);
     };
     anim.current = requestAnimationFrame(step);
@@ -97,7 +100,7 @@ export function useCanvasZoom(min = 0.3, max = 8, active = true, recenterAnchor?
     if (!canvas || !control) return;
     cancelAnimationFrame(anim.current);
     const target = Math.min(max, Math.max(min, transform.current.k * factor));
-    if (target !== transform.current.k) select<HTMLCanvasElement, unknown>(canvas).call(control.scaleTo, target);
+    if (target !== transform.current.k) select<HTMLCanvasElement, unknown>(canvas).call(control.scaleTo, target, scaleAnchor(canvas));
   };
   const reset = () => {
     const canvas = canvasRef.current, control = behavior.current;

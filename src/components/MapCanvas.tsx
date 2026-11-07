@@ -126,6 +126,7 @@ export interface SceneData {
   thermalAlpha?: number; // 0..1 opacity of the thermal overlay
   triangle?: XcTriangle | null;
   showProfile?: boolean; // when the side profile is visible, keep the glider in the upper third of the screen
+  anchorFraction?: number;
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
@@ -362,7 +363,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const z = ZOOM * view.k;
   const { sim } = s;
-  const anchorF = s.showProfile ? 1 / 3 : 1 / 2; // glider in upper third when the profile is shown, centered otherwise
+  const anchorF = s.anchorFraction ?? (s.showProfile ? 1 / 3 : 1 / 2);
   const cx = view.applyX(W / 2), cy = view.applyY(H * anchorF);
   const sx = (x: number) => cx + (x - sim.x) * z;
   const sy = (y: number) => cy - (y - sim.y) * z;

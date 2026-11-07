@@ -1,9 +1,12 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-07a",
+    id: "2026-11-07b",
     date: "7. Nov 2026",
-    items: ["Automatischer Zoomwechsel merkt sich die auf der Karte gewählte Thermik-Zoomstufe"],
+    items: [
+      "Automatischer Zoomwechsel merkt sich die auf der Karte gewählte Thermik-Zoomstufe",
+      "Handy: doppeltes Zoomtempo, Schirm mittig oberhalb des Varios",
+    ],
   },
   {
     id: "2026-11-06g",
