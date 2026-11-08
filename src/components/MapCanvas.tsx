@@ -130,6 +130,7 @@ export interface SceneData {
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
+  others?: { x: number; y: number; alt: number; heading: number; name: string }[] | undefined;
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
 
@@ -501,6 +502,35 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   if (s.dusk > 0) {
     ctx.fillStyle = `rgba(10,15,40,${s.dusk * 0.6})`;
     ctx.fillRect(0, 0, W, H);
+  }
+
+  // other live pilots: tinted wing with name/altitude badge
+  if (s.others?.length) {
+    const wing = getWingImage();
+    ctx.font = "bold 11px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    for (const o of s.others) {
+      const ox = sx(o.x), oy = sy(o.y);
+      if (ox < -60 || oy < -60 || ox > W + 60 || oy > H + 60) continue;
+      ctx.save();
+      ctx.translate(ox, oy);
+      ctx.save();
+      ctx.rotate(o.heading);
+      if (wing) {
+        const w = 36, h = (w * wing.naturalHeight) / wing.naturalWidth;
+        ctx.filter = "hue-rotate(180deg) saturate(1.6)";
+        ctx.drawImage(wing, -w / 2, -h / 2, w, h);
+        ctx.filter = "none";
+      }
+      ctx.restore();
+      const label = `${o.name} · ${Math.round(o.alt)} m`;
+      const tw = ctx.measureText(label).width + 10;
+      ctx.fillStyle = "rgba(0,40,60,0.85)";
+      ctx.beginPath(); ctx.roundRect(-tw / 2, -38, tw, 17, 4); ctx.fill();
+      ctx.fillStyle = "#7ff3ff";
+      ctx.fillText(label, 0, -25.5);
+      ctx.restore();
+    }
   }
 
   // glider (photo wing on transparent background)

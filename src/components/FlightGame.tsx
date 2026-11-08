@@ -1,3 +1,4 @@
+import { isPacket, prunePilots, toLatLon, toLocal, type PilotPacket, type RemotePilot } from "@/game/multiplayer";
 import { loadAirspace } from "@/game/loadAirspace";
 import bossSheet from "@/assets/spreadsheet.jpg";
 import type { Airspace } from "@/game/airspace";
@@ -104,6 +105,32 @@ export function FlightGame() {
   const pausedRef = useRef(false);
   pausedRef.current = paused;
   const resumeFree = useRef<(() => void) | null>(null);
+  const mpSim = useRef<Sim | null>(null);
+  const remotes = useRef(new Map<string, RemotePilot>());
+  useEffect(() => {
+    const name = config?.pilotName;
+    if (runId === 0 || !config || !name) return;
+    const site = config.site;
+    const id = crypto.randomUUID();
+    remotes.current.clear();
+    const channel = supabase.channel("xcfly-multiplayer", { config: { broadcast: { self: false } } });
+    channel.on("broadcast", { event: "pos" }, ({ payload }) => {
+      if (isPacket(payload) && payload.id !== id) remotes.current.set(payload.id, { ...payload, seen: Date.now() });
+    }).subscribe();
+    const iv = setInterval(() => {
+      prunePilots(remotes.current, Date.now());
+      const sim = mpSim.current;
+      if (!sim || sim.landed || pausedRef.current) return;
+      const ll = toLatLon(site, sim.x, sim.y);
+      void channel.send({ type: "broadcast", event: "pos", payload: { id, name, lat: ll.lat, lon: ll.lon, alt: sim.alt, heading: sim.heading, vz: sim.vz } satisfies PilotPacket });
+    }, 1000);
+    return () => { clearInterval(iv); mpSim.current = null; remotes.current.clear(); void supabase.removeChannel(channel); };
+  }, [runId, config]);
+
+  const remoteList = (site: { lat: number; lon: number }) => {
+    if (remotes.current.size === 0) return undefined;
+    return [...remotes.current.values()].map((p) => ({ ...toLocal(site, p.lat, p.lon), alt: p.alt, heading: p.heading, name: p.name }));
+  };
 
   const start = (c: FlightConfig) => {
     if (!vario.current) vario.current = new AudioVario();
@@ -186,6 +213,7 @@ export function FlightGame() {
         maxAlt: 0, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
+      mpSim.current = sim;
       const visYaw: VisualYaw = { vis: sim.heading, lag: 0 };
       let triangle: XcTriangle | null = null, lastTri = 0;
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
@@ -274,7 +302,7 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;

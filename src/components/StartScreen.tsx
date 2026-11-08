@@ -16,7 +16,7 @@ import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
 
-export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode }
+export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined }
 
 function FlightStats() {
   const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number } | null>(null);
@@ -49,6 +49,9 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [infoOpen, setInfoOpen] = useState(false);
   const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [pilotName, setPilotName] = useState("");
+  useEffect(() => { setPilotName(localStorage.getItem("xcfly-pilot-name") ?? ""); }, []);
+  const updatePilotName = (v: string) => { setPilotName(v); localStorage.setItem("xcfly-pilot-name", v); };
   const [unseenChanges, setUnseenChanges] = useState(false);
   useEffect(() => { setUnseenChanges(hasUnseenChangelog(localStorage.getItem(CHANGELOG_SEEN_KEY))); }, []);
   const openChangelog = () => {
@@ -149,9 +152,13 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <Button variant="outline" className="mt-2 h-9 w-full text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
             {site?.id.startsWith("map-") && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
-          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode }); }} className="w-full rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+          <div className="flex gap-2">
+          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode, pilotName: pilotName.trim() || undefined }); }} className="w-2/5 shrink-0 rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             Starten
           </button>
+          <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname (Multiplayer)" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="min-w-0 flex-1 rounded-lg border border-border bg-background/80 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          <p className="text-center text-[10px] text-muted-foreground">Leeres Namensfeld = unsichtbar für andere Piloten (kein Multiplayer).</p>
           {!site && <p className="text-center text-xs text-muted-foreground">Bitte einen Startplatz wählen</p>}
           <div className="grid grid-cols-3 gap-1.5">
             <div className="flex h-full flex-col justify-center rounded-md border border-border bg-card/60 p-2 text-[9px] leading-tight text-muted-foreground">
