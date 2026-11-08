@@ -3,7 +3,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
     id: "2026-11-08a",
     date: "8. Nov 2026",
-    items: ["Live-Multiplayer: andere Piloten mit Name und Höhe auf der Karte"],
+    items: ["Live-Multiplayer: andere Piloten mit Name und Höhe auf der Karte", "Wöchentliche Ranglisten (Reset sonntags 23:00)"],
   },
   {
     id: "2026-11-07b",

@@ -6,6 +6,7 @@ import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { X } from "lucide-react";
 import { TrackOverview } from "./TrackOverview";
 import { Button } from "./ui/button";
+import { getWeeklyCutoff } from "@/game/leaderboardTime";
 
 interface Entry {
   id: string;
@@ -23,12 +24,13 @@ const ENTRY_COLUMNS = "id,pilot_name,site_name,mode,distance_km,duration_s,point
 const asRoute = (t: string): RouteType => (t === "fai" || t === "tri" ? t : "free");
 const xcSpeed = (e: Entry) => (e.duration_s > 0 ? e.distance_km / (e.duration_s / 3600) : 0);
 
-export async function loadLeaderboardEntries(site?: string) {
+export async function loadLeaderboardEntries(site?: string, weekly = false) {
   const entries: Entry[] = [];
   const pageSize = 500;
   for (let offset = 0; ; offset += pageSize) {
     let query = supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc");
     if (site !== undefined) query = query.eq("site_name", site);
+    if (weekly) query = query.gte("created_at", getWeeklyCutoff());
     const ordered = query.order("points", { ascending: false }).order("id", { ascending: true });
     const { data, error } = await (site === undefined ? ordered.range(offset, offset + pageSize - 1) : ordered.limit(50));
     if (error) return { data: null, error };
@@ -127,7 +129,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   );
 }
 
-export function Leaderboard({ initialSite, overall = false, onClose }: { initialSite?: string; overall?: boolean; onClose: () => void }) {
+export function Leaderboard({ initialSite, overall = false, weekly = false, onClose }: { initialSite?: string; overall?: boolean; weekly?: boolean; onClose: () => void }) {
   const site = overall ? undefined : initialSite ?? SITES[0]?.name ?? "";
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -137,20 +139,20 @@ export function Leaderboard({ initialSite, overall = false, onClose }: { initial
     let cancelled = false;
     setEntries(null);
     setError(null);
-    loadLeaderboardEntries(site)
+    loadLeaderboardEntries(site, weekly)
       .then(({ data, error: e }) => {
         if (cancelled) return;
         if (e) setError("Rangliste konnte nicht geladen werden.");
         else setEntries(data as Entry[]);
       });
     return () => { cancelled = true; };
-  }, [site]);
+  }, [site, weekly]);
 
   return (
     <div className="absolute inset-0 z-30 grid grid-cols-1 place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
       <div className="flex max-h-[85dvh] w-fit max-w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`}</h2>
+          <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`} · {weekly ? "Weekly" : "Alle Daten"}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
         </div>
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
