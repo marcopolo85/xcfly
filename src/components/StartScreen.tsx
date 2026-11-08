@@ -6,7 +6,7 @@ import { sunTimes } from "@/game/sun";
 import { MODES, type FlightMode } from "@/game/modes";
 import heroImg from "@/assets/hero-alps.jpg";
 import logoImg from "@/assets/xcfly-logo.png";
-import { Info, MapPin, ScrollText, Trophy } from "lucide-react";
+import { Info, MapPin, Medal, ScrollText, Trophy } from "lucide-react";
 import { ChangelogDialog } from "./ChangelogDialog";
 import { CHANGELOG, CHANGELOG_SEEN_KEY, hasUnseenChangelog } from "@/game/changelog";
 import { Button } from "./ui/button";
@@ -46,6 +46,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [choosing, setChoosing] = useState(false);
   const [rankingSite, setRankingSite] = useState<string | null>(null);
   const [overallRanking, setOverallRanking] = useState(false);
+  const [weeklyRanking, setWeeklyRanking] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
@@ -84,7 +85,10 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <div className="mb-1.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="hud-label">Modus</h2>
-                <Button type="button" variant="outline" size="icon" title="Gesamtrangliste" aria-label="Gesamtrangliste" onClick={() => setOverallRanking(true)} className="h-6 w-6 text-muted-foreground [&_svg]:size-3.5">
+                <Button type="button" variant="outline" size="icon" title="Wöchentliche Gesamtrangliste" aria-label="Wöchentliche Gesamtrangliste" onClick={() => { setWeeklyRanking(true); setOverallRanking(true); }} className="h-6 w-6 text-muted-foreground [&_svg]:size-3.5">
+                  <Medal />
+                </Button>
+                <Button type="button" variant="outline" size="icon" title="Gesamtrangliste" aria-label="Gesamtrangliste" onClick={() => { setWeeklyRanking(false); setOverallRanking(true); }} className="h-6 w-6 text-muted-foreground [&_svg]:size-3.5">
                   <Trophy />
                 </Button>
               </div>
@@ -133,16 +137,29 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
                 <Button key={s.id} variant="outline" onClick={() => setSite(s)} data-active={site !== null && s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
+                    <span className="flex shrink-0 items-center">
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Wöchentliche Rangliste ${s.name}`}
+                      title={`Wöchentliche Rangliste ${s.name}`}
+                      onClick={(e) => { e.stopPropagation(); setWeeklyRanking(true); setRankingSite(s.name); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setWeeklyRanking(true); setRankingSite(s.name); } }}
+                      className="grid shrink-0 place-items-center rounded-md p-1 text-muted-foreground active:bg-accent"
+                    >
+                      <Medal className="h-3.5 w-3.5" />
+                    </span>
                     <span
                       role="button"
                       tabIndex={0}
                       aria-label={`Rangliste ${s.name}`}
                       title={`Rangliste ${s.name}`}
-                      onClick={(e) => { e.stopPropagation(); setRankingSite(s.name); }}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setRankingSite(s.name); } }}
+                      onClick={(e) => { e.stopPropagation(); setWeeklyRanking(false); setRankingSite(s.name); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setWeeklyRanking(false); setRankingSite(s.name); } }}
                       className="grid shrink-0 place-items-center rounded-md p-1 text-muted-foreground active:bg-accent"
                     >
                       <Trophy className="h-3.5 w-3.5" />
+                    </span>
                     </span>
                   </span>
                   <span className="block text-[10px] text-muted-foreground">{s.launchAlt} m</span>
@@ -180,8 +197,8 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
         </div>
       </div>
       {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
-      {rankingSite && <Leaderboard initialSite={rankingSite} onClose={() => setRankingSite(null)} />}
-      {overallRanking && <Leaderboard overall onClose={() => setOverallRanking(false)} />}
+      {rankingSite && <Leaderboard initialSite={rankingSite} weekly={weeklyRanking} onClose={() => setRankingSite(null)} />}
+      {overallRanking && <Leaderboard overall weekly={weeklyRanking} onClose={() => setOverallRanking(false)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>
