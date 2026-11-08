@@ -127,7 +127,7 @@ export function FlightGame() {
     return () => { clearInterval(iv); mpSim.current = null; remotes.current.clear(); void supabase.removeChannel(channel); };
   }, [runId, config]);
 
-  const remoteList = (site: Site) => {
+  const remoteList = (site: { lat: number; lon: number }) => {
     if (remotes.current.size === 0) return undefined;
     return [...remotes.current.values()].map((p) => ({ ...toLocal(site, p.lat, p.lon), alt: p.alt, heading: p.heading, name: p.name }));
   };
