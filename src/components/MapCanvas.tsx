@@ -130,7 +130,7 @@ export interface SceneData {
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
-  others?: { x: number; y: number; alt: number; heading: number; name: string }[];
+  others?: { x: number; y: number; alt: number; heading: number; name: string }[] | undefined;
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
 

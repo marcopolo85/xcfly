@@ -16,7 +16,7 @@ import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
 
-export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string }
+export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined }
 
 function FlightStats() {
   const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number } | null>(null);
