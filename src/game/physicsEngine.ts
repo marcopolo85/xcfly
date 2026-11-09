@@ -7,7 +7,7 @@ export const POLAR = {
 };
 export const TURN_RATE = (128 * Math.PI) / 180; // rad per simulated second
 /** Slide steering on the speed button turns at a fraction of the full turn rate. */
-export const STEER_ANALOG_FACTOR = 0.125;
+export const STEER_ANALOG_FACTOR = 0.0625;
 export const TURN_SINK = 0.45;
 export const ACCEL_TIME_FACTOR = 40;
 
@@ -84,7 +84,7 @@ function updateXc(sim: Sim) {
 }
 
 /** Arrow turn rate while on the speed bar: 2° per real second (not per simulated second). */
-export const ACCEL_TURN_RATE = (10 * Math.PI) / 180;
+export const ACCEL_TURN_RATE = (5 * Math.PI) / 180;
 
 export interface Input { left: boolean; right: boolean; accel: boolean; steer?: number }
 

@@ -410,7 +410,8 @@ export function FlightGame() {
       const dx = e.clientX - speedHold.current.startX;
       const dead = STEER_DEADZONE_PX;
       const v = Math.abs(dx) <= dead ? 0 : Math.max(-1, Math.min(1, (dx - Math.sign(dx) * dead) / STEER_RANGE_PX));
-      input.current.steer = v;
+      // Progressive curve: small thumb movements steer very gently.
+      input.current.steer = Math.sign(v) * v * v;
     },
     onPointerUp: releaseSpeed,
     onPointerCancel: releaseSpeed,
