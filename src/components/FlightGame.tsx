@@ -1,4 +1,4 @@
-import { isPacket, prunePilots, toLatLon, toLocal, type PilotPacket, type RemotePilot } from "@/game/multiplayer";
+import { advanceRemote, isPacket, prunePilots, SEND_INTERVAL_MS, toLatLon, toLocal, type PilotPacket, type RemotePilot } from "@/game/multiplayer";
 import { loadAirspace } from "@/game/loadAirspace";
 import bossSheet from "@/assets/spreadsheet.jpg";
 import type { Airspace } from "@/game/airspace";
@@ -115,21 +115,41 @@ export function FlightGame() {
     remotes.current.clear();
     const channel = supabase.channel("xcfly-multiplayer", { config: { broadcast: { self: false } } });
     channel.on("broadcast", { event: "pos" }, ({ payload }) => {
-      if (isPacket(payload) && payload.id !== id) remotes.current.set(payload.id, { ...payload, seen: Date.now() });
+      if (!isPacket(payload) || payload.id === id) return;
+      const prev = remotes.current.get(payload.id);
+      const local = toLocal(site, payload.lat, payload.lon);
+      remotes.current.set(payload.id, { ...payload, seen: Date.now(), px: local.x, py: local.y, dx: prev?.dx, dy: prev?.dy, dh: prev?.dh, da: prev?.da });
     }).subscribe();
+    let last: { t: number; x: number; y: number; h: number; a: number } | null = null;
     const iv = setInterval(() => {
-      prunePilots(remotes.current, Date.now());
+      const now = Date.now();
+      prunePilots(remotes.current, now);
       const sim = mpSim.current;
-      if (!sim || sim.landed || pausedRef.current) return;
+      if (!sim || sim.landed || pausedRef.current) { last = null; return; }
+      // Real-time rates include the current time-lapse, so receivers see exactly our motion.
+      const dt = last ? (now - last.t) / 1000 : 0;
+      const ok = last && dt > 0.05;
+      const vx = ok ? (sim.x - last!.x) / dt : 0, vy = ok ? (sim.y - last!.y) / dt : 0;
+      const hr = ok ? (Math.atan2(Math.sin(sim.heading - last!.h), Math.cos(sim.heading - last!.h))) / dt : 0;
+      const vzr = ok ? (sim.alt - last!.a) / dt : 0;
+      last = { t: now, x: sim.x, y: sim.y, h: sim.heading, a: sim.alt };
       const ll = toLatLon(site, sim.x, sim.y);
-      void channel.send({ type: "broadcast", event: "pos", payload: { id, name, lat: ll.lat, lon: ll.lon, alt: sim.alt, heading: sim.heading, vz: sim.vz } satisfies PilotPacket });
-    }, 1000);
+      void channel.send({ type: "broadcast", event: "pos", payload: { id, name, lat: ll.lat, lon: ll.lon, alt: sim.alt, heading: sim.heading, vz: sim.vz, vx, vy, hr, vzr } satisfies PilotPacket });
+    }, SEND_INTERVAL_MS);
     return () => { clearInterval(iv); mpSim.current = null; remotes.current.clear(); void supabase.removeChannel(channel); };
   }, [runId, config]);
 
+  const remoteFrame = useRef(0);
   const remoteList = (site: { lat: number; lon: number }) => {
     if (remotes.current.size === 0) return undefined;
-    return [...remotes.current.values()].map((p) => ({ ...toLocal(site, p.lat, p.lon), alt: p.alt, heading: p.heading, name: p.name }));
+    const now = Date.now();
+    const dtS = remoteFrame.current ? (now - remoteFrame.current) / 1000 : 0;
+    remoteFrame.current = now;
+    return [...remotes.current.values()].map((p) => {
+      if (p.px === undefined) { const l = toLocal(site, p.lat, p.lon); p.px = l.x; p.py = l.y; }
+      advanceRemote(p, now, dtS);
+      return { x: p.dx!, y: p.dy!, alt: p.da!, heading: p.dh!, name: p.name };
+    });
   };
 
   const start = (c: FlightConfig) => {
