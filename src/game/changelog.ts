@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-09a",
+    date: "9. Nov 2026",
+    items: ["Feinfühligere, progressive Steuerung im beschleunigten Flug"],
+  },
+  {
     id: "2026-11-08a",
     date: "8. Nov 2026",
     items: ["Live-Multiplayer: andere Piloten mit Name und Höhe auf der Karte", "Wöchentliche Ranglisten (Reset sonntags 23:00)"],
