@@ -2,7 +2,7 @@
 /** vx/vy in m per real second (time-lapse included), hr = heading change in rad per real second. */
 export interface PilotPacket { id: string; name: string; lat: number; lon: number; alt: number; heading: number; vz: number; vx?: number; vy?: number; hr?: number; vzr?: number }
 /** Display state (dx/dy/dh/da) is advanced every frame and eased towards the extrapolated packet. */
-export interface RemotePilot extends PilotPacket { seen: number; px?: number; py?: number; dx?: number; dy?: number; dh?: number; da?: number }
+export interface RemotePilot extends PilotPacket { seen: number; px?: number; py?: number; dx?: number | undefined; dy?: number | undefined; dh?: number | undefined; da?: number | undefined }
 
 export const SEND_INTERVAL_MS = 250;
 /** Never extrapolate further than this past the last packet (lost connection, landed). */
