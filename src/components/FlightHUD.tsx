@@ -22,6 +22,7 @@ const fmtTime = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60
 const fmtCountdown = (t: number) => `${Math.floor(t / 3600)}:${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 export function FlightHUD({ d }: { d: HudData }) {
+  const cbAgl = Math.max(50, d.cloudbase - (d.alt - d.agl));
   return (
     <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[150px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
       <header className="flex items-center justify-between border-b border-border font-mono text-[10px]">
