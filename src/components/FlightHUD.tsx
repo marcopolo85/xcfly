@@ -29,10 +29,10 @@ export function FlightHUD({ d }: { d: HudData }) {
         <span className="text-muted-foreground">{d.clock}</span>
       </header>
       <div className="flex flex-1 gap-1.5 pt-0.5">
-      <div className="relative w-3 shrink-0 border-r border-border" role="meter" aria-label="Höhe über Grund" aria-valuemin={0} aria-valuemax={Math.max(1500, Math.ceil(d.agl / 500) * 500)} aria-valuenow={Math.max(0, d.agl)} aria-valuetext={`${Math.round(d.agl)} Meter über Grund`}>
+      <div className="relative w-3 shrink-0 border-r border-border" role="meter" aria-label="Höhe über Grund" aria-valuemin={0} aria-valuemax={cbAgl} aria-valuenow={Math.max(0, d.agl)} aria-valuetext={`${Math.round(d.agl)} Meter über Grund`}>
         <span className="absolute inset-x-0 top-0 text-[7px] font-mono text-muted-foreground">AGL</span>
         <div className="absolute bottom-2 left-0 top-4 w-1.5 overflow-hidden rounded-sm bg-muted">
-          <div className="absolute inset-x-0 bottom-0 bg-climb transition-[height] duration-100 ease-linear motion-reduce:transition-none" style={{ height: `${Math.max(0, Math.min(100, d.agl / Math.max(1500, Math.ceil(d.agl / 500) * 500) * 100))}%` }} />
+          <div className="absolute inset-x-0 bottom-0 bg-climb transition-[height] duration-100 ease-linear motion-reduce:transition-none" style={{ height: `${Math.max(0, Math.min(100, d.agl / cbAgl * 100))}%` }} />
           <span className="absolute inset-x-0 top-1/3 border-t border-card/70" />
           <span className="absolute inset-x-0 top-2/3 border-t border-card/70" />
         </div>
