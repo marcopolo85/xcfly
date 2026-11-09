@@ -16,6 +16,11 @@ describe("FlightHUD rest time", () => {
     expect(screen.getByText("RESTZEIT")).toBeInTheDocument();
     expect(screen.getByText("4:00:00")).toBeInTheDocument();
   });
+  it("scales the AGL bar from ground to cloudbase", () => {
+    render(<FlightHUD d={base} />);
+    // ground 500 m, cloudbase 3000 m → 2500 m AGL range
+    expect(screen.getByRole("meter", { name: "Höhe über Grund" })).toHaveAttribute("aria-valuemax", "2500");
+  });
   it("shows no countdown in free flight", () => {
     render(<FlightHUD d={base} />);
     expect(screen.queryByText("RESTZEIT")).not.toBeInTheDocument();
