@@ -3,7 +3,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
     id: "2026-11-10b",
     date: "10. Nov 2026",
-    items: ["Touch-Steuerung auch auf iPad und Tablets", "FlyXC-Aufgaben importieren (Zylinder 400 m)", "Im Flug: «Aufgabe abbrechen» und «Zurück zum Start»"],
+    items: ["Touch-Steuerung auch auf iPad und Tablets", "FlyXC-Aufgaben importieren (Zylinder 400 m)", "Im Flug: «Aufgabe abbrechen», «Neustart», «Navigiere zum SP» und «Menü»", "Als App installiert im Vollbild"],
   },
   {
     id: "2026-11-09a",

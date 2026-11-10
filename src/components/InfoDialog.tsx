@@ -22,7 +22,8 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           <section className="space-y-2">
             <h3 className="font-semibold text-base">2. Deinen Flug vorbereiten</h3>
             <ol className="list-decimal space-y-1.5 pl-5">
-              <li>Wähle einen der drei Flugmodi. Die kleinen Info-Symbole an den Modus-Buttons erklären den jeweiligen Modus separat.</li>
+              <li>Wähle den Modus XC oder Freeflight. Die kleinen Info-Symbole an den Modus-Buttons erklären den jeweiligen Modus separat.</li>
+              <li>Optional: Pilotenname rechts neben <strong>Starten</strong> eingeben, um im Multiplayer für andere sichtbar zu sein. Mit <strong>Aufgabe importieren</strong> fügst du einen FlyXC-Link ein; Wegpunkte (Zylinder 400 m) erscheinen auf der Karte.</li>
               <li>Wähle einen Startplatz aus der alphabetischen Liste. Unter dem Namen steht die Starthöhe in Metern. Das Pokalsymbol öffnet die Ranglisten dieses Startplatzes.</li>
               <li>Mit <strong>Auf Karte wählen</strong> kannst du einen eigenen Startpunkt festlegen. Verschiebe und zoome die Karte, wähle einen Punkt und bestätige ihn; seine Geländehöhe wird geladen.</li>
               <li>Im Freeflight kannst du die Startzeit mit dem Regler wählen. Im XC-Modus startest du um 11 Uhr. Die Simulation verwendet Sommerbedingungen.</li>
@@ -81,16 +82,17 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           </section>
           <section className="space-y-2">
             <h3 className="font-semibold text-base">10. Landung, Auswertung und Ranglisten</h3>
+            <p>Oben im Flug: <strong>Pause</strong>, <strong>Aufgabe abbrechen</strong> (bei importierter Aufgabe), <strong>Navigiere zum SP</strong> (Wegpunkt zurück zum Startplatz), <strong>Neustart</strong> (Flug am Startplatz neu beginnen) und <strong>Menü</strong> (zurück zur Startseite).</p>
             <p>Nach der Landung oder dem Zeitlimit öffnet sich die Flugauswertung. Sie zeigt die Moduswertung, XC-Strecke, XC-Punkte (ein Punkt je XC-Kilometer), Flugdauer, XC-Geschwindigkeit, maximale Höhe, kumulierten Höhengewinn, erkannte Thermiken und vollständige Thermikkreise.</p>
             <p>Die <strong>Trackübersicht</strong> zeigt deinen Flugweg auf dem gewählten Kartenstil; der Punkt markiert den Start. Mit <strong>Nochmal</strong> startest du mit denselben Vorgaben erneut, mit <strong>Menü</strong> kehrst du zur Startauswahl zurück.</p>
             <p>Für einen Ranglisteneintrag gibst du deinen Pilotennamen ein und drückst <strong>Eintragen</strong>. Mit <strong>Abbrechen</strong> überspringst du die Eintragung. Ranglisteneinträge werden in der Cloud gespeichert und sind für andere Spieler sichtbar – verwende nur einen Namen, den du öffentlich anzeigen möchtest.</p>
-            <p>Das Pokalsymbol eines Startplatzes zeigt dessen getrennte Ranglisten für <strong>Out & Return</strong> und <strong>One-Way</strong> nebeneinander, jeweils mit Namen und Kilometern. Klicke auf einen Pilotennamen, um die Trackübersicht dieses Fluges zu öffnen. Bei älteren Einträgen kann noch kein Track vorhanden sein.</p>
+            <p>Die Pokalsymbole zeigen die Ranglisten (alle Daten oder wöchentlich, Reset sonntags 23:00) pro Startplatz oder overall, sortiert nach XC-Punkten. Klicke auf einen Pilotennamen, um die Trackübersicht dieses Fluges zu öffnen. Bei älteren Einträgen kann noch kein Track vorhanden sein.</p>
           </section>
           <section className="space-y-2">
             <h3 className="font-semibold text-base">11. Daten laden und ein guter erster Flug</h3>
             <p>Für Kartendarstellung, Gelände, Thermik und Ranglisten brauchst du eine Internetverbindung. Die regionale KK7-Karte umfasst die Schweiz und angrenzende Regionen; auch grenzüberschreitende Flüge, etwa Richtung Domodossola, sind möglich. Die Farbkarte kann örtlich leer sein – dort wird keine KK7-Thermik erfunden.</p>
             <p>Bei längeren Flügen werden weitere Gelände- und Thermikdaten nachgeladen. Reichen die vorhandenen Daten nicht mehr aus, wartet die Simulation auf neue Abdeckung. Bei einem Ladefehler kannst du <strong>Erneut versuchen</strong> wählen.</p>
-            <p><strong>Zum Einstieg:</strong> Starte im Freeflight, lass die Thermikkarte sichtbar und suche zunächst einen Aufwind nahe dem Start. Kreise mit positivem Vario bis du genügend Höhe hast. Wähle dann eine kurze Gleitstrecke mit guter Bodenreserve. Erst wenn du Thermiken zuverlässig findest, versuche einen 4-Stunden-Flug – bei Out & Return immer mit Rückweg im Blick.</p>
+            <p><strong>Zum Einstieg:</strong> Starte im Freeflight, lass die Thermikkarte sichtbar und suche zunächst einen Aufwind nahe dem Start. Kreise mit positivem Vario bis du genügend Höhe hast. Wähle dann eine kurze Gleitstrecke mit guter Bodenreserve. Erst wenn du Thermiken zuverlässig findest, versuche einen 4-Stunden-Flug.</p>
           </section>
           <section className="space-y-1.5">
             <h3 className="font-semibold text-base">Copyright & Quellen</h3>

@@ -452,7 +452,9 @@ export function FlightGame() {
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
       {phase === "flying" && <div className="absolute right-[6.25rem] top-3 z-20 flex gap-1.5">
         {taskInfo && <button onClick={() => { taskRef.current = null; setTaskInfo(null); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Aufgabe abbrechen{taskInfo.next < taskInfo.total ? ` (${taskInfo.next}/${taskInfo.total - 1})` : " ✓"}</button>}
-        <button onClick={() => { if (config) start(config); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Zurück zum Start</button>
+        <button onClick={() => { taskRef.current = { local: [{ x: 0, y: 0 }, { x: 0, y: 0 }], next: 1, radius: 400 }; setTaskInfo({ next: 1, total: 2 }); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Navigiere zum SP</button>
+        <button onClick={() => { if (config) start(config); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Neustart</button>
+        <button onClick={() => { setRunId(0); setPhase("config"); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Menü</button>
       </div>}
       {phase === "flying" && paused && <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center"><span className="rounded-md border border-border bg-card/95 px-4 py-2 font-display text-2xl font-bold text-foreground">Pause</span></div>}
       {phase === "loading" && (
