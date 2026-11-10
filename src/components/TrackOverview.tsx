@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { fitTrackOverview, trackOverviewCamera } from "@/game/trackOverview";
@@ -10,7 +10,7 @@ import { drawSwissRelief, getMapStyle, MAP_STYLES } from "./SwissRelief";
 /** Distinct colour per track (golden-angle hue steps). */
 export function trackColor(i: number) { return `hsl(${Math.round((i * 137.5) % 360)} 85% 55%)`; }
 
-function TrackMap({ track, className, interactive = false, splits }: { track: [number, number][] | null; className: string; interactive?: boolean; splits?: number[] | undefined }) {
+function TrackMap({ track, className, interactive = false, splits, selected = null }: { track: [number, number][] | null; className: string; interactive?: boolean; splits?: number[] | undefined; selected?: number | null }) {
   const map = useCanvasZoom(0.1, 32, interactive);
   const { canvasRef } = map;
   const creditRef = useRef<HTMLParagraphElement>(null);
@@ -41,13 +41,19 @@ function TrackMap({ track, className, interactive = false, splits }: { track: [n
       const view = map.transform.current;
       const segs = splits && splits.length > 1 ? splits : [0];
       ctx.lineJoin = "round"; ctx.lineCap = "round";
-      segs.forEach((from, si) => {
-        const to = segs[si + 1] ?? fit.points.length;
+      const hasSel = selected !== null && selected >= 0 && selected < segs.length;
+      const order = segs.map((_, si) => si).filter((si) => !hasSel || si !== selected);
+      if (hasSel) order.push(selected);
+      for (const si of order) {
+        const from = segs[si]!, to = segs[si + 1] ?? fit.points.length;
+        const hi = hasSel && si === selected;
+        ctx.globalAlpha = hasSel && !hi ? 0.25 : 1;
         ctx.beginPath();
         for (let i = from; i < to; i++) { const p = fit.points[i]; const x = view.applyX(p.x), y = view.applyY(p.y); if (i === from) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-        ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.lineWidth = 5; ctx.stroke();
-        ctx.strokeStyle = segs.length > 1 ? trackColor(si) : theme.getPropertyValue("--primary").trim(); ctx.lineWidth = 2.5; ctx.stroke();
-      });
+        ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.lineWidth = hi ? 7 : 5; ctx.stroke();
+        ctx.strokeStyle = segs.length > 1 ? trackColor(si) : theme.getPropertyValue("--primary").trim(); ctx.lineWidth = hi ? 4 : 2.5; ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
       const start = fit.points[0];
       if (start) {
         ctx.beginPath(); ctx.arc(view.applyX(start.x), view.applyY(start.y), 4, 0, Math.PI * 2);
@@ -58,7 +64,7 @@ function TrackMap({ track, className, interactive = false, splits }: { track: [n
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [track, splits, canvasRef, map.transform]);
+  }, [track, splits, selected, canvasRef, map.transform]);
   if (!track || track.length < 2) {
     return <p className="py-10 text-center text-xs text-muted-foreground">Keine Trackdaten vorhanden.</p>;
   }
@@ -101,10 +107,12 @@ export function TrackOverview({ track, className = "aspect-[16/11] w-full", expa
 }
 
 /** Several tracks on one interactive map (e.g. all flights of today). */
-export function MultiTrackMap({ tracks }: { tracks: [number, number][][] }) {
-  const valid = tracks.filter((t) => t.length >= 2);
-  const splits: number[] = [];
-  const flat: [number, number][] = [];
-  for (const t of valid) { splits.push(flat.length); flat.push(...t); }
-  return <TrackMap track={flat.length >= 2 ? flat : null} splits={splits} className="h-full" interactive />;
+export function MultiTrackMap({ tracks, selected = null }: { tracks: [number, number][][]; selected?: number | null }) {
+  const { flat, splits } = useMemo(() => {
+    const splits: number[] = [];
+    const flat: [number, number][] = [];
+    for (const t of tracks) { if (t.length < 2) continue; splits.push(flat.length); flat.push(...t); }
+    return { flat, splits };
+  }, [tracks]);
+  return <TrackMap track={flat.length >= 2 ? flat : null} splits={splits} selected={selected} className="h-full" interactive />;
 }
