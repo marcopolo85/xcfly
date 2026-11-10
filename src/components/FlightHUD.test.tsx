@@ -23,6 +23,6 @@ describe("FlightHUD rest time", () => {
   });
   it("shows no countdown in free flight", () => {
     render(<FlightHUD d={base} />);
-    expect(screen.queryByText("RESTZEIT")).not.toBeInTheDocument();
+    expect(screen.getByText("RESTZEIT").nextSibling?.textContent).toBe("–");
   });
 });
