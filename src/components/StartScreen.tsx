@@ -1,12 +1,12 @@
 import { inThermalRegion } from "@/game/thermalRegion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
 import { sunTimes } from "@/game/sun";
 import { MODES, type FlightMode } from "@/game/modes";
 import heroImg from "@/assets/hero-alps.jpg";
 import logoImg from "@/assets/xcfly-logo.png";
-import { Info, MapPin, Route, Medal, ScrollText, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, List, MapPin, Route, Medal, ScrollText, Trophy } from "lucide-react";
 import { ChangelogDialog } from "./ChangelogDialog";
 import { CHANGELOG, CHANGELOG_SEEN_KEY, hasUnseenChangelog } from "@/game/changelog";
 import { Button } from "./ui/button";
