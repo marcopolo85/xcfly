@@ -35,6 +35,7 @@ import { loadThermalRegion, requestTilesAround, type ThermalProgress } from "@/g
 import { inThermalRegion } from "@/game/thermalRegion";
 import { addGlideSample, averageGlideVz } from "@/game/glideBoundary";
 import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
+import { advanceTask, type TaskProgress } from "@/game/flyxcTask";
 import { flightAnchorFraction } from "@/hooks/recenterTransform";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
@@ -56,6 +57,8 @@ export function FlightGame() {
   const finishedTrack = useRef<[number, number][]>([]);
   const statsRow = useRef<string | null>(null);
   const [runId, setRunId] = useState(0);
+  const taskRef = useRef<TaskProgress | null>(null);
+  const [taskInfo, setTaskInfo] = useState<{ next: number; total: number } | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const instrumentRef = useRef<HTMLDivElement>(null);
   const pilotAnchor = useRef(0.5);
@@ -165,6 +168,8 @@ export function FlightGame() {
     setPaused(false);
     setSubmitState("idle");
     statsRow.current = null;
+    taskRef.current = c.task ? { local: c.task.points.map((p) => toLocal(c.site, p.lat, p.lon)), next: 1, radius: c.task.radius } : null;
+    setTaskInfo(taskRef.current ? { next: 1, total: taskRef.current.local.length } : null);
     setPhase("loading");
     setRunId((r) => r + 1);
   };
@@ -322,7 +327,9 @@ export function FlightGame() {
 
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
-        if (canvasRef.current) drawScene(canvasRef.current, { site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
+        const tk = taskRef.current;
+        if (tk && advanceTask(tk, sim.x, sim.y)) setTaskInfo({ next: tk.next, total: tk.local.length });
+        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
@@ -443,6 +450,10 @@ export function FlightGame() {
       {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
       {phase === "flying" && boss && <button aria-label="Fortsetzen" onClick={() => { setBoss(false); setPaused(false); }} className="fixed inset-0 z-[100] cursor-default bg-background"><img src={bossSheet} alt="" className="h-full w-full object-cover object-left-top" /></button>}
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
+      {phase === "flying" && <div className="absolute right-[6.25rem] top-3 z-20 flex gap-1.5">
+        {taskInfo && <button onClick={() => { taskRef.current = null; setTaskInfo(null); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Aufgabe abbrechen{taskInfo.next < taskInfo.total ? ` (${taskInfo.next}/${taskInfo.total - 1})` : " ✓"}</button>}
+        <button onClick={() => { if (config) start(config); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Zurück zum Start</button>
+      </div>}
       {phase === "flying" && paused && <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center"><span className="rounded-md border border-border bg-card/95 px-4 py-2 font-display text-2xl font-bold text-foreground">Pause</span></div>}
       {phase === "loading" && (
         <div className="absolute inset-0 grid place-items-center bg-background">

@@ -131,6 +131,7 @@ export interface SceneData {
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
   others?: { x: number; y: number; alt: number; heading: number; name: string }[] | undefined;
+  task?: { local: { x: number; y: number }[]; next: number; radius: number } | null;
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
 
@@ -502,6 +503,32 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   if (s.dusk > 0) {
     ctx.fillStyle = `rgba(10,15,40,${s.dusk * 0.6})`;
     ctx.fillRect(0, 0, W, H);
+  }
+
+  // imported FlyXC task: legs, 400 m cylinders, next turnpoint highlighted
+  if (s.task && s.task.local.length > 1) {
+    const t = s.task;
+    ctx.save();
+    ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.strokeStyle = "rgba(255,0,200,0.85)";
+    ctx.beginPath();
+    t.local.forEach((p, k) => (k ? ctx.lineTo(sx(p.x), sy(p.y)) : ctx.moveTo(sx(p.x), sy(p.y))));
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = "bold 11px system-ui, sans-serif"; ctx.textAlign = "center";
+    t.local.forEach((p, k) => {
+      const done = k < t.next, cur = k === t.next;
+      ctx.beginPath(); ctx.arc(sx(p.x), sy(p.y), Math.max(3, t.radius * z), 0, Math.PI * 2);
+      ctx.fillStyle = done ? "rgba(0,200,80,0.18)" : cur ? "rgba(255,0,200,0.22)" : "rgba(255,0,200,0.08)";
+      ctx.fill();
+      ctx.lineWidth = cur ? 3 : 1.5; ctx.strokeStyle = done ? "rgba(0,160,60,0.9)" : "rgba(255,0,200,0.9)"; ctx.stroke();
+      const label = k === 0 ? "Start" : k === t.local.length - 1 ? "Ziel" : `WP${k}`;
+      ctx.fillStyle = "rgba(0,0,0,0.75)"; ctx.fillText(label, sx(p.x), sy(p.y) - Math.max(6, t.radius * z) - 4);
+    });
+    const nx = t.local[t.next];
+    if (nx) {
+      ctx.strokeStyle = "rgba(255,0,200,0.9)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sx(sim.x), sy(sim.y)); ctx.lineTo(sx(nx.x), sy(nx.y)); ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // other live pilots: tinted wing with name/altitude badge
