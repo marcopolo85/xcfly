@@ -15,7 +15,7 @@ import { RouteIcon } from "./RouteIcon";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
-import { MultiTrackMap } from "./TrackOverview";
+import { MultiTrackMap, trackColor } from "./TrackOverview";
 import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTask";
 import { loadLaunchAltitude } from "@/game/realTerrain";
 import { selectedLaunch } from "@/game/launchSelection";
@@ -60,7 +60,7 @@ function TodayTracks({ onClose }: { onClose: () => void }) {
         {rows && rows.length === 0 && <p className="py-16 text-center text-xs text-muted-foreground">Heute noch keine Flüge eingetragen.</p>}
         {rows && rows.length > 0 && <MultiTrackMap tracks={rows.map((r) => r.track)} />}
       </div>
-      {rows && rows.length > 0 && <p className="max-h-16 overflow-auto border-t border-border p-2 text-[10px] text-muted-foreground">{rows.map((r) => `${r.pilot_name} ${Number(r.distance_km).toFixed(1)} km`).join(" · ")}</p>}
+      {rows && rows.length > 0 && <p className="max-h-16 overflow-auto border-t border-border p-2 text-[10px] text-muted-foreground">{rows.map((r, i) => <span key={i} className="mr-2 inline-flex items-center gap-1"><span className="inline-block h-2 w-3 rounded-sm" style={{ background: trackColor(i) }} />{r.pilot_name} {Number(r.distance_km).toFixed(1)} km</span>)}</p>}
     </div>
   );
 }

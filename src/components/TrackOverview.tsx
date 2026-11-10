@@ -7,6 +7,9 @@ import { ZoomControls } from "./ZoomControls";
 import { Button } from "./ui/button";
 import { drawSwissRelief, getMapStyle, MAP_STYLES } from "./SwissRelief";
 
+/** Distinct colour per track (golden-angle hue steps). */
+export function trackColor(i: number) { return `hsl(${Math.round((i * 137.5) % 360)} 85% 55%)`; }
+
 function TrackMap({ track, className, interactive = false, splits }: { track: [number, number][] | null; className: string; interactive?: boolean; splits?: number[] | undefined }) {
   const map = useCanvasZoom(0.1, 32, interactive);
   const { canvasRef } = map;
@@ -35,13 +38,16 @@ function TrackMap({ track, className, interactive = false, splits }: { track: [n
       drawSwissRelief(ctx, fit.site, camera.x, camera.y, width, height, camera.zoom, dpr, mapStyle);
       const credit = MAP_STYLES.find((style) => style.v === mapStyle)?.credit ?? "";
       if (creditRef.current && creditRef.current.textContent !== credit) creditRef.current.textContent = credit;
-      ctx.beginPath();
       const view = map.transform.current;
-      const starts = new Set(splits ?? [0]);
-      fit.points.forEach((point, index) => { const x = view.applyX(point.x), y = view.applyY(point.y); if (index === 0 || starts.has(index)) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      const segs = splits && splits.length > 1 ? splits : [0];
       ctx.lineJoin = "round"; ctx.lineCap = "round";
-      ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.lineWidth = 5; ctx.stroke();
-      ctx.strokeStyle = theme.getPropertyValue("--primary").trim(); ctx.lineWidth = 2.5; ctx.stroke();
+      segs.forEach((from, si) => {
+        const to = segs[si + 1] ?? fit.points.length;
+        ctx.beginPath();
+        for (let i = from; i < to; i++) { const p = fit.points[i]; const x = view.applyX(p.x), y = view.applyY(p.y); if (i === from) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+        ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.lineWidth = 5; ctx.stroke();
+        ctx.strokeStyle = segs.length > 1 ? trackColor(si) : theme.getPropertyValue("--primary").trim(); ctx.lineWidth = 2.5; ctx.stroke();
+      });
       const start = fit.points[0];
       if (start) {
         ctx.beginPath(); ctx.arc(view.applyX(start.x), view.applyY(start.y), 4, 0, Math.PI * 2);
