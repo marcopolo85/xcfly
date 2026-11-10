@@ -6,7 +6,7 @@ import { sunTimes } from "@/game/sun";
 import { MODES, type FlightMode } from "@/game/modes";
 import heroImg from "@/assets/hero-alps.jpg";
 import logoImg from "@/assets/xcfly-logo.png";
-import { Info, MapPin, Medal, ScrollText, Trophy } from "lucide-react";
+import { Info, MapPin, Route, Medal, ScrollText, Trophy } from "lucide-react";
 import { ChangelogDialog } from "./ChangelogDialog";
 import { CHANGELOG, CHANGELOG_SEEN_KEY, hasUnseenChangelog } from "@/game/changelog";
 import { Button } from "./ui/button";
@@ -15,8 +15,11 @@ import { RouteIcon } from "./RouteIcon";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
+import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTask";
+import { loadLaunchAltitude } from "@/game/realTerrain";
+import { selectedLaunch } from "@/game/launchSelection";
 
-export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined }
+export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined; task?: FlightTask | undefined }
 
 function FlightStats() {
   const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number } | null>(null);
@@ -51,6 +54,24 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [pilotName, setPilotName] = useState("");
+  const [task, setTask] = useState<FlightTask | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importLink, setImportLink] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const importTask = async () => {
+    const t = parseFlyxcLink(importLink);
+    if (!t) { setImportError("Kein gültiger FlyXC-Link (flyxc.app/?p=…)."); return; }
+    const p0 = t.points[0]!;
+    if (!inThermalRegion(p0.lat, p0.lon)) { setImportError("Der Startpunkt liegt ausserhalb des Fluggebiets."); return; }
+    setImporting(true); setImportError(null);
+    try {
+      const alt = await loadLaunchAltitude(p0);
+      setSite({ ...selectedLaunch(SITES[0]!, p0.lat, p0.lon, alt), name: "FlyXC-Aufgabe" });
+      setTask(t); setImportOpen(false);
+    } catch { setImportError("Geländehöhe nicht erreichbar. Bitte erneut versuchen."); }
+    finally { setImporting(false); }
+  };
   useEffect(() => { setPilotName(localStorage.getItem("xcfly-pilot-name") ?? ""); }, []);
   const updatePilotName = (v: string) => { setPilotName(v); localStorage.setItem("xcfly-pilot-name", v); };
   const [unseenChanges, setUnseenChanges] = useState(false);
@@ -134,7 +155,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <h2 className="hud-label mb-1.5">Startplatz</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {sortedSites.map((s) => (
-                <Button key={s.id} variant="outline" onClick={() => setSite(s)} data-active={site !== null && s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
+                <Button key={s.id} variant="outline" onClick={() => { setSite(s); setTask(null); }} data-active={site !== null && s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
                     <span className="flex shrink-0 items-center">
@@ -166,11 +187,15 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
                 </Button>
               ))}
             </div>
-            <Button variant="outline" className="mt-2 h-9 w-full text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
-            {site?.id.startsWith("map-") && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <Button variant="outline" className="h-9 text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
+              <Button variant="outline" className="h-9 text-sm" onClick={() => { setImportError(null); setImportOpen(true); }}><Route />Aufgabe importieren</Button>
+            </div>
+            {task && <div className="mt-1 flex items-center justify-between font-mono text-xs text-foreground"><span>Aufgabe: {task.points.length - 1} Wegpunkte · {taskDistanceKm(task.points).toFixed(1)} km</span><button type="button" className="underline text-muted-foreground" onClick={() => setTask(null)}>entfernen</button></div>}
+            {site?.id.startsWith("map-") && !task && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
           <div className="flex gap-2">
-          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode, pilotName: pilotName.trim() || undefined }); }} className="w-2/5 shrink-0 rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode, pilotName: pilotName.trim() || undefined, task: task ?? undefined }); }} className="w-2/5 shrink-0 rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             Starten
           </button>
           <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname (Multiplayer)" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="min-w-0 flex-1 rounded-lg border border-border bg-background/80 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
@@ -196,7 +221,16 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
           </div>
         </div>
       </div>
-      {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setChoosing(false); }} />}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Aufgabe importieren</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground">Link aus flyxc.app einfügen (Teilen → Link). Der erste Punkt wird Startplatz, Zylinder 400 m.</p>
+          <input autoFocus value={importLink} onChange={(e) => setImportLink(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void importTask(); }} placeholder="https://flyxc.app/?p=…" aria-label="FlyXC-Link" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          {importError && <p role="alert" className="text-xs text-destructive">{importError}</p>}
+          <Button disabled={importing || !importLink.trim()} onClick={() => void importTask()}>{importing ? "Lade…" : "Übernehmen"}</Button>
+        </DialogContent>
+      </Dialog>
+      {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setTask(null); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} weekly={weeklyRanking} onClose={() => setRankingSite(null)} />}
       {overallRanking && <Leaderboard overall weekly={weeklyRanking} onClose={() => setOverallRanking(false)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
