@@ -10,6 +10,10 @@ const base: HudData = {
 };
 
 describe("FlightHUD rest time", () => {
+  it("colours XC KM by the current scored route type", () => {
+    render(<FlightHUD d={{ ...base, xcType: "fai" }} />);
+    expect(screen.getByText("XC KM").nextSibling).toHaveClass("text-route-fai-light");
+  });
   it("counts down the 4 h XC flight time", () => {
     expect(XC_TIME_LIMIT_S).toBe(4 * 3600);
     render(<FlightHUD d={{ ...base, remain: XC_TIME_LIMIT_S }} />);
