@@ -25,7 +25,7 @@ export function MobileZoomSlider({ scaleBy, scale, active }: { scaleBy: (factor:
     return () => { cancelAnimationFrame(raf); displacement.current = 0; window.removeEventListener("blur", stop); document.removeEventListener("visibilitychange", stop); };
   }, [active]);
 
-  return <div className="flex w-10 shrink-0 flex-col items-center gap-2 rounded-md border border-border bg-card/95 py-2 text-foreground backdrop-blur-md sm:hidden">
+  return <div className="flex w-10 shrink-0 flex-col items-center gap-2 rounded-md border border-border bg-card/95 py-2 text-foreground backdrop-blur-md sm:not-pointer-coarse:hidden">
     <Minus aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
     <div className="relative flex min-h-24 w-full flex-1 justify-center">
       <span aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-1/2 border-t border-muted-foreground" />

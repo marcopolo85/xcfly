@@ -458,7 +458,7 @@ export function FlightGame() {
       <div className="absolute left-3 top-3 hidden rounded-md border border-border bg-card/95 p-1.5 font-mono text-[10px] text-foreground backdrop-blur-md sm:block">
         <ZoomControls label="Karte" scale={mapZoom.scale} change={mapZoom.change} reset={mapZoom.reset} />
       </div>
-      {hud && <div ref={instrumentRef} className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:bottom-8 sm:left-auto sm:right-3">
+      {hud && <div ref={instrumentRef} className="absolute bottom-[94px] right-2 left-2 flex items-stretch justify-end gap-2 sm:not-pointer-coarse:bottom-8 sm:left-auto sm:right-3">
         {showProfile && <section aria-label="Seitenansicht" className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-border bg-card/95 backdrop-blur-md">
           <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
             <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">BERGPROFIL</span>
@@ -469,7 +469,7 @@ export function FlightGame() {
         <FlightHUD d={hud} />
         <MobileZoomSlider scaleBy={mapZoom.scaleBy} scale={mapZoom.scale} active={phase === "flying" && !paused && !settingsOpen} />
       </div>}
-      <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:hidden">
+      <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:not-pointer-coarse:hidden">
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
         <button className="ctrl-btn h-16 flex-1 text-sm font-bold" {...speedHandlers}>SPEED</button>
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("right")}>→</button>
