@@ -240,7 +240,7 @@ export function FlightGame() {
       const trail: { x: number; y: number; vz: number }[] = [];
       mpSim.current = sim;
       const visYaw: VisualYaw = { vis: sim.heading, lag: 0 };
-      let triangle: XcTriangle | null = null, lastTri = 0;
+      let triangle: XcTriangle | null = null, lastTri = 0, xcType: RouteType = "free";
       let last = performance.now(), lastHud = 0, smoothVz = 0, trailT = 0;
       let maxOutDist = 0;
       let flightEnded = false;
@@ -325,7 +325,7 @@ export function FlightGame() {
           }
         }
 
-        if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); }
+        if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); xcType = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]).type; }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
         const tk = taskRef.current;
         if (tk && advanceTask(tk, sim.x, sim.y)) setTaskInfo({ next: tk.next, total: tk.local.length });
@@ -338,7 +338,7 @@ export function FlightGame() {
           setHud({
             alt: sim.alt, agl: sim.alt - heightAt(terrain, sim.x, sim.y), vz: smoothVz, speed: sim.speed,
             time: sim.flightTime,
-            xc, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
+            xc, xcType, xcSpeed: sim.flightTime > 0 ? (xc / 1000) / (sim.flightTime / 3600) : 0,
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,

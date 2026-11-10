@@ -1,7 +1,7 @@
 export interface HudData {
   alt: number; agl: number; vz: number; speed: number;
   time: number;
-  xc: number; xcSpeed: number;
+  xc: number; xcSpeed: number; xcType?: "free" | "tri" | "fai";
   tri: number; triFai: boolean; triMin: number; triMax: number; close: number;
   clock: string; accel: boolean; cloudbase: number;
   remain?: number | undefined; outDist?: number | undefined; returnRadius?: number | undefined;
@@ -20,6 +20,8 @@ const vzCls = (v: number) => (v > 0.1 ? "text-climb" : v < -1.5 ? "text-sink" : 
 const fmtVz = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
 const fmtTime = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 const fmtCountdown = (t: number) => `${Math.floor(t / 3600)}:${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+
+const XC_CLS = { free: "text-route-free", tri: "text-route-tri-light", fai: "text-route-fai-light" } as const;
 
 export function FlightHUD({ d }: { d: HudData }) {
   const routeCls = d.tri > 0 ? (d.triFai ? "text-route-fai-light" : "text-route-tri-light") : "text-route-free";
@@ -47,7 +49,7 @@ export function FlightHUD({ d }: { d: HudData }) {
         <Cell label="GZ" value={d.vz < -0.1 ? `1:${(d.speed / -d.vz).toFixed(0)}` : "1:∞"} />
         <Cell label="GESCHW." value={(d.speed * 3.6).toFixed(0)} unit="km/h" />
         <Cell label="XC GESCHW." value={d.xcSpeed.toFixed(1)} unit="km/h" />
-        <Cell label="XC KM" value={(d.xc / 1000).toFixed(1)} unit="km" cls={routeCls} />
+        <Cell label="XC KM" value={(d.xc / 1000).toFixed(1)} unit="km" cls={XC_CLS[d.xcType ?? "free"]} />
         <Cell label="UNFINISHED" value={(d.tri / 1000).toFixed(1)} unit="km" cls={routeCls} />
         <Cell label="MIN FAI" value={d.triMin > 0 && isFinite(d.triMin) ? (d.triMin / 1000).toFixed(1) : "–"} unit={d.triMin > 0 && isFinite(d.triMin) ? "km" : ""} />
         <Cell label="MAX FAI" value={d.triMax > 0 && isFinite(d.triMax) ? (d.triMax / 1000).toFixed(1) : "–"} unit={d.triMax > 0 && isFinite(d.triMax) ? "km" : ""} />
