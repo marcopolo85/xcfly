@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-10a",
+    date: "10. Nov 2026",
+    items: ["Touch-Steuerung auch auf iPad und Tablets"],
+  },
+  {
     id: "2026-11-09a",
     date: "9. Nov 2026",
     items: ["Feinfühligere, progressive Steuerung im beschleunigten Flug", "Multiplayer: andere Piloten bewegen sich flüssig", "AGL-Balken zeigt Boden bis Wolkenbasis"],
