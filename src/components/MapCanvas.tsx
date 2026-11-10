@@ -527,6 +527,19 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     if (nx) {
       ctx.strokeStyle = "rgba(255,0,200,0.9)"; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(sx(sim.x), sy(sim.y)); ctx.lineTo(sx(nx.x), sy(nx.y)); ctx.stroke();
+      // off-screen turnpoint: badge with name and distance at the screen edge
+      const px = sx(nx.x), py = sy(nx.y);
+      if (px < 0 || py < 0 || px > W || py > H) {
+        const ox = sx(sim.x), oy = sy(sim.y), dx = px - ox, dy = py - oy;
+        const f = Math.min(Math.abs((dx > 0 ? W - 60 - ox : 60 - ox) / (dx || 1e-9)), Math.abs((dy > 0 ? H - 30 - oy : 70 - oy) / (dy || 1e-9)));
+        const bx = ox + dx * f, by = oy + dy * f;
+        const k = t.next, name = k === t.local.length - 1 ? "Ziel" : `WP${k}`;
+        const label = `${name} · ${(Math.sqrt((nx.x - sim.x) ** 2 + (nx.y - sim.y) ** 2) / 1000).toFixed(1)} km`;
+        const tw = ctx.measureText(label).width + 12;
+        ctx.fillStyle = "rgba(200,0,160,0.92)";
+        ctx.beginPath(); ctx.roundRect(bx - tw / 2, by - 10, tw, 20, 5); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.fillText(label, bx, by + 4);
+      }
     }
     ctx.restore();
   }
