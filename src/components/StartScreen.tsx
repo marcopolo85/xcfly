@@ -120,7 +120,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
     setImporting(true); setImportError(null);
     try {
       const alt = await loadLaunchAltitude(p0);
-      setSite({ ...selectedLaunch(SITES[0]!, p0.lat, p0.lon, alt), name: "FlyXC-Aufgabe" });
+      setSite(selectedLaunch(SITES[0]!, p0.lat, p0.lon, alt));
       setTask(t); setImportOpen(false);
     } catch { setImportError("Geländehöhe nicht erreichbar. Bitte erneut versuchen."); }
     finally { setImporting(false); }
