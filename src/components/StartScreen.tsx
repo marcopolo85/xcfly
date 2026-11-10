@@ -15,6 +15,7 @@ import { RouteIcon } from "./RouteIcon";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
+import { MultiTrackMap } from "./TrackOverview";
 import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTask";
 import { loadLaunchAltitude } from "@/game/realTerrain";
 import { selectedLaunch } from "@/game/launchSelection";
@@ -40,6 +41,30 @@ function FlightStats() {
   );
 }
 
+function TodayTracks({ onClose }: { onClose: () => void }) {
+  const [rows, setRows] = useState<{ pilot_name: string; distance_km: number; track: [number, number][] }[] | null>(null);
+  useEffect(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0);
+    supabase.from("leaderboard_entries").select("pilot_name, distance_km, track").gte("created_at", d.toISOString()).limit(200).then(({ data }) => {
+      setRows(((data ?? []) as unknown as { pilot_name: string; distance_km: number; track: [number, number][] | null }[]).filter((r) => Array.isArray(r.track) && r.track.length >= 2) as { pilot_name: string; distance_km: number; track: [number, number][] }[]);
+    });
+  }, []);
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Tracks von heute" className="fixed inset-0 z-50 flex flex-col bg-background">
+      <div className="flex items-center justify-between border-b border-border p-2">
+        <h2 className="font-display text-lg font-bold">Tracks von heute{rows ? ` (${rows.length})` : ""}</h2>
+        <Button variant="outline" size="sm" onClick={onClose}>Schliessen</Button>
+      </div>
+      <div className="min-h-0 flex-1">
+        {rows === null && <p className="py-16 text-center text-xs text-muted-foreground">Lade Tracks…</p>}
+        {rows && rows.length === 0 && <p className="py-16 text-center text-xs text-muted-foreground">Heute noch keine Flüge eingetragen.</p>}
+        {rows && rows.length > 0 && <MultiTrackMap tracks={rows.map((r) => r.track)} />}
+      </div>
+      {rows && rows.length > 0 && <p className="max-h-16 overflow-auto border-t border-border p-2 text-[10px] text-muted-foreground">{rows.map((r) => `${r.pilot_name} ${Number(r.distance_km).toFixed(1)} km`).join(" · ")}</p>}
+    </div>
+  );
+}
+
 const FIXED_SEASON: Season = "summer";
 
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
@@ -56,6 +81,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [pilotName, setPilotName] = useState("");
   const [task, setTask] = useState<FlightTask | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [todayOpen, setTodayOpen] = useState(false);
   const [importLink, setImportLink] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -190,6 +216,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <div className="mt-2 grid grid-cols-2 gap-1.5">
               <Button variant="outline" className="h-9 text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
               <Button variant="outline" className="h-9 text-sm" onClick={() => { setImportError(null); setImportOpen(true); }}><Route />Aufgabe importieren</Button>
+              <Button variant="outline" className="col-span-2 h-9 text-sm" onClick={() => setTodayOpen(true)}><MapPin />Tracks von heute</Button>
             </div>
             {task && <div className="mt-1 flex items-center justify-between font-mono text-xs text-foreground"><span>Aufgabe: {task.points.length - 1} Wegpunkte · {taskDistanceKm(task.points).toFixed(1)} km</span><button type="button" className="underline text-muted-foreground" onClick={() => setTask(null)}>entfernen</button></div>}
             {site?.id.startsWith("map-") && !task && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
@@ -233,6 +260,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setTask(null); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} weekly={weeklyRanking} onClose={() => setRankingSite(null)} />}
       {overallRanking && <Leaderboard overall weekly={weeklyRanking} onClose={() => setOverallRanking(false)} />}
+      {todayOpen && <TodayTracks onClose={() => setTodayOpen(false)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>

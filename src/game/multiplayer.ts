@@ -2,7 +2,7 @@
 /** vx/vy in m per real second (time-lapse included), hr = heading change in rad per real second. */
 export interface PilotPacket { id: string; name: string; lat: number; lon: number; alt: number; heading: number; vz: number; vx?: number; vy?: number; hr?: number; vzr?: number }
 /** Display state (dx/dy/dh/da) is advanced every frame and eased towards the extrapolated packet. */
-export interface RemotePilot extends PilotPacket { seen: number; px?: number; py?: number; dx?: number | undefined; dy?: number | undefined; dh?: number | undefined; da?: number | undefined }
+export interface RemotePilot extends PilotPacket { seen: number; px?: number; py?: number; dx?: number | undefined; dy?: number | undefined; dh?: number | undefined; da?: number | undefined; trail?: { x: number; y: number }[] }
 
 export const SEND_INTERVAL_MS = 250;
 /** Never extrapolate further than this past the last packet (lost connection, landed). */
@@ -21,6 +21,15 @@ export function advanceRemote(p: RemotePilot, now: number, dtS: number) {
   p.dx += (tx - p.dx) * k; p.dy += (ty - p.dy) * k; p.da += (ta - p.da) * k;
   p.dh += wrapAngle(th - p.dh) * k;
   return p;
+}
+
+/** Append a received position to the pilot's trail when it moved ≥30 m; capped to bound memory. */
+export const TRAIL_MAX = 300;
+export function extendTrail(trail: { x: number; y: number }[] | undefined, x: number, y: number) {
+  const t = trail ?? [];
+  const l = t[t.length - 1];
+  if (!l || (l.x - x) ** 2 + (l.y - y) ** 2 >= 900) { t.push({ x, y }); if (t.length > TRAIL_MAX) t.splice(0, t.length - TRAIL_MAX); }
+  return t;
 }
 
 export const PILOT_TIMEOUT_MS = 60_000;

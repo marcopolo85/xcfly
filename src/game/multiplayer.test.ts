@@ -31,3 +31,16 @@ describe("multiplayer", () => {
     expect(r.dx).toBeCloseTo(10 * MAX_EXTRAPOLATION_S);
   });
 });
+
+import { extendTrail, TRAIL_MAX } from "./multiplayer";
+describe("extendTrail", () => {
+  it("adds points only after 30 m and caps length", () => {
+    let t = extendTrail(undefined, 0, 0);
+    t = extendTrail(t, 10, 0);
+    expect(t.length).toBe(1);
+    t = extendTrail(t, 40, 0);
+    expect(t.length).toBe(2);
+    for (let i = 0; i < 400; i++) t = extendTrail(t, i * 100, 0);
+    expect(t.length).toBe(TRAIL_MAX);
+  });
+});

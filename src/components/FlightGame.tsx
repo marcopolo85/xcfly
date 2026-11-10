@@ -1,4 +1,4 @@
-import { advanceRemote, isPacket, prunePilots, SEND_INTERVAL_MS, toLatLon, toLocal, type PilotPacket, type RemotePilot } from "@/game/multiplayer";
+import { advanceRemote, extendTrail, isPacket, prunePilots, SEND_INTERVAL_MS, toLatLon, toLocal, type PilotPacket, type RemotePilot } from "@/game/multiplayer";
 import { loadAirspace } from "@/game/loadAirspace";
 import bossSheet from "@/assets/spreadsheet.jpg";
 import type { Airspace } from "@/game/airspace";
@@ -121,7 +121,7 @@ export function FlightGame() {
       if (!isPacket(payload) || payload.id === id) return;
       const prev = remotes.current.get(payload.id);
       const local = toLocal(site, payload.lat, payload.lon);
-      remotes.current.set(payload.id, { ...payload, seen: Date.now(), px: local.x, py: local.y, dx: prev?.dx, dy: prev?.dy, dh: prev?.dh, da: prev?.da });
+      remotes.current.set(payload.id, { ...payload, seen: Date.now(), px: local.x, py: local.y, dx: prev?.dx, dy: prev?.dy, dh: prev?.dh, da: prev?.da, trail: extendTrail(prev?.trail, local.x, local.y) });
     }).subscribe();
     let last: { t: number; x: number; y: number; h: number; a: number } | null = null;
     const iv = setInterval(() => {
@@ -151,7 +151,7 @@ export function FlightGame() {
     return [...remotes.current.values()].map((p) => {
       if (p.px === undefined) { const l = toLocal(site, p.lat, p.lon); p.px = l.x; p.py = l.y; }
       advanceRemote(p, now, dtS);
-      return { x: p.dx!, y: p.dy!, alt: p.da!, heading: p.dh!, name: p.name };
+      return { x: p.dx!, y: p.dy!, alt: p.da!, heading: p.dh!, name: p.name, trail: p.trail };
     });
   };
 
