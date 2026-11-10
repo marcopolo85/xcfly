@@ -1,9 +1,9 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-10b",
+    id: "2026-11-10c",
     date: "10. Nov 2026",
-    items: ["Touch-Steuerung auch auf iPad und Tablets", "FlyXC-Aufgaben importieren (Zylinder 400 m)", "Im Flug: «Aufgabe abbrechen», «Neustart», «Navigiere zum SP» und «Menü»", "Als App installiert im Vollbild"],
+    items: ["GPS neu angeordnet, XC km/Unfinished farbig nach Streckentyp", "Touch-Steuerung auch auf iPad und Tablets", "FlyXC-Aufgaben importieren (Zylinder 400 m)", "Im Flug: «Aufgabe abbrechen», «Neustart», «Navigiere zum SP» und «Menü»", "Als App installiert im Vollbild"],
   },
   {
     id: "2026-11-09a",
