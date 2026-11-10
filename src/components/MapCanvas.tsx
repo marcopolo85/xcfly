@@ -130,7 +130,7 @@ export interface SceneData {
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
-  others?: { x: number; y: number; alt: number; heading: number; name: string }[] | undefined;
+  others?: { x: number; y: number; alt: number; heading: number; name: string; trail?: { x: number; y: number }[] | undefined }[] | undefined;
   task?: { local: { x: number; y: number }[]; next: number; radius: number } | null;
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
@@ -549,6 +549,18 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     const wing = getWingImage();
     ctx.font = "bold 11px system-ui, sans-serif";
     ctx.textAlign = "center";
+    ctx.save();
+    ctx.strokeStyle = "rgba(56,189,248,0.55)"; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    for (const o of s.others) {
+      const t = o.trail;
+      if (!t || t.length < 1) continue;
+      ctx.beginPath();
+      ctx.moveTo(sx(t[0].x), sy(t[0].y));
+      for (let i = 1; i < t.length; i++) ctx.lineTo(sx(t[i].x), sy(t[i].y));
+      ctx.lineTo(sx(o.x), sy(o.y));
+      ctx.stroke();
+    }
+    ctx.restore();
     for (const o of s.others) {
       const ox = sx(o.x), oy = sy(o.y);
       if (ox < -60 || oy < -60 || ox > W + 60 || oy > H + 60) continue;

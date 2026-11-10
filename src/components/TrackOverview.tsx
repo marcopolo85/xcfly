@@ -7,7 +7,7 @@ import { ZoomControls } from "./ZoomControls";
 import { Button } from "./ui/button";
 import { drawSwissRelief, getMapStyle, MAP_STYLES } from "./SwissRelief";
 
-function TrackMap({ track, className, interactive = false }: { track: [number, number][] | null; className: string; interactive?: boolean }) {
+function TrackMap({ track, className, interactive = false, splits }: { track: [number, number][] | null; className: string; interactive?: boolean; splits?: number[] | undefined }) {
   const map = useCanvasZoom(0.1, 32, interactive);
   const { canvasRef } = map;
   const creditRef = useRef<HTMLParagraphElement>(null);
@@ -37,7 +37,8 @@ function TrackMap({ track, className, interactive = false }: { track: [number, n
       if (creditRef.current && creditRef.current.textContent !== credit) creditRef.current.textContent = credit;
       ctx.beginPath();
       const view = map.transform.current;
-      fit.points.forEach((point, index) => { const x = view.applyX(point.x), y = view.applyY(point.y); if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      const starts = new Set(splits ?? [0]);
+      fit.points.forEach((point, index) => { const x = view.applyX(point.x), y = view.applyY(point.y); if (index === 0 || starts.has(index)) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
       ctx.lineJoin = "round"; ctx.lineCap = "round";
       ctx.strokeStyle = theme.getPropertyValue("--foreground").trim(); ctx.lineWidth = 5; ctx.stroke();
       ctx.strokeStyle = theme.getPropertyValue("--primary").trim(); ctx.lineWidth = 2.5; ctx.stroke();
@@ -51,7 +52,7 @@ function TrackMap({ track, className, interactive = false }: { track: [number, n
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [track, canvasRef, map.transform]);
+  }, [track, splits, canvasRef, map.transform]);
   if (!track || track.length < 2) {
     return <p className="py-10 text-center text-xs text-muted-foreground">Keine Trackdaten vorhanden.</p>;
   }
@@ -91,4 +92,13 @@ export function TrackOverview({ track, className = "aspect-[16/11] w-full", expa
       <div className="min-h-0 flex-1"><TrackMap track={track} className="h-full" interactive /></div>
     </div>, document.body)}
   </>;
+}
+
+/** Several tracks on one interactive map (e.g. all flights of today). */
+export function MultiTrackMap({ tracks }: { tracks: [number, number][][] }) {
+  const valid = tracks.filter((t) => t.length >= 2);
+  const splits: number[] = [];
+  const flat: [number, number][] = [];
+  for (const t of valid) { splits.push(flat.length); flat.push(...t); }
+  return <TrackMap track={flat.length >= 2 ? flat : null} splits={splits} className="h-full" interactive />;
 }
