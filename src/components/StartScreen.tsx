@@ -41,26 +41,53 @@ function FlightStats() {
   );
 }
 
+type TodayRow = { pilot_name: string; distance_km: number; points: number; track: [number, number][] };
+
 function TodayTracks({ onClose }: { onClose: () => void }) {
-  const [rows, setRows] = useState<{ pilot_name: string; distance_km: number; track: [number, number][] }[] | null>(null);
+  const [rows, setRows] = useState<TodayRow[] | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [listOpen, setListOpen] = useState(true);
   useEffect(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0);
-    supabase.from("leaderboard_entries").select("pilot_name, distance_km, track").gte("created_at", d.toISOString()).limit(200).then(({ data }) => {
-      setRows(((data ?? []) as unknown as { pilot_name: string; distance_km: number; track: [number, number][] | null }[]).filter((r) => Array.isArray(r.track) && r.track.length >= 2) as { pilot_name: string; distance_km: number; track: [number, number][] }[]);
+    supabase.from("leaderboard_entries").select("pilot_name, distance_km, points, track").gte("created_at", d.toISOString()).order("points", { ascending: false }).limit(200).then(({ data }) => {
+      const all = (data ?? []) as unknown as (Omit<TodayRow, "track"> & { track: [number, number][] | null })[];
+      setRows(all.filter((r) => Array.isArray(r.track) && r.track.length >= 2) as TodayRow[]);
     });
   }, []);
+  const tracks = useMemo(() => (rows ?? []).map((r) => r.track), [rows]);
   return (
     <div role="dialog" aria-modal="true" aria-label="Tracks von heute" className="fixed inset-0 z-50 flex flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border p-2">
         <h2 className="font-display text-lg font-bold">Tracks von heute{rows ? ` (${rows.length})` : ""}</h2>
         <Button variant="outline" size="sm" onClick={onClose}>Schliessen</Button>
       </div>
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         {rows === null && <p className="py-16 text-center text-xs text-muted-foreground">Lade Tracks…</p>}
         {rows && rows.length === 0 && <p className="py-16 text-center text-xs text-muted-foreground">Heute noch keine Flüge eingetragen.</p>}
-        {rows && rows.length > 0 && <MultiTrackMap tracks={rows.map((r) => r.track)} />}
+        {rows && rows.length > 0 && <MultiTrackMap tracks={tracks} selected={selected} />}
+        {rows && rows.length > 0 && (
+          <div className="absolute right-2 top-2 z-10 flex max-h-[calc(100%-1rem)] flex-col items-end gap-1">
+            <Button variant="outline" size="sm" className="h-8 bg-card/95" onClick={() => setListOpen((o) => !o)} aria-expanded={listOpen}>
+              <List />{listOpen ? <ChevronRight /> : <ChevronLeft />}
+            </Button>
+            {listOpen && (
+              <ul className="min-h-0 w-56 max-w-[70vw] overflow-auto rounded-md border border-border bg-card/95 p-1 text-xs shadow-lg">
+                {rows.map((r, i) => (
+                  <li key={i}>
+                    <button type="button" onClick={() => setSelected((s) => (s === i ? null : i))} className={`flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left ${selected === i ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}>
+                      <span className="w-4 text-right text-muted-foreground">{i + 1}</span>
+                      <span className="inline-block h-2 w-3 shrink-0 rounded-sm" style={{ background: trackColor(i) }} />
+                      <span className="min-w-0 flex-1 truncate font-medium">{r.pilot_name}</span>
+                      <span className="tabular-nums font-bold">{Number(r.points).toFixed(1)}</span>
+                      <span className="tabular-nums text-muted-foreground">{Number(r.distance_km).toFixed(1)} km</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
-      {rows && rows.length > 0 && <p className="max-h-16 overflow-auto border-t border-border p-2 text-[10px] text-muted-foreground">{rows.map((r, i) => <span key={i} className="mr-2 inline-flex items-center gap-1"><span className="inline-block h-2 w-3 rounded-sm" style={{ background: trackColor(i) }} />{r.pilot_name} {Number(r.distance_km).toFixed(1)} km</span>)}</p>}
     </div>
   );
 }
