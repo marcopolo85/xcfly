@@ -13,7 +13,7 @@ import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, stepVisualYaw, timeScale, frameSpeeds, setTurnInput, type Sim, type Input, type HoldStarts, type VisualYaw } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
 import { SEASONS } from "@/game/sites";
-import { modeLabel, XC_TIME_LIMIT_S, type FlightMode } from "@/game/modes";
+import { flightTimeLimit, modeLabel, XC_TIME_LIMIT_S, type FlightMode } from "@/game/modes";
 import { xcScore, XC_FACTORS, type RouteType } from "@/game/xcScore";
 import { submitFlight } from "./Leaderboard";
 import { supabase } from "@/integrations/supabase/client";
@@ -371,14 +371,14 @@ export function FlightGame() {
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,
-            remain: mode === "xc" ? Math.max(0, XC_TIME_LIMIT_S - sim.flightTime) : undefined,
+            remain: flightTimeLimit(mode, config.weekly) === undefined ? undefined : Math.max(0, XC_TIME_LIMIT_S - sim.flightTime),
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
         }
         const outDist = Math.hypot(sim.x, sim.y);
         if (outDist > maxOutDist) maxOutDist = outDist;
         if (sim.landed) { finish("Gelandet"); return; }
-        if (mode === "xc" && sim.flightTime >= XC_TIME_LIMIT_S) { finish("Zeitlimit erreicht (4 h)"); return; }
+        if (flightTimeLimit(mode, config.weekly) !== undefined && sim.flightTime >= XC_TIME_LIMIT_S) { finish("Zeitlimit erreicht (4 h)"); return; }
         raf = requestAnimationFrame(loop);
       };
       raf = requestAnimationFrame(loop);
