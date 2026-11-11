@@ -19,8 +19,9 @@ import { MultiTrackMap, trackColor } from "./TrackOverview";
 import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTask";
 import { loadLaunchAltitude } from "@/game/realTerrain";
 import { selectedLaunch } from "@/game/launchSelection";
+import { weeklyTask } from "@/game/weeklyTask";
 
-export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined; task?: FlightTask | undefined }
+export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined; task?: FlightTask | undefined; weekly?: boolean | undefined }
 
 function FlightStats() {
   const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number } | null>(null);
@@ -102,6 +103,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
   const [rankingSite, setRankingSite] = useState<string | null>(null);
   const [overallRanking, setOverallRanking] = useState(false);
   const [weeklyRanking, setWeeklyRanking] = useState(false);
+  const [taskRanking, setTaskRanking] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [modeInfo, setModeInfo] = useState<FlightMode | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
@@ -252,6 +254,8 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
           <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode, pilotName: pilotName.trim() || undefined, task: task ?? undefined }); }} className="w-2/5 shrink-0 rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             Starten
           </button>
+          <button type="button" title={(() => { const w = weeklyTask(); return `Weekly-Task ab ${w.site.name} · 3 Wegpunkte · 150 km`; })()} onClick={() => { const w = weeklyTask(); onStart({ site: w.site, season: FIXED_SEASON, startHour: effectiveHour, mode: "xc", pilotName: pilotName.trim() || undefined, task: w.task, weekly: true }); }} className="shrink-0 rounded-lg border border-primary bg-card/80 px-2 font-display text-sm font-bold text-primary transition hover:bg-accent">Weekly-Task</button>
+          <Button type="button" variant="outline" size="icon" title="Rangliste Weekly-Task" aria-label="Rangliste Weekly-Task" onClick={() => setTaskRanking(true)} className="h-auto w-9 shrink-0 text-muted-foreground"><Medal /></Button>
           <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname (Multiplayer)" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="min-w-0 flex-1 rounded-lg border border-border bg-background/80 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           <p className="text-center text-[10px] text-muted-foreground">Leeres Namensfeld = unsichtbar für andere Piloten (kein Multiplayer).</p>
@@ -287,6 +291,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       {choosing && <LaunchMapPicker initial={site ?? undefined} onClose={() => setChoosing(false)} onSelect={(selected) => { setSite(selected); setTask(null); setChoosing(false); }} />}
       {rankingSite && <Leaderboard initialSite={rankingSite} weekly={weeklyRanking} onClose={() => setRankingSite(null)} />}
       {overallRanking && <Leaderboard overall weekly={weeklyRanking} onClose={() => setOverallRanking(false)} />}
+      {taskRanking && <Leaderboard task onClose={() => setTaskRanking(false)} />}
       {todayOpen && <TodayTracks onClose={() => setTodayOpen(false)} />}
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
