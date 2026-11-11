@@ -146,6 +146,7 @@ export interface SceneData {
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
   others?: { x: number; y: number; alt: number; heading: number; name: string; color?: string; trail?: { x: number; y: number }[] | undefined }[] | undefined;
   task?: { local: { x: number; y: number }[]; next: number; radius: number } | null;
+  mapAlpha?: number; // relief map opacity 0..1
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
 
@@ -389,7 +390,9 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   ctx.fillRect(0, 0, W, H);
   ctx.imageSmoothingEnabled = true;
   // relief tiles are laid out around screen point (W/2, 0.55·H): pass the world position under that point
+  ctx.globalAlpha = s.mapAlpha ?? 1;
   const map = drawSwissRelief(ctx, s.site, sim.x + (W / 2 - cx) / z, sim.y + (cy - H * 0.55) / z, W, H, z, dpr);
+  ctx.globalAlpha = 1;
   if (!map.loaded) {
     ctx.fillStyle = theme.getPropertyValue("--foreground").trim();
     ctx.font = "12px monospace";
@@ -624,7 +627,7 @@ export const MapCanvas = forwardRef<HTMLCanvasElement>(function MapCanvas(_, ref
 
 const miniFit = new WeakMap<HTMLCanvasElement, { fit: number; mx: number; my: number; t: number }>();
 /** Overview minimap: auto-fits track, triangle and FAI sectors; `view` is the user's extra zoom/pan on top. */
-export function drawMiniMap(canvas: HTMLCanvasElement, site: Site, sim: Sim, triangle: XcTriangle | null, view: ZoomTransform) {
+export function drawMiniMap(canvas: HTMLCanvasElement, site: Site, sim: Sim, triangle: XcTriangle | null, view: ZoomTransform, mapAlpha = 1) {
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
@@ -658,7 +661,9 @@ export function drawMiniMap(canvas: HTMLCanvasElement, site: Site, sim: Sim, tri
   const sx = (x: number) => W / 2 + (x - mx) * z + view.x, sy = (y: number) => H / 2 - (y - my) * z + view.y;
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
   ctx.imageSmoothingEnabled = true;
+  ctx.globalAlpha = mapAlpha;
   drawSwissRelief(ctx, site, mx - view.x / z, my + (H / 2 + view.y - H * 0.55) / z, W, H, z, dpr);
+  ctx.globalAlpha = 1;
   if (triangle) drawTriangle(ctx, triangle, sx, sy, z);
   ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#fc0"; ctx.lineWidth = 2; ctx.lineJoin = "round";
   ctx.beginPath(); ctx.moveTo(sx(0), sy(0));
