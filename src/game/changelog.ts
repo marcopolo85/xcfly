@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-11a",
+    date: "11. Nov 2026",
+    items: ["Multiplayer: knallige Schirmfarben, Track in Schirmfarbe", "Minimap mit automatischem Zoom auf Track und FAI-Sektoren, separat zoombar"],
+  },
+  {
     id: "2026-11-10c",
     date: "10. Nov 2026",
     items: ["GPS neu angeordnet, XC km/Unfinished farbig nach Streckentyp", "Touch-Steuerung auch auf iPad und Tablets", "FlyXC-Aufgaben importieren (Zylinder 400 m)", "Im Flug: «Aufgabe abbrechen», «Neustart», «Navigiere zum SP» und «Menü»", "Als App installiert im Vollbild", "Multiplayer: Flugspuren der anderen Piloten", "Startseite: «Tracks von heute» mit Seitenliste nach Punkten, Track antippen hebt ihn hervor", "Ranglisten: eigener Start/Aufgabe zeigt nächsten Startplatz oder Berg"],
