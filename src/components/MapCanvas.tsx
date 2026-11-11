@@ -22,9 +22,20 @@ const tintedWings = new Map<string, HTMLCanvasElement>();
 function tintedWing(wing: HTMLImageElement, color: string) {
   let c = tintedWings.get(color);
   if (c) return c;
-  c = document.createElement("canvas"); c.width = wing.naturalWidth; c.height = wing.naturalHeight;
+  // Keep the wing's details: luminance × colour, then a dark contour behind it.
+  const w = wing.naturalWidth, h = wing.naturalHeight, pad = Math.max(2, Math.round(w / 40));
+  const body = document.createElement("canvas"); body.width = w; body.height = h;
+  const b = body.getContext("2d")!;
+  b.filter = "grayscale(1) brightness(1.35) contrast(1.15)"; b.drawImage(wing, 0, 0); b.filter = "none";
+  b.globalCompositeOperation = "multiply"; b.fillStyle = color; b.fillRect(0, 0, w, h);
+  b.globalCompositeOperation = "destination-in"; b.drawImage(wing, 0, 0);
+  const sil = document.createElement("canvas"); sil.width = w; sil.height = h;
+  const si = sil.getContext("2d")!;
+  si.drawImage(wing, 0, 0); si.globalCompositeOperation = "source-in"; si.fillStyle = "#0b1220"; si.fillRect(0, 0, w, h);
+  c = document.createElement("canvas"); c.width = w + 2 * pad; c.height = h + 2 * pad;
   const g = c.getContext("2d")!;
-  g.drawImage(wing, 0, 0); g.globalCompositeOperation = "source-atop"; g.globalAlpha = 0.8; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
+  for (let k = 0; k < 16; k++) { const a = (k / 16) * Math.PI * 2; g.drawImage(sil, pad + Math.cos(a) * pad, pad + Math.sin(a) * pad); }
+  g.drawImage(body, pad, pad);
   tintedWings.set(color, c);
   return c;
 }
@@ -588,7 +599,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
       ctx.rotate(o.heading);
       if (wing) {
         const w = 36, h = (w * wing.naturalHeight) / wing.naturalWidth;
-        if (wing.complete && wing.naturalWidth) ctx.drawImage(tintedWing(wing, o.color ?? "#38bdf8"), -w / 2, -h / 2, w, h);
+        if (wing.complete && wing.naturalWidth) { const t = tintedWing(wing, o.color ?? "#38bdf8"), tw = (w * t.width) / wing.naturalWidth, th = (h * t.height) / wing.naturalHeight; ctx.drawImage(t, -tw / 2, -th / 2, tw, th); }
       }
       ctx.restore();
       const label = `${o.name} · ${Math.round(o.alt)} m`;
