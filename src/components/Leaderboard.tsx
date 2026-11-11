@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { TrackOverview } from "./TrackOverview";
 import { Button } from "./ui/button";
 import { getWeeklyCutoff } from "@/game/leaderboardTime";
+import { WEEKLY_MODE } from "@/game/weeklyTask";
 
 interface Entry {
   id: string;
@@ -24,14 +25,14 @@ const ENTRY_COLUMNS = "id,pilot_name,site_name,mode,distance_km,duration_s,point
 const asRoute = (t: string): RouteType => (t === "fai" || t === "tri" ? t : "free");
 const xcSpeed = (e: Entry) => (e.duration_s > 0 ? e.distance_km / (e.duration_s / 3600) : 0);
 
-export async function loadLeaderboardEntries(site?: string, weekly = false) {
+export async function loadLeaderboardEntries(site?: string, weekly = false, task = false) {
   const entries: Entry[] = [];
   const pageSize = 500;
   for (let offset = 0; ; offset += pageSize) {
-    let query = supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", "xc");
+    let query = supabase.from("leaderboard_entries").select(ENTRY_COLUMNS).eq("mode", task ? WEEKLY_MODE : "xc");
     if (site !== undefined) query = query.eq("site_name", site);
     if (weekly) query = query.gte("created_at", getWeeklyCutoff());
-    const ordered = query.order("points", { ascending: false }).order("id", { ascending: true });
+    const ordered = (task ? query.order("distance_km", { ascending: false }).order("duration_s", { ascending: true }) : query.order("points", { ascending: false })).order("id", { ascending: true });
     const { data, error } = await (site === undefined ? ordered.range(offset, offset + pageSize - 1) : ordered.limit(50));
     if (error) return { data: null, error };
     const page = (data ?? []) as Entry[];
@@ -40,11 +41,11 @@ export async function loadLeaderboardEntries(site?: string, weekly = false) {
   }
 }
 
-export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: [number, number][]): Promise<string | null> {
+export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: [number, number][], mode: string = "xc"): Promise<string | null> {
   const { error } = await supabase.from("leaderboard_entries").insert({
     pilot_name: pilot.trim().slice(0, 40),
     site_name: site.slice(0, 80),
-    mode: "xc",
+    mode,
     distance_km: Math.round(distanceKm * 10) / 10,
     points: Math.round(points * 100) / 100,
     route_type: routeType,
@@ -129,8 +130,8 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   );
 }
 
-export function Leaderboard({ initialSite, overall = false, weekly = false, onClose }: { initialSite?: string; overall?: boolean; weekly?: boolean; onClose: () => void }) {
-  const site = overall ? undefined : initialSite ?? SITES[0]?.name ?? "";
+export function Leaderboard({ initialSite, overall = false, weekly = false, task = false, onClose }: { initialSite?: string; overall?: boolean; weekly?: boolean; task?: boolean; onClose: () => void }) {
+  const site = overall || task ? undefined : initialSite ?? SITES[0]?.name ?? "";
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Entry | null>(null);
@@ -139,20 +140,20 @@ export function Leaderboard({ initialSite, overall = false, weekly = false, onCl
     let cancelled = false;
     setEntries(null);
     setError(null);
-    loadLeaderboardEntries(site, weekly)
+    loadLeaderboardEntries(site, task || weekly, task)
       .then(({ data, error: e }) => {
         if (cancelled) return;
         if (e) setError("Rangliste konnte nicht geladen werden.");
         else setEntries(data as Entry[]);
       });
     return () => { cancelled = true; };
-  }, [site, weekly]);
+  }, [site, weekly, task]);
 
   return (
     <div className="absolute inset-0 z-30 grid grid-cols-1 place-items-center bg-background/80 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-label="Rangliste">
       <div className="flex max-h-[85dvh] w-fit max-w-full flex-col rounded-xl border border-border bg-card p-3 sm:p-4">
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`} · {weekly ? "Weekly" : "Alle Daten"}</h2>
+          <h2 className="truncate font-display text-lg font-bold text-foreground sm:text-xl">{task ? "Rangliste Weekly-Task" : <>{overall ? "Gesamtrangliste XC" : `Rangliste XC · ${site}`} · {weekly ? "Weekly" : "Alle Daten"}</>}</h2>
           <Button variant="ghost" size="icon" aria-label="Schliessen" onClick={onClose} className="shrink-0 text-muted-foreground"><X /></Button>
         </div>
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -166,7 +167,7 @@ export function Leaderboard({ initialSite, overall = false, weekly = false, onCl
               {overall && <span className={HEAD}>Startplatz</span>}
               <span className={HEAD}>Datum</span>
               <span className={`${HEAD} text-right`}>Km</span>
-              <span className={`${HEAD} text-right`}>Pkt</span>
+              <span className={`${HEAD} text-right`}>{task ? "Zeit" : "Pkt"}</span>
               <span className={`${HEAD} text-right`}>km/h</span>
               {entries.map((e) => {
                 const st = fmtStamp(e.created_at);
@@ -177,7 +178,7 @@ export function Leaderboard({ initialSite, overall = false, weekly = false, onCl
                     {overall && <span className={`${CELL} break-words text-[10px] leading-tight text-muted-foreground`}>{e.site_name}</span>}
                     <span className={`${CELL} font-mono text-[10px] leading-tight text-muted-foreground`}>{st.date}</span>
                     <span className={`${CELL} ${NUM}`}>{e.distance_km.toFixed(1)}</span>
-                    <span className={`${CELL} ${NUM} font-bold`}>{e.points.toFixed(1)}</span>
+                    <span className={`${CELL} ${NUM} font-bold`}>{task ? fmtTime(e.duration_s) : e.points.toFixed(1)}</span>
                     <span className={`${CELL} ${NUM} text-muted-foreground`}>{xcSpeed(e).toFixed(1)}</span>
                   </Fragment>
                 );
