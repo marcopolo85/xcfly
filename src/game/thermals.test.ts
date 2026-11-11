@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SITES } from "./sites";
 import { generateTerrain, heightAt, N, type Terrain } from "./terrain";
-import { airLift, generateThermals, peakLift, sunlitSurfaceLift, type ThermalField } from "./thermals";
+import { airLift, generateThermals, peakLift, summitCore, sunlitSurfaceLift, type ThermalField } from "./thermals";
 import { sunPosition, sunVector } from "./sun";
 import { mulberry32 } from "./rng";
 import { POLAR } from "./physicsEngine";
@@ -71,17 +71,13 @@ describe("summit thermals", () => {
     }
     return peakLift(t, cx, cy);
   };
-  it("strength is randomized and independent of summit height", () => {
+  it("higher and more exposed summits give stronger lift", () => {
     const low = flat(1400), high = flat(3500);
-    // Same position, different heights: identical random strength.
-    expect(high).toBe(low);
-    expect(low).toBeGreaterThanOrEqual(3);
-    expect(low).toBeLessThanOrEqual(6);
-    // Different summits get different random strengths.
-    const other = flat(3500, 4000, 4000);
-    expect(other).not.toBe(low);
-    expect(other).toBeGreaterThanOrEqual(3);
-    expect(other).toBeLessThanOrEqual(6);
+    expect(high).toBeGreaterThan(low + 2);
+    expect(low).toBeGreaterThanOrEqual(2.5);
+    expect(high).toBeLessThanOrEqual(8);
+    
+    expect(summitCore({ x: 0, y: 0, h: 2500, prom: 600 })).toBeGreaterThan(summitCore({ x: 0, y: 0, h: 2500, prom: 160 }) + 1.2);
   });
 });
 

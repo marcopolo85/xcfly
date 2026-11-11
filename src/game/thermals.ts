@@ -35,7 +35,7 @@ function strengthNoise(x: number, y: number) {
 }
 
 /** Prominent, exposed summits found once per terrain window. */
-export interface Peak { x: number; y: number; h: number }
+export interface Peak { x: number; y: number; h: number; prom: number }
 const peakCache = new WeakMap<Terrain, Map<number, Peak[]>>();
 const PEAK_CELL = 2000;
 export function terrainPeaks(t: Terrain) {
@@ -57,7 +57,7 @@ export function terrainPeaks(t: Terrain) {
       if (!isMax || h - ring / 8 < 150) continue;
       const k = key(Math.floor(x / PEAK_CELL), Math.floor(y / PEAK_CELL));
       let arr = grid.get(k); if (!arr) grid.set(k, (arr = []));
-      arr.push({ x, y, h });
+      arr.push({ x, y, h, prom: h - ring / 8 });
     }
   peakCache.set(t, grid);
   return grid;
@@ -71,7 +71,14 @@ function peakRandom(x: number, y: number) {
   return (n >>> 0) / 4294967296;
 }
 
-/** Summit lift (m/s): randomized per summit, independent of its height (3–6 m/s). */
+/** Summit lift (m/s): grows with height (1000→4000 m) and exposure
+ * (prominence 150→600 m), plus small per-summit scatter; capped at 8 m/s. */
+export function summitCore(p: Peak) {
+  const hf = Math.max(0, Math.min(1, (p.h - 1000) / 3000));
+  const ef = Math.max(0, Math.min(1, (p.prom - 150) / 450));
+  return Math.min(8, 3 + 3.5 * hf + 1.5 * ef + (peakRandom(p.x, p.y) - 0.5));
+}
+
 export function peakLift(t: Terrain, x: number, y: number) {
   const grid = terrainPeaks(t);
   const cx = Math.floor(x / PEAK_CELL), cy = Math.floor(y / PEAK_CELL);
@@ -82,7 +89,7 @@ export function peakLift(t: Terrain, x: number, y: number) {
     for (const p of arr) {
       const d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
       if (d2 > 640000) continue;
-      const core = 3 + 3 * peakRandom(p.x, p.y);
+      const core = summitCore(p);
       const v = core * fastExpNeg(-d2 / (250 * 250));
       if (v > best) best = v;
     }
