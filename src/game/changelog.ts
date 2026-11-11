@@ -3,7 +3,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
     id: "2026-11-11e",
     date: "11. Nov 2026",
-    items: ["Multiplayer: knallige Schirmfarben, Track in Schirmfarbe", "Einstellungen bleiben pro Gerät gespeichert, Kartendeckkraft einstellbar", "Minimap mit automatischem Zoom auf Track und FAI-Sektoren, separat zoombar", "Weekly-Task: jede Woche neue 150-km-Aufgabe mit eigener Rangliste (km, dann Flugdauer)", "Weekly-Task ohne Zeitlimit", "Startseite: Flugzähler in eigenen Zeilen, Hinweise gekürzt", "Flugdauer als HH:MM:SS", "Weekly-Task: GPS zeigt nächsten Wendepunkt und Distanz zum Goal, Flug endet im Goal", "Gesamte Flugstunden neben Pilotenanzahl; neue Flüge ohne Rangliste zählen mit", "Stärkere Thermik über hohen, exponierten Gipfeln"],
+    items: ["Multiplayer: knallige Schirmfarben, Track in Schirmfarbe", "Einstellungen bleiben pro Gerät gespeichert, Kartendeckkraft einstellbar", "Minimap mit automatischem Zoom auf Track und FAI-Sektoren, separat zoombar", "Weekly-Task: jede Woche neue 150-km-Aufgabe mit eigener Rangliste (km, dann Flugdauer)", "Weekly-Task ohne Zeitlimit", "Startseite: Flugzähler in eigenen Zeilen, Hinweise gekürzt", "Flugdauer als HH:MM:SS", "Weekly-Task: GPS zeigt nächsten Wendepunkt und Distanz zum Goal, Flug endet im Goal", "Gesamte Flugstunden neben Pilotenanzahl; neue Flüge ohne Rangliste zählen mit", "Stärkere Thermik über hohen, exponierten Gipfeln", "Weekly-Task: kein «Aufgabe abbrechen»-Knopf im Flug"],
   },
   {
     id: "2026-11-10c",
