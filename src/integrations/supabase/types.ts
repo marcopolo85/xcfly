@@ -17,18 +17,21 @@ export type Database = {
       flight_stats: {
         Row: {
           created_at: string
+          duration_s: number | null
           id: string
           mode: string
           site_name: string
         }
         Insert: {
           created_at?: string
+          duration_s?: number | null
           id?: string
           mode: string
           site_name: string
         }
         Update: {
           created_at?: string
+          duration_s?: number | null
           id?: string
           mode?: string
           site_name?: string
@@ -82,6 +85,15 @@ export type Database = {
       flight_summary: {
         Args: never
         Returns: {
+          flights_total: number
+          flights_unranked: number
+          pilots: number
+        }[]
+      }
+      flight_summary_with_hours: {
+        Args: never
+        Returns: {
+          flight_hours: number
           flights_total: number
           flights_unranked: number
           pilots: number

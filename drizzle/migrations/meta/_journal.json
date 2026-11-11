@@ -43,6 +43,13 @@
       "when": 1794419507138,
       "tag": "0005_allow_weekly_task_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794424941986,
+      "tag": "0006_flight_duration_totals",
+      "breakpoints": true
     }
   ]
 }
