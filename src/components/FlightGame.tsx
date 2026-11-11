@@ -39,6 +39,7 @@ import { mapOrigin, MERCATOR_EXTENT } from "@/game/swissMap";
 import { advanceTask, type TaskProgress } from "@/game/flyxcTask";
 import { taskFlownKm, WEEKLY_MODE } from "@/game/weeklyTask";
 import { flightAnchorFraction } from "@/hooks/recenterTransform";
+import { finishedFlightStats } from "@/game/flightStats";
 
 type Phase = "config" | "loading" | "flying" | "done" | "error";
 
@@ -287,7 +288,7 @@ export function FlightGame() {
         window.__lovableEvents?.track?.("project.flight_completed", { ...evProps(), reason: reason === "Gelandet" ? "landed" : "time_limit" });
         vario.current?.update(0);
         finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
-        void supabase.from("flight_stats").insert({ site_name: config.site.name, mode }).select("id").single()
+        void supabase.from("flight_stats").insert(finishedFlightStats(config.site.name, mode, sim.flightTime)).select("id").single()
           .then(({ data }) => { if (data) statsRow.current = (data as { id: string }).id; }, () => {});
         weeklyKm.current = config.weekly && taskRef.current ? taskFlownKm(taskRef.current, sim.x, sim.y) : 0;
         const sc = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]);
