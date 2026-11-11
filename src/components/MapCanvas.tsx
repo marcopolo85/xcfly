@@ -641,9 +641,8 @@ export function drawMiniMap(canvas: HTMLCanvasElement, sim: Sim, triangle: XcTri
     x0 = Math.min(x0, a.x - r); x1 = Math.max(x1, a.x + r); y0 = Math.min(y0, a.y - r); y1 = Math.max(y1, a.y + r);
     for (const sec of sectors) { const R = sec.maxP * 0.5; const c = triangle; for (const v of [c.a, c.b, c.c]) { x0 = Math.min(x0, v.x - R * 0.3); x1 = Math.max(x1, v.x + R * 0.3); y0 = Math.min(y0, v.y - R * 0.3); y1 = Math.max(y1, v.y + R * 0.3); } x0 = Math.min(x0, sec.lx); x1 = Math.max(x1, sec.lx); y0 = Math.min(y0, sec.ly); y1 = Math.max(y1, sec.ly); }
   }
-  const pad = 12, span = Math.max(500, x1 - x0, (y1 - y0) * (W / H));
-  const base = (W - 2 * pad) / span * Math.min(1, (H - 2 * pad) / ((W - 2 * pad) / span * Math.max(1, y1 - y0)) || 1);
-  const fit = Math.min((W - 2 * pad) / Math.max(500, x1 - x0), (H - 2 * pad) / Math.max(500, y1 - y0)) || base;
+  const pad = 12;
+  const fit = Math.min((W - 2 * pad) / Math.max(500, x1 - x0), (H - 2 * pad) / Math.max(500, y1 - y0));
   const z = fit * view.k, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
   const sx = (x: number) => W / 2 + (x - mx) * z + view.x, sy = (y: number) => H / 2 - (y - my) * z + view.y;
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
