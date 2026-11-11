@@ -15,6 +15,20 @@ import { GLIDE_BOUNDARY_RAYS, traceGlideBoundary } from "@/game/glideBoundary";
 
 const glideBoundaryPoints = new Float64Array(GLIDE_BOUNDARY_RAYS * 2);
 
+/** Bright, well-separated colours for other live pilots (wing and track share it). */
+export const PILOT_COLORS = ["#4ade80", "#38bdf8", "#ef4444", "#f97316", "#a3e635", "#ffffff", "#cbd5e1"];
+export function pilotColor(id: string) { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0; return PILOT_COLORS[Math.abs(h) % PILOT_COLORS.length]; }
+const tintedWings = new Map<string, HTMLCanvasElement>();
+function tintedWing(wing: HTMLImageElement, color: string) {
+  let c = tintedWings.get(color);
+  if (c) return c;
+  c = document.createElement("canvas"); c.width = wing.naturalWidth; c.height = wing.naturalHeight;
+  const g = c.getContext("2d")!;
+  g.drawImage(wing, 0, 0); g.globalCompositeOperation = "source-atop"; g.globalAlpha = 0.8; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
+  tintedWings.set(color, c);
+  return c;
+}
+
 let wingImage: HTMLImageElement | null = null;
 function getWingImage() {
   if (!wingImage) {
@@ -130,7 +144,7 @@ export interface SceneData {
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
-  others?: { x: number; y: number; alt: number; heading: number; name: string; trail?: { x: number; y: number }[] | undefined }[] | undefined;
+  others?: { x: number; y: number; alt: number; heading: number; name: string; color?: string; trail?: { x: number; y: number }[] | undefined }[] | undefined;
   task?: { local: { x: number; y: number }[]; next: number; radius: number } | null;
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
@@ -550,10 +564,11 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.font = "bold 11px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.save();
-    ctx.strokeStyle = "rgba(56,189,248,0.55)"; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.globalAlpha = 0.75;
     for (const o of s.others) {
       const t = o.trail;
       if (!t || t.length < 1) continue;
+      ctx.strokeStyle = o.color ?? "#38bdf8";
       ctx.beginPath();
       ctx.moveTo(sx(t[0].x), sy(t[0].y));
       for (let i = 1; i < t.length; i++) ctx.lineTo(sx(t[i].x), sy(t[i].y));
@@ -570,16 +585,14 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
       ctx.rotate(o.heading);
       if (wing) {
         const w = 36, h = (w * wing.naturalHeight) / wing.naturalWidth;
-        ctx.filter = "hue-rotate(180deg) saturate(1.6)";
-        ctx.drawImage(wing, -w / 2, -h / 2, w, h);
-        ctx.filter = "none";
+        if (wing.complete && wing.naturalWidth) ctx.drawImage(tintedWing(wing, o.color ?? "#38bdf8"), -w / 2, -h / 2, w, h);
       }
       ctx.restore();
       const label = `${o.name} · ${Math.round(o.alt)} m`;
       const tw = ctx.measureText(label).width + 10;
       ctx.fillStyle = "rgba(0,40,60,0.85)";
       ctx.beginPath(); ctx.roundRect(-tw / 2, -38, tw, 17, 4); ctx.fill();
-      ctx.fillStyle = "#7ff3ff";
+      ctx.fillStyle = o.color ?? "#7ff3ff";
       ctx.fillText(label, 0, -25.5);
       ctx.restore();
     }
@@ -608,3 +621,36 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
 export const MapCanvas = forwardRef<HTMLCanvasElement>(function MapCanvas(_, ref) {
   return <canvas ref={ref} aria-label="Zoombare Schweizer Flugkarte" className="absolute inset-0 h-full w-full cursor-grab touch-none active:cursor-grabbing" />;
 });
+
+/** Overview minimap: auto-fits track, triangle and FAI sectors; `view` is the user's extra zoom/pan on top. */
+export function drawMiniMap(canvas: HTMLCanvasElement, sim: Sim, triangle: XcTriangle | null, view: ZoomTransform) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const css = getComputedStyle(canvas);
+  ctx.fillStyle = css.getPropertyValue("--card").trim() || "#111"; ctx.fillRect(0, 0, W, H);
+  let x0 = Math.min(0, sim.x), x1 = Math.max(0, sim.x), y0 = Math.min(0, sim.y), y1 = Math.max(0, sim.y);
+  for (let i = 0; i < sim.trackX.length; i++) { const x = sim.trackX[i], y = sim.trackY[i]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  let sectors: Sector[] = [];
+  if (triangle) {
+    sectors = [faiSector(triangle.b, triangle.c, triangle.a), faiSector(triangle.c, triangle.a, triangle.b), faiSector(triangle.a, triangle.b, triangle.c)];
+    const r = CLOSING_RATIO * triangle.perimeter, a = triangle.a;
+    x0 = Math.min(x0, a.x - r); x1 = Math.max(x1, a.x + r); y0 = Math.min(y0, a.y - r); y1 = Math.max(y1, a.y + r);
+    for (const sec of sectors) { const R = sec.maxP * 0.5; const c = triangle; for (const v of [c.a, c.b, c.c]) { x0 = Math.min(x0, v.x - R * 0.3); x1 = Math.max(x1, v.x + R * 0.3); y0 = Math.min(y0, v.y - R * 0.3); y1 = Math.max(y1, v.y + R * 0.3); } x0 = Math.min(x0, sec.lx); x1 = Math.max(x1, sec.lx); y0 = Math.min(y0, sec.ly); y1 = Math.max(y1, sec.ly); }
+  }
+  const pad = 12;
+  const fit = Math.min((W - 2 * pad) / Math.max(500, x1 - x0), (H - 2 * pad) / Math.max(500, y1 - y0));
+  const z = fit * view.k, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+  const sx = (x: number) => W / 2 + (x - mx) * z + view.x, sy = (y: number) => H / 2 - (y - my) * z + view.y;
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  if (triangle) drawTriangle(ctx, triangle, sx, sy, z);
+  ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#fc0"; ctx.lineWidth = 2; ctx.lineJoin = "round";
+  ctx.beginPath(); ctx.moveTo(sx(0), sy(0));
+  for (let i = 0; i < sim.trackX.length; i++) ctx.lineTo(sx(sim.trackX[i]), sy(sim.trackY[i]));
+  ctx.lineTo(sx(sim.x), sy(sim.y)); ctx.stroke();
+  ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.arc(sx(sim.x), sy(sim.y), 4, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}

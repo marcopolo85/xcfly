@@ -24,6 +24,7 @@ import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
 import { MobileZoomSlider } from "./MobileZoomSlider";
+import { drawMiniMap, pilotColor } from "./MapCanvas";
 import { FlightSettings } from "./FlightSettings";
 import { DEFAULT_SIM_PREFS, loadSimPrefs, flightZoomTarget, type FlightZoomState, type SimPrefs } from "@/game/simPrefs";
 import { SideProfile, drawSideProfile } from "./SideProfile";
@@ -66,6 +67,11 @@ export function FlightGame() {
   const mapZoomChange = useRef(mapZoom.change);
   const profileZoom = useCanvasZoom(0.5, 6, phase !== "config" && hud !== null);
   const { canvasRef } = mapZoom;
+  const [showMini, setShowMini] = useState(false);
+  const showMiniRef = useRef(false);
+  showMiniRef.current = showMini;
+  const [zoomTarget, setZoomTarget] = useState<"main" | "mini">("main");
+  const miniZoom = useCanvasZoom(0.3, 20, phase !== "config" && showMini);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -151,7 +157,7 @@ export function FlightGame() {
     return [...remotes.current.values()].map((p) => {
       if (p.px === undefined) { const l = toLocal(site, p.lat, p.lon); p.px = l.x; p.py = l.y; }
       advanceRemote(p, now, dtS);
-      return { x: p.dx!, y: p.dy!, alt: p.da!, heading: p.dh!, name: p.name, trail: p.trail };
+      return { x: p.dx!, y: p.dy!, alt: p.da!, heading: p.dh!, name: p.name, color: pilotColor(p.id), trail: p.trail };
     });
   };
 
@@ -330,6 +336,7 @@ export function FlightGame() {
         const tk = taskRef.current;
         if (tk && advanceTask(tk, sim.x, sim.y)) setTaskInfo({ next: tk.next, total: tk.local.length });
         if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
+        if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, sim, triangle, miniZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
@@ -446,12 +453,14 @@ export function FlightGame() {
 
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
-      <MapCanvas ref={canvasRef} />
+      <div className="contents" onPointerDown={() => setZoomTarget("main")}><MapCanvas ref={canvasRef} /></div>
+      {phase === "flying" && showMini && <div onPointerDown={() => setZoomTarget("mini")} className={`absolute left-3 top-14 z-20 h-40 w-40 overflow-hidden rounded-md border-2 bg-card/95 sm:top-20 sm:h-56 sm:w-56 ${zoomTarget === "mini" ? "border-primary" : "border-border"}`}><canvas ref={miniZoom.canvasRef} aria-label="Minimap" className="h-full w-full touch-none" /></div>}
       {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
       {phase === "flying" && boss && <button aria-label="Fortsetzen" onClick={() => { setBoss(false); setPaused(false); }} className="fixed inset-0 z-[100] cursor-default bg-background"><img src={bossSheet} alt="" className="h-full w-full object-cover object-left-top" /></button>}
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
       {phase === "flying" && <div className="absolute right-[6.25rem] top-3 z-20 flex gap-1.5">
         {taskInfo && <button onClick={() => { taskRef.current = null; setTaskInfo(null); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Aufgabe abbrechen{taskInfo.next < taskInfo.total ? ` (${taskInfo.next}/${taskInfo.total - 1})` : " ✓"}</button>}
+        <button aria-pressed={showMini} onClick={() => { setShowMini((v) => !v); setZoomTarget("main"); miniZoom.reset(); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Minimap</button>
         <button onClick={() => { taskRef.current = { local: [{ x: 0, y: 0 }, { x: 0, y: 0 }], next: 1, radius: 400 }; setTaskInfo({ next: 1, total: 2 }); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Navigiere zum SP</button>
         <button onClick={() => { if (config) start(config); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Neustart</button>
         <button onClick={() => { setRunId(0); setPhase("config"); }} className="h-9 rounded-md border border-border bg-card/95 px-2 text-xs font-bold text-foreground backdrop-blur-md active:bg-accent">Menü</button>
@@ -480,7 +489,7 @@ export function FlightGame() {
           <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
         </section>}
         <FlightHUD d={hud} />
-        <MobileZoomSlider scaleBy={mapZoom.scaleBy} scale={mapZoom.scale} active={phase === "flying" && !paused && !settingsOpen} />
+        <MobileZoomSlider scaleBy={zoomTarget === "mini" && showMini ? miniZoom.scaleBy : mapZoom.scaleBy} scale={zoomTarget === "mini" && showMini ? miniZoom.scale : mapZoom.scale} active={phase === "flying" && !paused && !settingsOpen} />
       </div>}
       <div className="absolute inset-x-2 bottom-3 flex gap-2 sm:not-pointer-coarse:hidden">
         <button className="ctrl-btn h-16 flex-1 text-2xl" {...hold("left")}>←</button>
