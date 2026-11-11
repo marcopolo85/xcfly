@@ -106,7 +106,25 @@ export function FlightGame() {
   const [simPrefs, setSimPrefs] = useState<SimPrefs>(DEFAULT_SIM_PREFS);
   const simPrefsRef = useRef(simPrefs);
   simPrefsRef.current = simPrefs;
-  useEffect(() => { setSimPrefs(loadSimPrefs()); }, []);
+  const [mapOpacity, setMapOpacity] = useState(1);
+  const mapOpacityRef = useRef(1);
+  mapOpacityRef.current = mapOpacity;
+  const viewLoaded = useRef(false);
+  useEffect(() => {
+    setSimPrefs(loadSimPrefs());
+    try {
+      const v = JSON.parse(localStorage.getItem("viewPrefs") ?? "{}") as Record<string, unknown>;
+      const num = (x: unknown, d: number) => (typeof x === "number" && isFinite(x) ? Math.min(1, Math.max(0, x)) : d);
+      const bool = (x: unknown, d: boolean) => (typeof x === "boolean" ? x : d);
+      setThermalOpacity(num(v.thermalOpacity, 0.3)); setMapOpacity(num(v.mapOpacity, 1));
+      setShowProfile(bool(v.showProfile, false)); setShowAirspaces(bool(v.showAirspaces, false));
+      setShowAirspaceLabels(bool(v.showAirspaceLabels, true)); setShowMini(bool(v.showMini, false));
+    } catch { /* defaults */ }
+    viewLoaded.current = true;
+  }, []);
+  useEffect(() => {
+    if (viewLoaded.current) localStorage.setItem("viewPrefs", JSON.stringify({ thermalOpacity, mapOpacity, showProfile, showAirspaces, showAirspaceLabels, showMini }));
+  }, [thermalOpacity, mapOpacity, showProfile, showAirspaces, showAirspaceLabels, showMini]);
   const updateSimPrefs = (p: SimPrefs) => { setSimPrefs(p); localStorage.setItem("simPrefs", JSON.stringify(p)); };
   const vario = useRef<AudioVario | null>(null);
   const [paused, setPaused] = useState(false);
@@ -335,8 +353,8 @@ export function FlightGame() {
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
         const tk = taskRef.current;
         if (tk && advanceTask(tk, sim.x, sim.y)) setTaskInfo({ next: tk.next, total: tk.local.length });
-        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
-        if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, config.site, sim, triangle, miniZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current, mapAlpha: mapOpacityRef.current }, mapZoom.transform.current);
+        if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, config.site, sim, triangle, miniZoom.transform.current, mapOpacityRef.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
@@ -455,7 +473,7 @@ export function FlightGame() {
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <div className="contents" onPointerDown={() => setZoomTarget("main")}><MapCanvas ref={canvasRef} /></div>
       {phase === "flying" && showMini && <div onPointerDown={() => setZoomTarget("mini")} className={`absolute bottom-[94px] left-2 z-20 h-32 w-32 overflow-hidden rounded-md border-2 bg-card/95 sm:h-56 sm:w-56 sm:not-pointer-coarse:bottom-3 sm:not-pointer-coarse:left-3 ${zoomTarget === "mini" ? "border-primary" : "border-border"}`}><canvas ref={miniZoom.canvasRef} aria-label="Minimap" className="h-full w-full touch-none" /></div>}
-      {config && <FlightSettings thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
+      {config && <FlightSettings mapOpacity={mapOpacity} onMapOpacity={setMapOpacity} thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
       {phase === "flying" && boss && <button aria-label="Fortsetzen" onClick={() => { setBoss(false); setPaused(false); }} className="fixed inset-0 z-[100] cursor-default bg-background"><img src={bossSheet} alt="" className="h-full w-full object-cover object-left-top" /></button>}
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
       {phase === "flying" && <div className="absolute right-[6.25rem] top-3 z-20 flex gap-1.5">

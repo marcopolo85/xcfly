@@ -3,7 +3,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
     id: "2026-11-11a",
     date: "11. Nov 2026",
-    items: ["Multiplayer: knallige Schirmfarben, Track in Schirmfarbe", "Minimap mit automatischem Zoom auf Track und FAI-Sektoren, separat zoombar"],
+    items: ["Multiplayer: knallige Schirmfarben, Track in Schirmfarbe", "Einstellungen bleiben pro Gerät gespeichert, Kartendeckkraft einstellbar", "Minimap mit automatischem Zoom auf Track und FAI-Sektoren, separat zoombar"],
   },
   {
     id: "2026-11-10c",

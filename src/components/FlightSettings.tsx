@@ -27,7 +27,9 @@ function PrefSlider({ label, unit, value, min, max, step, onChange }: { label: s
   );
 }
 
-export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange, simPrefs, onSimPrefs }: {
+export const FlightSettings = memo(function FlightSettings({ mapOpacity, onMapOpacity, thermalOpacity, onThermalOpacity, showProfile, onShowProfile, showAirspaces, onShowAirspaces, showAirspaceLabels, onShowAirspaceLabels, open, onOpenChange, simPrefs, onSimPrefs }: {
+  mapOpacity: number;
+  onMapOpacity: (v: number) => void;
   simPrefs: SimPrefs;
   onSimPrefs: (p: SimPrefs) => void;
   thermalOpacity: number;
@@ -70,6 +72,7 @@ export const FlightSettings = memo(function FlightSettings({ thermalOpacity, onT
                   </button>
                 ))}
               </div>
+              <PrefSlider label="Deckkraft" unit=" %" value={Math.round(mapOpacity * 100)} min={10} max={100} step={5} onChange={(v) => onMapOpacity(v / 100)} />
             </Section>
             <Section title="Simulation">
               <PrefSlider label="Tempo normal" unit="×" value={simPrefs.normalSpeed} min={1} max={5} step={1} onChange={(v) => onSimPrefs({ ...simPrefs, normalSpeed: v })} />
