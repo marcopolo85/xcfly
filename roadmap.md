@@ -1,4 +1,5 @@
 # Aufgaben
+- [x] Flugstunden neben Piloten anzeigen; Dauer neuer Flüge ohne Rangliste speichern. Zehn Tests bestanden; echte Statistik und temporärer 1-h-Flug samt Anzeige und Entfernung geprüft, Handy ohne horizontalen Überlauf.
 - [x] Thermikmodus: Long-Press-Boost ×20 beschleunigt Steigen und Flugzeit; normale Drehung und horizontale Bewegung erhalten den kleinen Kurvenradius. 21 Engine-Tests und echter Flug mit sechs Sekunden Langhalten ohne Seitenfehler geprüft.
 - [x] Mobiler proportionaler Zoomschieber rechts neben Vario: unten hinein, oben heraus, Loslassen zentriert und stoppt; echter Handyflug mit 100→139→110 % geprüft, Desktop-Steuerung unverändert, sieben Tests bestanden.
 - [x] Gleitschirm dreht im Thermikmodus sichtbar mit maximal 1 Umdrehung pro Sekunde (Steigwert und Kurvenradius gleich); im Browser bei 0,5-s-Abständen ~200° pro Aufnahme gemessen statt 2560°/s Physikdrehung, 116 Tests bestanden.

@@ -20,17 +20,18 @@ import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTas
 import { loadLaunchAltitude } from "@/game/realTerrain";
 import { selectedLaunch } from "@/game/launchSelection";
 import { weeklyTask } from "@/game/weeklyTask";
+import { formatFlightHours } from "@/game/flightStats";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined; task?: FlightTask | undefined; weekly?: boolean | undefined }
 
 function FlightStats() {
-  const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number } | null>(null);
+  const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number; hours: number } | null>(null);
   useEffect(() => {
     let cancelled = false;
-    supabase.rpc("flight_summary").then(({ data, error }) => {
+    supabase.rpc("flight_summary_with_hours").then(({ data, error }) => {
       if (cancelled || error || !data) return;
       const row = Array.isArray(data) ? data[0] : data;
-      if (row) setStats({ total: Number(row.flights_total), unranked: Number(row.flights_unranked), pilots: Number(row.pilots) });
+      if (row) setStats({ total: Number(row.flights_total), unranked: Number(row.flights_unranked), pilots: Number(row.pilots), hours: Number(row.flight_hours) });
     });
     return () => { cancelled = true; };
   }, []);
@@ -38,7 +39,7 @@ function FlightStats() {
   return (
     <div className="text-center text-[10px] leading-tight text-muted-foreground">
       <p>Total: {stats.total} · in RL: {stats.total - stats.unranked} · ohne RL: {stats.unranked}</p>
-      <p>Piloten: {stats.pilots}</p>
+      <p>Piloten: {stats.pilots} · Flugstunden: {formatFlightHours(stats.hours)} h</p>
     </div>
   );
 }
