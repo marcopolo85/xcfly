@@ -622,6 +622,7 @@ export const MapCanvas = forwardRef<HTMLCanvasElement>(function MapCanvas(_, ref
   return <canvas ref={ref} aria-label="Zoombare Schweizer Flugkarte" className="absolute inset-0 h-full w-full cursor-grab touch-none active:cursor-grabbing" />;
 });
 
+const miniFit = new WeakMap<HTMLCanvasElement, { fit: number; mx: number; my: number; t: number }>();
 /** Overview minimap: auto-fits track, triangle and FAI sectors; `view` is the user's extra zoom/pan on top. */
 export function drawMiniMap(canvas: HTMLCanvasElement, site: Site, sim: Sim, triangle: XcTriangle | null, view: ZoomTransform) {
   const dpr = window.devicePixelRatio || 1;
@@ -643,7 +644,17 @@ export function drawMiniMap(canvas: HTMLCanvasElement, site: Site, sim: Sim, tri
   }
   const pad = 12;
   const fit = Math.min((W - 2 * pad) / Math.max(500, x1 - x0), (H - 2 * pad) / Math.max(500, y1 - y0));
-  const z = fit * view.k, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+  // ease the auto-fit towards its target so the minimap zoom glides instead of jumping
+  const tgt = { fit, mx: (x0 + x1) / 2, my: (y0 + y1) / 2 };
+  const prev = miniFit.get(canvas);
+  const now = performance.now();
+  let cur = tgt;
+  if (prev) {
+    const a = 1 - Math.exp(-Math.min(0.1, (now - prev.t) / 1000) * 2.5);
+    cur = { fit: Math.exp(Math.log(prev.fit) + (Math.log(tgt.fit) - Math.log(prev.fit)) * a), mx: prev.mx + (tgt.mx - prev.mx) * a, my: prev.my + (tgt.my - prev.my) * a };
+  }
+  miniFit.set(canvas, { ...cur, t: now });
+  const z = cur.fit * view.k, mx = cur.mx, my = cur.my;
   const sx = (x: number) => W / 2 + (x - mx) * z + view.x, sy = (y: number) => H / 2 - (y - my) * z + view.y;
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
   ctx.imageSmoothingEnabled = true;
