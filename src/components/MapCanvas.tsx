@@ -623,7 +623,7 @@ export const MapCanvas = forwardRef<HTMLCanvasElement>(function MapCanvas(_, ref
 });
 
 /** Overview minimap: auto-fits track, triangle and FAI sectors; `view` is the user's extra zoom/pan on top. */
-export function drawMiniMap(canvas: HTMLCanvasElement, sim: Sim, triangle: XcTriangle | null, view: ZoomTransform) {
+export function drawMiniMap(canvas: HTMLCanvasElement, site: Site, sim: Sim, triangle: XcTriangle | null, view: ZoomTransform) {
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
@@ -646,6 +646,8 @@ export function drawMiniMap(canvas: HTMLCanvasElement, sim: Sim, triangle: XcTri
   const z = fit * view.k, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
   const sx = (x: number) => W / 2 + (x - mx) * z + view.x, sy = (y: number) => H / 2 - (y - my) * z + view.y;
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();
+  ctx.imageSmoothingEnabled = true;
+  drawSwissRelief(ctx, site, mx - view.x / z, my + (H / 2 + view.y - H * 0.55) / z, W, H, z, dpr);
   if (triangle) drawTriangle(ctx, triangle, sx, sy, z);
   ctx.strokeStyle = css.getPropertyValue("--primary").trim() || "#fc0"; ctx.lineWidth = 2; ctx.lineJoin = "round";
   ctx.beginPath(); ctx.moveTo(sx(0), sy(0));

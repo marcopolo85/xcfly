@@ -336,7 +336,7 @@ export function FlightGame() {
         const tk = taskRef.current;
         if (tk && advanceTask(tk, sim.x, sim.y)) setTaskInfo({ next: tk.next, total: tk.local.length });
         if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current }, mapZoom.transform.current);
-        if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, sim, triangle, miniZoom.transform.current);
+        if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, config.site, sim, triangle, miniZoom.transform.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 
         const xc = sim.xcDist;
