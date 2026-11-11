@@ -356,7 +356,10 @@ export function FlightGame() {
         if (now - lastTri > 1000) { lastTri = now; triangle = bestTriangle(sim.trackX, sim.trackY, { x: sim.x, y: sim.y }); xcType = xcScore([...sim.trackX, sim.x], [...sim.trackY, sim.y]).type; }
         const dusk = Math.max(0, Math.min(1, (0.12 - sp.el) / 0.2));
         const tk = taskRef.current;
-        if (tk && advanceTask(tk, sim.x, sim.y)) setTaskInfo({ next: tk.next, total: tk.local.length });
+        if (tk && advanceTask(tk, sim.x, sim.y)) {
+          setTaskInfo({ next: tk.next, total: tk.local.length });
+          if (config.weekly && tk.next >= tk.local.length) { finish("Goal erreicht!"); return; }
+        }
         if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current, mapAlpha: mapOpacityRef.current }, mapZoom.transform.current);
         if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, config.site, sim, triangle, miniZoom.transform.current, mapOpacityRef.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
@@ -371,6 +374,10 @@ export function FlightGame() {
             tri: triangle ? triangle.perimeter : 0, triFai: triangle?.fai ?? false,
             triMin: triangle ? faiRange(triangle).min : 0, triMax: triangle ? faiRange(triangle).max : 0,
             close: triangle ? closingGap(triangle) : 0,
+            task: config.weekly && tk && tk.next < tk.local.length ? (() => {
+              const n = tk.local[tk.next], g = tk.local[tk.local.length - 1];
+              return { nextName: tk.next === tk.local.length - 1 ? "Goal" : `TP ${tk.next}`, nextDist: Math.hypot(n.x - sim.x, n.y - sim.y), goalDist: Math.hypot(g.x - sim.x, g.y - sim.y) };
+            })() : undefined,
             remain: flightTimeLimit(mode, config.weekly) === undefined ? undefined : Math.max(0, XC_TIME_LIMIT_S - sim.flightTime),
             clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
