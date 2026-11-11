@@ -4,7 +4,7 @@ export interface HudData {
   xc: number; xcSpeed: number; xcType?: "free" | "tri" | "fai";
   tri: number; triFai: boolean; triMin: number; triMax: number; close: number;
   clock: string; accel: boolean; cloudbase: number;
-  remain?: number | undefined; outDist?: number | undefined; returnRadius?: number | undefined;
+  remain?: number | undefined; task?: { nextName: string; nextDist: number; goalDist: number } | undefined; outDist?: number | undefined; returnRadius?: number | undefined;
 }
 
 function Cell({ label, value, unit, cls = "" }: { label: string; value: string; unit?: string; cls?: string }) {
@@ -18,7 +18,8 @@ function Cell({ label, value, unit, cls = "" }: { label: string; value: string; 
 
 const vzCls = (v: number) => (v > 0.1 ? "text-climb" : v < -1.5 ? "text-sink" : "");
 const fmtVz = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
-const fmtTime = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+const p2 = (n: number) => String(Math.floor(n)).padStart(2, "0");
+export const fmtTime = (t: number) => `${p2(t / 3600)}:${p2((t % 3600) / 60)}:${p2(t % 60)}`;
 const fmtCountdown = (t: number) => `${Math.floor(t / 3600)}:${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 const XC_CLS = { free: "text-route-free", tri: "text-route-tri-light", fai: "text-route-fai-light" } as const;
@@ -51,9 +52,15 @@ export function FlightHUD({ d }: { d: HudData }) {
         <Cell label="XC GESCHW." value={d.xcSpeed.toFixed(1)} unit="km/h" />
         <Cell label="XC KM" value={(d.xc / 1000).toFixed(1)} unit="km" cls={XC_CLS[d.xcType ?? "free"]} />
         <Cell label="UNFINISHED" value={(d.tri / 1000).toFixed(1)} unit="km" cls={routeCls} />
+        {d.task ? (<>
+        <Cell label="NEXT TP" value={d.task.nextName} />
+        <Cell label="DIST TP" value={(d.task.nextDist / 1000).toFixed(1)} unit="km" />
+        <Cell label="DIST GOAL" value={(d.task.goalDist / 1000).toFixed(1)} unit="km" cls="text-sun" />
+        </>) : (<>
         <Cell label="MIN FAI" value={d.triMin > 0 && isFinite(d.triMin) ? (d.triMin / 1000).toFixed(1) : "–"} unit={d.triMin > 0 && isFinite(d.triMin) ? "km" : ""} />
         <Cell label="MAX FAI" value={d.triMax > 0 && isFinite(d.triMax) ? (d.triMax / 1000).toFixed(1) : "–"} unit={d.triMax > 0 && isFinite(d.triMax) ? "km" : ""} />
         <Cell label="CLOSE" value={d.close > 0 ? (d.close / 1000).toFixed(1) : "0.0"} unit="km" cls={d.close > 0 ? "text-sun" : "text-climb"} />
+        </>)}
         <Cell label="FLUGDAUER" value={fmtTime(d.time)} />
         <Cell label="RESTZEIT" value={d.remain !== undefined ? fmtCountdown(d.remain) : "–"} cls={d.remain !== undefined && d.remain < 600 ? "text-sink" : ""} />
         <Cell label="WOLKENBASIS" value={d.cloudbase.toFixed(0)} unit="m" />

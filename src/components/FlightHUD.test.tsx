@@ -29,4 +29,14 @@ describe("FlightHUD rest time", () => {
     render(<FlightHUD d={base} />);
     expect(screen.getByText("RESTZEIT").nextSibling?.textContent).toBe("–");
   });
+  it("shows flight time as HH:MM:SS", () => {
+    render(<FlightHUD d={{ ...base, time: 3725 }} />);
+    expect(screen.getByText("01:02:05")).toBeInTheDocument();
+  });
+  it("replaces FAI fields with task fields in weekly task", () => {
+    render(<FlightHUD d={{ ...base, task: { nextName: "TP 2", nextDist: 12300, goalDist: 45600 } }} />);
+    expect(screen.queryByText("MIN FAI")).toBeNull();
+    expect(screen.getByText("TP 2")).toBeInTheDocument();
+    expect(screen.getByText("45.6")).toBeInTheDocument();
+  });
 });
