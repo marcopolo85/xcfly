@@ -110,10 +110,14 @@ export function FlightGame() {
   const mapOpacityRef = useRef(1);
   mapOpacityRef.current = mapOpacity;
   const viewLoaded = useRef(false);
+  // declared before the loader so its first run (still defaults) is skipped
+  useEffect(() => {
+    if (viewLoaded.current) localStorage.setItem("viewPrefs", JSON.stringify({ thermalOpacity, mapOpacity, showProfile, showAirspaces, showAirspaceLabels, showMini }));
+  }, [thermalOpacity, mapOpacity, showProfile, showAirspaces, showAirspaceLabels, showMini]);
   useEffect(() => {
     setSimPrefs(loadSimPrefs());
     try {
-      const v = JSON.parse(localStorage.getItem("viewPrefs") ?? "{}") as Record<string, unknown>;
+      const v = JSON.parse(localStorage.getItem("viewPrefs") ?? "{}") as Partial<Record<"thermalOpacity" | "mapOpacity" | "showProfile" | "showAirspaces" | "showAirspaceLabels" | "showMini", unknown>>;
       const num = (x: unknown, d: number) => (typeof x === "number" && isFinite(x) ? Math.min(1, Math.max(0, x)) : d);
       const bool = (x: unknown, d: boolean) => (typeof x === "boolean" ? x : d);
       setThermalOpacity(num(v.thermalOpacity, 0.3)); setMapOpacity(num(v.mapOpacity, 1));
@@ -122,9 +126,6 @@ export function FlightGame() {
     } catch { /* defaults */ }
     viewLoaded.current = true;
   }, []);
-  useEffect(() => {
-    if (viewLoaded.current) localStorage.setItem("viewPrefs", JSON.stringify({ thermalOpacity, mapOpacity, showProfile, showAirspaces, showAirspaceLabels, showMini }));
-  }, [thermalOpacity, mapOpacity, showProfile, showAirspaces, showAirspaceLabels, showMini]);
   const updateSimPrefs = (p: SimPrefs) => { setSimPrefs(p); localStorage.setItem("simPrefs", JSON.stringify(p)); };
   const vario = useRef<AudioVario | null>(null);
   const [paused, setPaused] = useState(false);
