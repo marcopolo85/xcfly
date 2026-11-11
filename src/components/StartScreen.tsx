@@ -36,9 +36,10 @@ function FlightStats() {
   }, []);
   if (!stats) return null;
   return (
-    <p className="text-center text-[10px] text-muted-foreground">
-      {stats.total} {stats.total === 1 ? "Flug" : "Flüge"} · {stats.total - stats.unranked} in der Rangliste · {stats.total - stats.unranked === stats.total ? "keine" : stats.unranked} ohne Rangliste · {stats.pilots} {stats.pilots === 1 ? "Pilot" : "Piloten"}
-    </p>
+    <div className="text-center text-[10px] leading-tight text-muted-foreground">
+      <p>Total: {stats.total} · in RL: {stats.total - stats.unranked} · ohne RL: {stats.unranked}</p>
+      <p>Piloten: {stats.pilots}</p>
+    </div>
   );
 }
 
@@ -260,8 +261,6 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
           </button>
           <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname (Multiplayer)" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="min-w-0 flex-1 rounded-lg border border-border bg-background/80 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
-          <p className="text-center text-[10px] text-muted-foreground">Leeres Namensfeld = unsichtbar für andere Piloten (kein Multiplayer).</p>
-          {!site && <p className="text-center text-xs text-muted-foreground">Bitte einen Startplatz wählen</p>}
           <div className="grid grid-cols-3 gap-1.5">
             <div className="flex h-full flex-col justify-center rounded-md border border-border bg-card/60 p-2 text-[9px] leading-tight text-muted-foreground">
               <span className="hud-label mb-0.5">Quellen</span>
@@ -271,7 +270,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
               <span>Gelände: Terrarium DEM · © OSM</span>
             </div>
             <div className="flex h-full flex-col items-center justify-center gap-1 rounded-md border border-border bg-card/60 p-2 text-center">
-              <p className="text-[10px] leading-tight text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger · Ton an!</p>
+              <p className="text-[10px] leading-tight text-muted-foreground">← → drehen · Leertaste / ↑ Beschleuniger</p>
               <FlightStats />
             </div>
             <div className="flex h-full flex-col items-center justify-center gap-1 rounded-md border border-border bg-card/60 p-2 text-center">
