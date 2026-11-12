@@ -19,6 +19,7 @@ import { submitFlight } from "./Leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { trackToLatLng } from "@/game/swissMap";
+import { ghostAt, GHOST_STYLES, type Ghost } from "@/game/ghosts";
 import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
@@ -183,7 +184,23 @@ export function FlightGame() {
     });
   };
 
+  const ghosts = useRef<Ghost[]>([]);
+  const ghostList = (t: number) => ghosts.current.flatMap((g) => {
+    const p = ghostAt(g, t);
+    if (!p) return [];
+    const st = GHOST_STYLES[g.rank];
+    return [{ x: p.x, y: p.y, alt: NaN, heading: p.heading, name: `${st.medal} ${g.name}`, color: st.color, trail: [...g.pts.slice(0, p.index + 1)] }];
+  });
+
   const start = (c: FlightConfig) => {
+    ghosts.current = [];
+    if (c.mode === "xc" && !c.weekly) {
+      void supabase.from("leaderboard_entries").select("pilot_name,duration_s,track").eq("site_name", c.site.name).eq("mode", "xc").order("points", { ascending: false }).limit(3)
+        .then(({ data }) => {
+          ghosts.current = (data ?? []).flatMap((r, rank) => Array.isArray(r.track) && r.track.length >= 2
+            ? [{ name: r.pilot_name, rank, duration: r.duration_s, pts: (r.track as [number, number][]).map(([lat, lon]) => toLocal(c.site, lat, lon)) }] : []);
+        });
+    }
     if (!vario.current) vario.current = new AudioVario();
     vario.current.start();
     setConfig(c);
@@ -361,7 +378,7 @@ export function FlightGame() {
           setTaskInfo({ next: tk.next, total: tk.local.length });
           if (config.weekly && tk.next >= tk.local.length) { finish("Goal erreicht!"); return; }
         }
-        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: remoteList(config.site), airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current, mapAlpha: mapOpacityRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: [...ghostList(sim.flightTime), ...(remoteList(config.site) ?? [])], airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current, mapAlpha: mapOpacityRef.current }, mapZoom.transform.current);
         if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, config.site, sim, triangle, miniZoom.transform.current, mapOpacityRef.current);
         if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
 

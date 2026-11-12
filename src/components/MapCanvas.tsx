@@ -602,7 +602,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
         if (wing.complete && wing.naturalWidth) { const t = tintedWing(wing, o.color ?? "#38bdf8"), tw = (w * t.width) / wing.naturalWidth, th = (h * t.height) / wing.naturalHeight; ctx.drawImage(t, -tw / 2, -th / 2, tw, th); }
       }
       ctx.restore();
-      const label = `${o.name} · ${Math.round(o.alt)} m`;
+      const label = Number.isFinite(o.alt) ? `${o.name} · ${Math.round(o.alt)} m` : o.name;
       const tw = ctx.measureText(label).width + 10;
       ctx.fillStyle = "rgba(0,40,60,0.85)";
       ctx.beginPath(); ctx.roundRect(-tw / 2, -38, tw, 17, 4); ctx.fill();
