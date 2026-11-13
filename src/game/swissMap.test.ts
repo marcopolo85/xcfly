@@ -11,7 +11,7 @@ describe("trackToLatLng", () => {
   it("keeps the last track point even when thinning", () => {
     const site = { lat: 46.71, lon: 7.77 };
     const xs = [0, 1000, 2000, 3000, 4000], ys = [0, 500, 1000, 1500, 2000];
-    const track = trackToLatLng(site, xs, ys, 3);
+    const track = trackToLatLng(site, xs, ys, undefined, 3);
     expect(track.length).toBe(3);
     const [lastLat, lastLng] = track[track.length - 1];
     const origin = mapOrigin(site);
@@ -20,6 +20,16 @@ describe("trackToLatLng", () => {
     expect(track[0][0]).toBeCloseTo(site.lat, 4);
     expect(lastLat).toBeLessThan(90);
     expect(Math.abs(lastLng - site.lon)).toBeLessThan(1);
+  });
+  it("stores rounded altitude as third element when given", () => {
+    const site = { lat: 46.71, lon: 7.77 };
+    const track = trackToLatLng(site, [0, 1000], [0, 500], [1234.4, 1567.8]);
+    expect(track[0][2]).toBe(1234);
+    expect(track[1][2]).toBe(1568);
+  });
+  it("omits altitude for tracks without it", () => {
+    const site = { lat: 46.71, lon: 7.77 };
+    expect(trackToLatLng(site, [0], [0])[0].length).toBe(2);
   });
 });
 
