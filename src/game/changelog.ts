@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-13a",
+    date: "13. Nov 2026",
+    items: ["Ghost-Piloten zeigen ihre Höhe am Namensschild (bei neu gespeicherten Flügen)", "Medaillen-Schirme mit Metallic-Glanz; Gold und Bronze klarer unterscheidbar"],
+  },
+  {
     id: "2026-11-12a",
     date: "11. Nov 2026",
     items: ["Multiplayer: knallige Schirmfarben, Track in Schirmfarbe", "Einstellungen bleiben pro Gerät gespeichert, Kartendeckkraft einstellbar", "Minimap mit automatischem Zoom auf Track und FAI-Sektoren, separat zoombar", "Weekly-Task: jede Woche neue 150-km-Aufgabe mit eigener Rangliste (km, dann Flugdauer)", "Weekly-Task ohne Zeitlimit", "Startseite: Flugzähler in eigenen Zeilen, Hinweise gekürzt", "Flugdauer als HH:MM:SS", "Weekly-Task: GPS zeigt nächsten Wendepunkt und Distanz zum Goal, Flug endet im Goal", "Gesamte Flugstunden neben Pilotenanzahl; neue Flüge ohne Rangliste zählen mit", "Stärkere Thermik über hohen, exponierten Gipfeln", "Weekly-Task: kein «Aufgabe abbrechen»-Knopf im Flug", "XC: Top-3-Ghost-Piloten des Startplatzes mit Gold-/Silber-/Bronze-Medaille"],
