@@ -18,7 +18,7 @@ import { xcScore, XC_FACTORS, type RouteType } from "@/game/xcScore";
 import { submitFlight } from "./Leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
-import { trackToLatLng } from "@/game/swissMap";
+import { trackToLatLng, type TrackPoint } from "@/game/swissMap";
 import { ghostAt, GHOST_STYLES, type Ghost } from "@/game/ghosts";
 import { loadRealTerrain } from "@/game/realTerrain";
 import { AudioVario } from "@/game/audioVario";
@@ -58,7 +58,7 @@ export function FlightGame() {
   const [thermalProgress, setThermalProgress] = useState<ThermalProgress | null>(null);
   const [coverageStatus, setCoverageStatus] = useState<"ready" | "loading" | "error">("ready");
   const coverageRetry = useRef(false);
-  const finishedTrack = useRef<[number, number][]>([]);
+  const finishedTrack = useRef<TrackPoint[]>([]);
   const statsRow = useRef<string | null>(null);
   const [runId, setRunId] = useState(0);
   const taskRef = useRef<TaskProgress | null>(null);
@@ -189,7 +189,7 @@ export function FlightGame() {
     const p = ghostAt(g, t);
     if (!p) return [];
     const st = GHOST_STYLES[g.rank];
-    return [{ x: p.x, y: p.y, alt: NaN, heading: p.heading, name: `${st.medal} ${g.name}`, color: st.color, trail: [...g.pts.slice(0, p.index + 1)] }];
+    return [{ x: p.x, y: p.y, alt: p.alt, heading: p.heading, name: `${st.medal} ${g.name}`, color: st.color, trail: [...g.pts.slice(0, p.index + 1)] }];
   });
 
   const start = (c: FlightConfig) => {
@@ -198,7 +198,7 @@ export function FlightGame() {
       void supabase.from("leaderboard_entries").select("pilot_name,duration_s,track").eq("site_name", c.site.name).eq("mode", "xc").order("points", { ascending: false }).limit(3)
         .then(({ data }) => {
           ghosts.current = (data ?? []).flatMap((r, rank) => Array.isArray(r.track) && r.track.length >= 2
-            ? [{ name: r.pilot_name, rank, duration: r.duration_s, pts: (r.track as [number, number][]).map(([lat, lon]) => toLocal(c.site, lat, lon)) }] : []);
+            ? [{ name: r.pilot_name, rank, duration: r.duration_s, pts: (r.track as TrackPoint[]).map(([lat, lon, alt]) => ({ ...toLocal(c.site, lat, lon), alt: alt ?? NaN })) }] : []);
         });
     }
     if (!vario.current) vario.current = new AudioVario();
@@ -279,7 +279,7 @@ export function FlightGame() {
       const sim: Sim = {
         x: 0, y: 0, alt: heightAt(terrain, 0, 0) + 40, heading: Math.atan2(-g.gx, -g.gy),
         vz: 0, airLift: 0, speed: 10, distance: 0, flightTime: 0, clock: config.startHour,
-        trackX: [], trackY: [], xcDist: 0, landed: false,
+        trackX: [], trackY: [], trackAlt: [], xcDist: 0, landed: false,
         maxAlt: 0, climbTotal: 0, thermals: 0, circles: 0, turnAcc: 0, inLift: false,
       };
       const trail: { x: number; y: number; vz: number }[] = [];
@@ -304,7 +304,7 @@ export function FlightGame() {
         window.removeEventListener("pagehide", onAbort);
         window.__lovableEvents?.track?.("project.flight_completed", { ...evProps(), reason: reason === "Gelandet" ? "landed" : "time_limit" });
         vario.current?.update(0);
-        finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY);
+        finishedTrack.current = trackToLatLng(config.site, sim.trackX, sim.trackY, sim.trackAlt);
         void supabase.from("flight_stats").insert(finishedFlightStats(config.site.name, mode, sim.flightTime)).select("id").single()
           .then(({ data }) => { if (data) statsRow.current = (data as { id: string }).id; }, () => {});
         weeklyKm.current = config.weekly && taskRef.current ? taskFlownKm(taskRef.current, sim.x, sim.y) : 0;
