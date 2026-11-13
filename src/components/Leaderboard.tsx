@@ -51,7 +51,7 @@ export async function submitFlight(pilot: string, site: string, distanceKm: numb
     points: Math.round(points * 100) / 100,
     route_type: routeType,
     duration_s: Math.round(durationS),
-    track,
+    track: track as unknown as Json[],
   });
   return error ? error.message : null;
 }
