@@ -166,7 +166,7 @@ export interface SceneData {
   airspaces?: Airspace[] | null;
   airspaceLabels?: boolean; // toggle for airspace edge labels, independent of the airspace fill
   glideVz?: number; // same smoothed vertical speed displayed by the GPS
-  others?: { x: number; y: number; alt: number; heading: number; name: string; color?: string; trail?: { x: number; y: number }[] | undefined }[] | undefined;
+  others?: { x: number; y: number; alt: number; heading: number; name: string; color?: string; metallic?: boolean; trail?: { x: number; y: number }[] | undefined }[] | undefined;
   task?: { local: { x: number; y: number }[]; next: number; radius: number } | null;
   mapAlpha?: number; // relief map opacity 0..1
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
@@ -610,7 +610,7 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
       ctx.rotate(o.heading);
       if (wing) {
         const w = 36, h = (w * wing.naturalHeight) / wing.naturalWidth;
-        if (wing.complete && wing.naturalWidth) { const t = tintedWing(wing, o.color ?? "#38bdf8"), tw = (w * t.width) / wing.naturalWidth, th = (h * t.height) / wing.naturalHeight; ctx.drawImage(t, -tw / 2, -th / 2, tw, th); }
+        if (wing.complete && wing.naturalWidth) { const t = tintedWing(wing, o.color ?? "#38bdf8", o.metallic === true), tw = (w * t.width) / wing.naturalWidth, th = (h * t.height) / wing.naturalHeight; ctx.drawImage(t, -tw / 2, -th / 2, tw, th); }
       }
       ctx.restore();
       const label = Number.isFinite(o.alt) ? `${o.name} · ${Math.round(o.alt)} m` : o.name;

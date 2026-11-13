@@ -189,7 +189,7 @@ export function FlightGame() {
     const p = ghostAt(g, t);
     if (!p) return [];
     const st = GHOST_STYLES[g.rank];
-    return [{ x: p.x, y: p.y, alt: p.alt, heading: p.heading, name: `${st.medal} ${g.name}`, color: st.color, trail: [...g.pts.slice(0, p.index + 1)] }];
+    return [{ x: p.x, y: p.y, alt: p.alt, heading: p.heading, name: `${st.medal} ${g.name}`, color: st.color, metallic: st.metallic, trail: [...g.pts.slice(0, p.index + 1)] }];
   });
 
   const start = (c: FlightConfig) => {
