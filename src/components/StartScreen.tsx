@@ -21,6 +21,7 @@ import { loadLaunchAltitude } from "@/game/realTerrain";
 import { selectedLaunch } from "@/game/launchSelection";
 import { weeklyTask } from "@/game/weeklyTask";
 import { formatFlightHours } from "@/game/flightStats";
+import type { TrackPoint } from "@/game/swissMap";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined; task?: FlightTask | undefined; weekly?: boolean | undefined }
 
