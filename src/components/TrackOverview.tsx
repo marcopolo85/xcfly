@@ -10,7 +10,7 @@ import { drawSwissRelief, getMapStyle, MAP_STYLES } from "./SwissRelief";
 /** Distinct colour per track (golden-angle hue steps). */
 export function trackColor(i: number) { return `hsl(${Math.round((i * 137.5) % 360)} 85% 55%)`; }
 
-function TrackMap({ track, className, interactive = false, splits, selected = null }: { track: [number, number][] | null; className: string; interactive?: boolean; splits?: number[] | undefined; selected?: number | null }) {
+function TrackMap({ track, className, interactive = false, splits, selected = null }: { track: TrackPoint[] | null; className: string; interactive?: boolean; splits?: number[] | undefined; selected?: number | null }) {
   const map = useCanvasZoom(0.1, 32, interactive);
   const { canvasRef } = map;
   const creditRef = useRef<HTMLParagraphElement>(null);
@@ -77,7 +77,7 @@ function TrackMap({ track, className, interactive = false, splits, selected = nu
   );
 }
 
-export function TrackOverview({ track, className = "aspect-[16/11] w-full", expandable = false }: { track: [number, number][] | null; className?: string; expandable?: boolean }) {
+export function TrackOverview({ track, className = "aspect-[16/11] w-full", expandable = false }: { track: TrackPoint[] | null; className?: string; expandable?: boolean }) {
   const [open, setOpen] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openRef = useRef<HTMLButtonElement>(null);
@@ -107,10 +107,10 @@ export function TrackOverview({ track, className = "aspect-[16/11] w-full", expa
 }
 
 /** Several tracks on one interactive map (e.g. all flights of today). */
-export function MultiTrackMap({ tracks, selected = null }: { tracks: [number, number][][]; selected?: number | null }) {
+export function MultiTrackMap({ tracks, selected = null }: { tracks: TrackPoint[][]; selected?: number | null }) {
   const { flat, splits } = useMemo(() => {
     const splits: number[] = [];
-    const flat: [number, number][] = [];
+    const flat: TrackPoint[] = [];
     for (const t of tracks) { if (t.length < 2) continue; splits.push(flat.length); flat.push(...t); }
     return { flat, splits };
   }, [tracks]);
