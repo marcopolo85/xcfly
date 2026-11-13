@@ -32,3 +32,5 @@
 - [x] Track-Übersicht auch in der Flugauswertung anzeigen. Testflug bis Landung im Browser: Track mit Startpunkt und Legende im Auswertfenster sichtbar, 72 Tests und Build bestanden.
 - [x] Empfindlichkeit der Slide-Steuerung im beschleunigten Flug halbiert: voller Link-/Rechtsausschlag jetzt bei 140 px statt 70 px Fingerbewegung.
 - [x] XC-Ranglisteneintrag: Cloud lehnte XC wegen veralteter Modusfreigabe ab; Freigabe ergänzt, identische Speicherfunktion erfolgreich ausgeführt, Werte und Track in Cloud sowie Ranglistenanzeige geprüft; Testflug wieder entfernt, zwei Regressionstests bestanden.
+- [x] Ghost-Piloten zeigen Höhe am Namensschild: Track speichert neu Höhe als drittes Element, Ghosts interpolieren sie; alte Tracks ohne Höhe zeigen weiterhin nur den Namen. 164 Tests und Typprüfung bestanden; im echten Flug nicht angeschaut.
+- [x] Medaillen-Ghosts: Gold (#eab308) und Bronze (#8c3d0f) klar unterscheidbar, alle drei Medaillen-Schirme mit diagonalem Metallic-Glanz. Tests bestanden; nicht visuell geprüft.
