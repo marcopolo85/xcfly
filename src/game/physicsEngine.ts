@@ -51,7 +51,7 @@ export interface Sim {
   x: number; y: number; alt: number; heading: number;
   vz: number; airLift: number; speed: number;
   distance: number; flightTime: number; clock: number; // clock in hours
-  trackX: number[]; trackY: number[]; // downsampled path for XC optimization
+  trackX: number[]; trackY: number[]; trackAlt: number[]; // downsampled path for XC optimization (alt stored for ghost replay)
   xcDist: number; // XContest-style optimized free distance
   landed: boolean;
   // Flight statistics for the results screen.
@@ -74,6 +74,7 @@ function updateXc(sim: Sim) {
   if (len(sim.x - lx, sim.y - ly) < XC_TRACK_STEP) return;
   sim.trackX.push(sim.x);
   sim.trackY.push(sim.y);
+  sim.trackAlt.push(sim.alt);
   const ex = sim.x, ey = sim.y;
   for (let i = 0; i <= n; i++) {
     const px = i < n ? sim.trackX[i] : 0;

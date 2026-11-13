@@ -21,6 +21,7 @@ import { loadLaunchAltitude } from "@/game/realTerrain";
 import { selectedLaunch } from "@/game/launchSelection";
 import { weeklyTask } from "@/game/weeklyTask";
 import { formatFlightHours } from "@/game/flightStats";
+import type { TrackPoint } from "@/game/swissMap";
 
 export interface FlightConfig { site: Site; season: Season; startHour: number; mode: FlightMode; pilotName?: string | undefined; task?: FlightTask | undefined; weekly?: boolean | undefined }
 
@@ -44,7 +45,7 @@ function FlightStats() {
   );
 }
 
-type TodayRow = { pilot_name: string; distance_km: number; points: number; track: [number, number][] };
+type TodayRow = { pilot_name: string; distance_km: number; points: number; track: TrackPoint[] };
 
 function TodayTracks({ onClose }: { onClose: () => void }) {
   const [rows, setRows] = useState<TodayRow[] | null>(null);
@@ -53,7 +54,7 @@ function TodayTracks({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0);
     supabase.from("leaderboard_entries").select("pilot_name, distance_km, points, track").gte("created_at", d.toISOString()).order("points", { ascending: false }).limit(200).then(({ data }) => {
-      const all = (data ?? []) as unknown as (Omit<TodayRow, "track"> & { track: [number, number][] | null })[];
+      const all = (data ?? []) as unknown as (Omit<TodayRow, "track"> & { track: TrackPoint[] | null })[];
       setRows(all.filter((r) => Array.isArray(r.track) && r.track.length >= 2) as TodayRow[]);
     });
   }, []);

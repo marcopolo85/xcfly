@@ -1,4 +1,4 @@
-import { mapOrigin } from "./swissMap";
+import { mapOrigin, type TrackPoint } from "./swissMap";
 
 /** Convert a screen-space pan/zoom back into the tile renderer's world-space camera. */
 export function trackOverviewCamera(fit: { x: number; y: number; zoom: number }, width: number, height: number, view: { x: number; y: number; k: number }) {
@@ -11,7 +11,7 @@ export function trackOverviewCamera(fit: { x: number; y: number; zoom: number },
 }
 
 /** Fit a geographic track using exactly the flight map's projection and 55% vertical anchor. */
-export function fitTrackOverview(track: [number, number][], width: number, height: number) {
+export function fitTrackOverview(track: TrackPoint[], width: number, height: number) {
   const first = track[0];
   if (!first || track.length < 2 || width <= 48 || height <= 48) return null;
   const site = { lat: first[0], lon: first[1] };

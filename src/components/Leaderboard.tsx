@@ -2,6 +2,8 @@ import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
 import type { RouteType } from "@/game/xcScore";
+import type { TrackPoint } from "@/game/swissMap";
+import type { Json } from "@/integrations/supabase/types";
 import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { X } from "lucide-react";
 import { TrackOverview } from "./TrackOverview";
@@ -41,7 +43,7 @@ export async function loadLeaderboardEntries(site?: string, weekly = false, task
   }
 }
 
-export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: [number, number][], mode: string = "xc"): Promise<string | null> {
+export async function submitFlight(pilot: string, site: string, distanceKm: number, points: number, routeType: RouteType, durationS: number, track: TrackPoint[], mode: string = "xc"): Promise<string | null> {
   const { error } = await supabase.from("leaderboard_entries").insert({
     pilot_name: pilot.trim().slice(0, 40),
     site_name: site.slice(0, 80),
@@ -50,7 +52,7 @@ export async function submitFlight(pilot: string, site: string, distanceKm: numb
     points: Math.round(points * 100) / 100,
     route_type: routeType,
     duration_s: Math.round(durationS),
-    track,
+    track: track as unknown as Json[],
   });
   return error ? error.message : null;
 }
@@ -86,7 +88,7 @@ export function fmtStamp(iso: string) {
 }
 
 function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
-  const [track, setTrack] = useState<[number, number][] | null>(null);
+  const [track, setTrack] = useState<TrackPoint[] | null>(null);
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
@@ -96,7 +98,7 @@ function TrackPopup({ entry, onClose }: { entry: Entry; onClose: () => void }) {
     supabase.from("leaderboard_entries").select("track").eq("id", entry.id).single().then(({ data, error }) => {
       if (cancelled) return;
       if (error) { setMissing(true); return; }
-      const t = (data as { track: [number, number][] | null } | null)?.track ?? null;
+      const t = (data as { track: TrackPoint[] | null } | null)?.track ?? null;
       if (t && t.length >= 2) setTrack(t);
       else setMissing(true);
     });
