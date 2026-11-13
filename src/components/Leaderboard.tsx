@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SITES } from "@/game/sites";
 import type { RouteType } from "@/game/xcScore";
 import type { TrackPoint } from "@/game/swissMap";
+import type { Json } from "@/integrations/supabase/types";
 import { RouteIcon, ROUTE_LABEL } from "./RouteIcon";
 import { X } from "lucide-react";
 import { TrackOverview } from "./TrackOverview";
