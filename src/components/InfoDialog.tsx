@@ -70,7 +70,7 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           </section>
           <section className="space-y-2">
             <h3 className="font-semibold text-base">8. Einstellungen und Seitenansicht</h3>
-            <p>Das Einstellungs-Symbol oben rechts öffnet die Anzeigeoptionen. Du kannst zwischen <strong>Relief, Landeskarte, Landeskarte grau, Luftbild, Topo, OSM Farbe und Dunkel</strong> wählen. Der Kartenstil wird auf deinem Gerät gespeichert. Beim Relief erscheinen auch Seen, grosse Flüsse und Wälder als zusätzliche Kartenebenen.</p>
+            <p>Das Einstellungs-Symbol oben rechts öffnet die Anzeigeoptionen. Du kannst zwischen <strong>Relief, Landeskarte, Landeskarte grau, Luftbild, Topo und OSM Farbe</strong> wählen. Der Kartenstil wird auf deinem Gerät gespeichert. Beim Relief erscheinen auch Seen, grosse Flüsse und Wälder als zusätzliche Kartenebenen.</p>
             <p>Der Regler <strong>Thermikkarte</strong> bestimmt ihre Deckkraft. Bei 0 % ist sie ausgeblendet – die Thermik wirkt trotzdem weiter, denn der Regler ändert nur die Darstellung.</p>
             <p>Das <strong>Seitenprofil</strong> ist zunächst ausgeblendet. Eingeschaltet zeigt es neben dem GPS das Gelände in deiner Flugrichtung und den Gleitpfad. Es lässt sich unabhängig von der Flugkarte zoomen. Es ist ein Schnitt entlang deiner Richtung, keine vollständige Ansicht aller seitlich liegenden Hindernisse.</p>
           </section>
@@ -82,7 +82,7 @@ export function InfoDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           </section>
           <section className="space-y-2">
             <h3 className="font-semibold text-base">10. Landung, Auswertung und Ranglisten</h3>
-            <p>Oben im Flug: <strong>Pause</strong>, <strong>Aufgabe abbrechen</strong> (bei importierter Aufgabe), <strong>Navigiere zum SP</strong> (Wegpunkt zurück zum Startplatz), <strong>Neustart</strong> (Flug am Startplatz neu beginnen) und <strong>Menü</strong> (zurück zur Startseite).</p>
+            <p>Oben im Flug: <strong>Pause</strong>, <strong>Aufgabe abbrechen</strong> (bei importierter Aufgabe), <strong>Nav SP</strong>, <strong>Top3</strong> (Tracks der Top 3), <strong>LR</strong> (Lufträume), <strong>SA</strong> (Seitenansicht) (Wegpunkt zurück zum Startplatz), <strong>Neustart</strong> (Flug am Startplatz neu beginnen) und <strong>Menü</strong> (zurück zur Startseite).</p>
             <p>Nach der Landung oder dem Zeitlimit öffnet sich die Flugauswertung. Sie zeigt die Moduswertung, XC-Strecke, XC-Punkte (ein Punkt je XC-Kilometer), Flugdauer, XC-Geschwindigkeit, maximale Höhe, kumulierten Höhengewinn, erkannte Thermiken und vollständige Thermikkreise.</p>
             <p>Die <strong>Trackübersicht</strong> zeigt deinen Flugweg auf dem gewählten Kartenstil; der Punkt markiert den Start. Mit <strong>Nochmal</strong> startest du mit denselben Vorgaben erneut, mit <strong>Menü</strong> kehrst du zur Startauswahl zurück.</p>
             <p>Für einen Ranglisteneintrag gibst du deinen Pilotennamen ein und drückst <strong>Eintragen</strong>. Mit <strong>Abbrechen</strong> überspringst du die Eintragung. Ranglisteneinträge werden in der Cloud gespeichert und sind für andere Spieler sichtbar – verwende nur einen Namen, den du öffentlich anzeigen möchtest.</p>
