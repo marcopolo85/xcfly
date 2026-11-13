@@ -19,8 +19,9 @@ const glideBoundaryPoints = new Float64Array(GLIDE_BOUNDARY_RAYS * 2);
 export const PILOT_COLORS = ["#4ade80", "#38bdf8", "#ef4444", "#f97316", "#a3e635", "#ffffff", "#cbd5e1"];
 export function pilotColor(id: string) { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0; return PILOT_COLORS[Math.abs(h) % PILOT_COLORS.length]; }
 const tintedWings = new Map<string, HTMLCanvasElement>();
-function tintedWing(wing: HTMLImageElement, color: string) {
-  let c = tintedWings.get(color);
+function tintedWing(wing: HTMLImageElement, color: string, metallic = false) {
+  const key = metallic ? `${color}|m` : color;
+  let c = tintedWings.get(key);
   if (c) return c;
   // Keep the wing's details: luminance × colour, then a dark contour behind it.
   const w = wing.naturalWidth, h = wing.naturalHeight, pad = Math.max(2, Math.round(w / 40));
@@ -29,6 +30,16 @@ function tintedWing(wing: HTMLImageElement, color: string) {
   b.filter = "grayscale(1) brightness(1.35) contrast(1.15)"; b.drawImage(wing, 0, 0); b.filter = "none";
   b.globalCompositeOperation = "multiply"; b.fillStyle = color; b.fillRect(0, 0, w, h);
   b.globalCompositeOperation = "destination-in"; b.drawImage(wing, 0, 0);
+  if (metallic) {
+    // Brushed-metal sheen: diagonal highlight bands clipped to the wing surface.
+    const grad = b.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, "rgba(255,255,255,0.75)");
+    grad.addColorStop(0.3, "rgba(255,255,255,0.08)");
+    grad.addColorStop(0.55, "rgba(0,0,0,0.22)");
+    grad.addColorStop(0.78, "rgba(255,255,255,0.45)");
+    grad.addColorStop(1, "rgba(0,0,0,0.12)");
+    b.globalCompositeOperation = "source-atop"; b.fillStyle = grad; b.fillRect(0, 0, w, h);
+  }
   const sil = document.createElement("canvas"); sil.width = w; sil.height = h;
   const si = sil.getContext("2d")!;
   si.drawImage(wing, 0, 0); si.globalCompositeOperation = "source-in"; si.fillStyle = "#0b1220"; si.fillRect(0, 0, w, h);
@@ -36,7 +47,7 @@ function tintedWing(wing: HTMLImageElement, color: string) {
   const g = c.getContext("2d")!;
   for (let k = 0; k < 16; k++) { const a = (k / 16) * Math.PI * 2; g.drawImage(sil, pad + Math.cos(a) * pad, pad + Math.sin(a) * pad); }
   g.drawImage(body, pad, pad);
-  tintedWings.set(color, c);
+  tintedWings.set(key, c);
   return c;
 }
 
