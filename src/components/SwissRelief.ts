@@ -2,7 +2,7 @@ import { reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleRelief
 import type { Site } from "@/game/sites";
 import { offlineEnabled, tileResponse } from "@/lib/offline-data";
 
-export type MapStyle = "relief" | "landeskarte" | "grau" | "luftbild" | "topo" | "osm" | "dunkel";
+export type MapStyle = "relief" | "landeskarte" | "grau" | "luftbild" | "topo" | "osm";
 export const MAP_STYLES: { v: MapStyle; label: string; credit: string; url: (z: number, x: number, y: number) => string; fallback?: (z: number, x: number, y: number) => string }[] = [
   // swisstopo serves data only around Switzerland; `fallback` fills transparent tile areas worldwide.
   { v: "relief", label: "Relief", credit: "© swisstopo · OpenTopoMap (CC-BY-SA)", url: (z, x, y) => reliefTileUrl(x, y, z), fallback: (z, x, y) => `https://${"abc"[(x + y) % 3]}.tile.opentopomap.org/${z}/${x}/${y}.png` },
@@ -11,7 +11,6 @@ export const MAP_STYLES: { v: MapStyle; label: string; credit: string; url: (z: 
   { v: "luftbild", label: "Luftbild", credit: "© swisstopo SWISSIMAGE · © Esri", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/${z}/${x}/${y}.jpeg`, fallback: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}.png` },
   { v: "topo", label: "Topo", credit: "© OpenTopoMap (CC-BY-SA)", url: (z, x, y) => `https://${"abc"[(x + y) % 3]}.tile.opentopomap.org/${z}/${x}/${y}.png` },
   { v: "osm", label: "OSM Farbe", credit: "© OpenStreetMap", url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png` },
-  { v: "dunkel", label: "Dunkel", credit: "© OpenStreetMap © CARTO", url: (z, x, y) => `https://${"abcd"[(x + y) % 4]}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png` },
 ];
 let activeStyle: MapStyle = "relief";
 /** Selected base map; read by the animation loops on every frame. */
