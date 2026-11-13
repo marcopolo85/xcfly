@@ -3,7 +3,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
     id: "2026-11-13a",
     date: "13. Nov 2026",
-    items: ["Ghost-Piloten zeigen ihre Höhe am Namensschild (bei neu gespeicherten Flügen)", "Medaillen-Schirme mit Metallic-Glanz; Gold und Bronze klarer unterscheidbar"],
+    items: ["Ghost-Piloten zeigen ihre Höhe am Namensschild (bei neu gespeicherten Flügen)", "Medaillen-Schirme mit Metallic-Glanz; Gold und Bronze klarer unterscheidbar", "Minimap so gross wie die Seitenansicht, abwechselnd eingeblendet; Flugleiste aufs Handy angepasst"],
   },
   {
     id: "2026-11-12a",
