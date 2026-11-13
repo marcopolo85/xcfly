@@ -82,14 +82,14 @@ export function FlightGame() {
     const update = () => {
       const height = canvas.clientHeight;
       const top = instrumentRef.current?.getBoundingClientRect().top ?? height;
-      pilotAnchor.current = flightAnchorFraction(height, top, canvas.clientWidth < 640, showProfile);
+      pilotAnchor.current = flightAnchorFraction(height, top, canvas.clientWidth < 640, showProfile || showMini);
     };
     const observer = new ResizeObserver(update);
     observer.observe(canvas);
     if (instrumentRef.current) observer.observe(instrumentRef.current);
     update();
     return () => observer.disconnect();
-  }, [canvasRef, hud !== null, showProfile]);
+  }, [canvasRef, hud !== null, showProfile, showMini]);
   const input = useRef<Input>({ left: false, right: false, accel: false, steer: 0 });
   const holdStart = useRef<HoldStarts>({ left: null, right: null });
   const lastSpaceTap = useRef(0);
@@ -504,19 +504,18 @@ export function FlightGame() {
   return (
     <div className="fixed inset-0 touch-none select-none overflow-hidden bg-background">
       <div className="contents" onPointerDown={() => setZoomTarget("main")}><MapCanvas ref={canvasRef} /></div>
-      {phase === "flying" && showMini && <div onPointerDown={() => setZoomTarget("mini")} className={`absolute bottom-[94px] left-2 z-20 h-32 w-32 overflow-hidden rounded-md border-2 bg-card/95 sm:h-56 sm:w-56 sm:not-pointer-coarse:bottom-3 sm:not-pointer-coarse:left-3 ${zoomTarget === "mini" ? "border-primary" : "border-border"}`}><canvas ref={miniZoom.canvasRef} aria-label="Minimap" className="h-full w-full touch-none" /></div>}
-      {config && <FlightSettings mapOpacity={mapOpacity} onMapOpacity={setMapOpacity} thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={setShowProfile} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
+      {config && <FlightSettings mapOpacity={mapOpacity} onMapOpacity={setMapOpacity} thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={(v) => { if (v) setShowMini(false); setShowProfile(v); }} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
       {phase === "flying" && boss && <button aria-label="Fortsetzen" onClick={() => { setBoss(false); setPaused(false); }} className="fixed inset-0 z-[100] cursor-default bg-background"><img src={bossSheet} alt="" className="h-full w-full object-cover object-left-top" /></button>}
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
-      {phase === "flying" && <div className="absolute right-[6.25rem] top-3 z-20 flex max-w-[calc(100vw-6.75rem)] items-center gap-1 overflow-x-auto no-scrollbar">
-        {taskInfo && !config?.weekly && <button onClick={() => { taskRef.current = null; setTaskInfo(null); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Aufgabe abbrechen{taskInfo.next < taskInfo.total ? ` (${taskInfo.next}/${taskInfo.total - 1})` : " ✓"}</button>}
-        <button aria-pressed={showMini} onClick={() => { setShowMini((v) => !v); setZoomTarget("main"); miniZoom.reset(); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Minimap</button>
-        {config?.mode === "xc" && !config?.weekly && <button aria-pressed={showTop3} onClick={() => setShowTop3((v) => !v)} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Top3</button>}
-        <button aria-pressed={showAirspaces} onClick={() => setShowAirspaces(!showAirspaces)} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">LR</button>
-        <button aria-pressed={showProfile} onClick={() => setShowProfile(!showProfile)} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">SA</button>
-        <button onClick={() => { taskRef.current = { local: [{ x: 0, y: 0 }, { x: 0, y: 0 }], next: 1, radius: 400 }; setTaskInfo({ next: 1, total: 2 }); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Nav SP</button>
-        <button onClick={() => { if (config) start(config); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Neustart</button>
-        <button onClick={() => { setRunId(0); setPhase("config"); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1.5 text-[11px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Menü</button>
+      {phase === "flying" && <div className="absolute left-2 right-[6.25rem] top-3 z-20 flex items-center gap-1 overflow-x-auto pr-1 no-scrollbar sm:left-auto">
+        {taskInfo && !config?.weekly && <button onClick={() => { taskRef.current = null; setTaskInfo(null); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Aufgabe abbrechen{taskInfo.next < taskInfo.total ? ` (${taskInfo.next}/${taskInfo.total - 1})` : " ✓"}</button>}
+        {config?.mode === "xc" && !config?.weekly && <button aria-pressed={showTop3} onClick={() => setShowTop3((v) => !v)} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Top3</button>}
+        <button aria-pressed={showMini} onClick={() => { if (!showMini) setShowProfile(false); setShowMini(!showMini); setZoomTarget("main"); miniZoom.reset(); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Minimap</button>
+        <button aria-pressed={showAirspaces} onClick={() => setShowAirspaces(!showAirspaces)} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">LR</button>
+        <button aria-pressed={showProfile} onClick={() => { if (!showProfile) setShowMini(false); setShowProfile(!showProfile); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">SA</button>
+        <button onClick={() => { taskRef.current = { local: [{ x: 0, y: 0 }, { x: 0, y: 0 }], next: 1, radius: 400 }; setTaskInfo({ next: 1, total: 2 }); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Nav SP</button>
+        <button onClick={() => { if (config) start(config); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Neustart</button>
+        <button onClick={() => { setRunId(0); setPhase("config"); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Menü</button>
       </div>}
       {phase === "flying" && paused && <div role="status" className="pointer-events-none absolute inset-0 z-10 grid place-items-center"><span className="rounded-md border border-border bg-card/95 px-4 py-2 font-display text-2xl font-bold text-foreground">Pause</span></div>}
       {phase === "loading" && (
@@ -540,6 +539,13 @@ export function FlightGame() {
             <ZoomControls label="Seitenansicht" scale={profileZoom.scale} change={profileZoom.change} reset={profileZoom.reset} />
           </header>
           <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><SideProfile ref={profileZoom.canvasRef} /></div></div>
+        </section>}
+        {phase === "flying" && showMini && <section aria-label="Minimap" onPointerDown={() => setZoomTarget("mini")} className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-md border bg-card/95 backdrop-blur-md ${zoomTarget === "mini" ? "border-primary" : "border-border"}`}>
+          <header className="flex flex-wrap items-center justify-between gap-x-1 border-b border-border px-1.5 py-0.5">
+            <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px]">MINIMAP</span>
+            <ZoomControls label="Minimap" scale={miniZoom.scale} change={miniZoom.change} reset={miniZoom.reset} />
+          </header>
+          <div className="relative min-h-0 flex-1"><div className="absolute inset-0"><canvas ref={miniZoom.canvasRef} className="h-full w-full touch-none" /></div></div>
         </section>}
         <FlightHUD d={hud} />
         <MobileZoomSlider scaleBy={zoomTarget === "mini" && showMini ? miniZoom.scaleBy : mapZoom.scaleBy} scale={zoomTarget === "mini" && showMini ? miniZoom.scale : mapZoom.scale} active={phase === "flying" && !paused && !settingsOpen} />
