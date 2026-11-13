@@ -1,4 +1,4 @@
-import { mapOrigin } from "./swissMap";
+import { mapOrigin, type TrackPoint } from "./swissMap";
 
 /** Convert a screen-space pan/zoom back into the tile renderer's world-space camera. */
 export function trackOverviewCamera(fit: { x: number; y: number; zoom: number }, width: number, height: number, view: { x: number; y: number; k: number }) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import { fitTrackOverview, trackOverviewCamera } from "@/game/trackOverview";
+import type { TrackPoint } from "@/game/swissMap";
 import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { ZoomControls } from "./ZoomControls";
 import { Button } from "./ui/button";
