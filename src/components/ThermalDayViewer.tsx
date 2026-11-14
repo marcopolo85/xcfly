@@ -63,6 +63,39 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
   const [grid, setGrid] = useState<Grid | null>(null);
   const [status, setStatus] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState({ k: 1, x: 0, y: 0 });
+  const ptrs = useRef(new Map<number, { x: number; y: number }>());
+  const zoomAt = (px: number, py: number, f: number) => setView((v) => {
+    const k = Math.max(0.8, Math.min(6, v.k * f)), r = k / v.k;
+    return { k, x: px - (px - v.x) * r, y: py - (py - v.y) * r };
+  });
+  const resetView = () => setView({ k: 1, x: 0, y: 0 });
+  useEffect(() => {
+    const el = boxRef.current; if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
+      zoomAt(e.clientX - rect.left, e.clientY - rect.top, Math.exp(-dy * 0.0015));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [open, grid]);
+  const onPointerDown = (e: React.PointerEvent) => { (e.target as Element).setPointerCapture?.(e.pointerId); ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); };
+  const onPointerUp = (e: React.PointerEvent) => { ptrs.current.delete(e.pointerId); };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const m = ptrs.current, prev = m.get(e.pointerId); if (!prev) return;
+    const rect = boxRef.current!.getBoundingClientRect();
+    if (m.size === 1) {
+      setView((v) => ({ ...v, x: v.x + e.clientX - prev.x, y: v.y + e.clientY - prev.y }));
+    } else if (m.size === 2) {
+      const other = [...m.entries()].find(([id]) => id !== e.pointerId)![1];
+      const d0 = Math.hypot(prev.x - other.x, prev.y - other.y), d1 = Math.hypot(e.clientX - other.x, e.clientY - other.y);
+      if (d0 > 0) zoomAt((e.clientX + other.x) / 2 - rect.left, (e.clientY + other.y) / 2 - rect.top, d1 / d0);
+    }
+    m.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  };
   const site = SITES.find((s) => s.id === siteId)!;
 
   useEffect(() => {
@@ -109,19 +142,32 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
             {(Object.keys(SEASONS) as Season[]).map((k) => <option key={k} value={k}>{SEASONS[k].label}</option>)}
           </select>
         </div>
-        <div className="relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-muted">
-          <canvas ref={canvasRef} width={G} height={G} className="h-full w-full" />
-          <div className="pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-foreground bg-primary" />
+        <div ref={boxRef} className="relative aspect-square w-full touch-none select-none overflow-hidden rounded-lg border border-border bg-muted cursor-grab active:cursor-grabbing"
+          onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onDoubleClick={resetView}>
+          <div className="absolute inset-0" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`, transformOrigin: "0 0" }}>
+            <canvas ref={canvasRef} width={G} height={G} className="h-full w-full" style={{ imageRendering: view.k > 2 ? "pixelated" : "auto" }} />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-foreground bg-primary" style={{ transform: `translate(-50%, -50%) scale(${1 / view.k})` }} />
+          </div>
+          <div className="absolute bottom-2 right-2 flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
+            <Button size="sm" variant="secondary" aria-label="Hineinzoomen" onClick={() => { const r = boxRef.current!.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1.4); }}>+</Button>
+            <Button size="sm" variant="secondary" aria-label="Herauszoomen" onClick={() => { const r = boxRef.current!.getBoundingClientRect(); zoomAt(r.width / 2, r.height / 2, 1 / 1.4); }}>−</Button>
+            <Button size="sm" variant="secondary" onClick={resetView}>Reset</Button>
+          </div>
           <div className="absolute left-2 top-2 rounded bg-background/80 px-2 py-1 font-mono text-sm">{fmtClock(hour)} · {sunInfo}</div>
           <div className="absolute right-2 top-2 rounded bg-background/80 px-1.5 font-mono text-xs">N ↑ · 40 km</div>
-          {status && <div className="absolute inset-x-2 bottom-2 rounded bg-background/80 px-2 py-1 text-xs">{status}</div>}
+          {status && <div className="absolute inset-x-2 bottom-12 rounded bg-background/80 px-2 py-1 text-xs">{status}</div>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-sm">
           <Button size="icon" variant="secondary" aria-label={playing ? "Pause" : "Abspielen"} onClick={() => setPlaying((p) => !p)}>{playing ? <Pause /> : <Play />}</Button>
-          <input aria-label="Uhrzeit" type="range" min={START} max={END} step={0.05} value={hour} onChange={(e) => { setPlaying(false); setHour(Number(e.target.value)); }} className="flex-1 accent-primary" />
-          <select aria-label="Geschwindigkeit" className="rounded-md border border-border bg-background px-2 py-1 text-sm" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
-            {[0.5, 1, 2, 4].map((v) => <option key={v} value={v}>{v}×</option>)}
-          </select>
+          <label className="w-20 shrink-0 text-muted-foreground">Tageszeit</label>
+          <input aria-label="Tageszeit" type="range" min={START} max={END} step={1 / 60} value={hour} onChange={(e) => { setPlaying(false); setHour(Number(e.target.value)); }} className="flex-1 accent-primary" />
+          <span className="w-12 text-right font-mono">{fmtClock(hour)}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="w-10 shrink-0" />
+          <label className="w-20 shrink-0 text-muted-foreground">Tempo</label>
+          <input aria-label="Animationsgeschwindigkeit" type="range" min={-2} max={3} step={0.25} value={Math.log2(speed)} onChange={(e) => setSpeed(2 ** Number(e.target.value))} className="flex-1 accent-primary" />
+          <span className="w-12 text-right font-mono">{speed < 1 ? speed.toFixed(2) : speed.toFixed(1)}×</span>
         </div>
         <p className="text-xs text-muted-foreground">Farbe = erwartete Thermikstärke aus Sonneneinstrahlung, Hangausrichtung und KK7-Thermikkarte (blau schwach → rot stark). Thermikdaten: thermal.kk7.ch, CC BY-NC-SA.</p>
       </DialogContent>
