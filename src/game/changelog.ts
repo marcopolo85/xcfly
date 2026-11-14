@@ -1,9 +1,9 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
-    id: "2026-11-14a",
+    id: "2026-11-14b",
     date: "14. Nov 2026",
-    items: ["Auswertung: Flugdauer als HH:MM:SS", "Handy: Flugleiste nutzt ganze Breite, Buttons gleich hoch", "Thermikkreise zählen den Kurven-Boost mit"],
+    items: ["Sonne: Richtung im GPS, Schirmschatten, besonnte/schattige Hänge, Sonnenstand in der Seitenansicht", "Auswertung: Flugdauer als HH:MM:SS", "Handy: Flugleiste nutzt ganze Breite, Buttons gleich hoch", "Thermikkreise zählen den Kurven-Boost mit"],
   },
   {
     id: "2026-11-13a",

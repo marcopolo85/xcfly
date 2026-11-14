@@ -6,7 +6,7 @@ import { AIRSPACE_COLORS, formatLimitM, insideVertical, limitMetres, type Airspa
 import { airspaceProfileIntervals } from "@/game/airspaceProfile";
 
 /** Heading-relative view of the simulation's terrain, never a physics input. */
-export function drawSideProfile(canvas: HTMLCanvasElement, terrain: Terrain, sim: Sim, view: ZoomTransform, airspaces?: Airspace[] | null, showLabels = true) {
+export function drawSideProfile(canvas: HTMLCanvasElement, terrain: Terrain, sim: Sim, view: ZoomTransform, airspaces?: Airspace[] | null, showLabels = true, sun?: { x: number; y: number; z: number }) {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   if (!w || !h) return;
   const dpr = window.devicePixelRatio || 1;
@@ -82,6 +82,26 @@ export function drawSideProfile(canvas: HTMLCanvasElement, terrain: Terrain, sim
     }
   }
   ctx.restore();
+  if (sun && sun.z > 0) {
+    // sun projected onto the heading plane: forward component vs height
+    const fwd = sun.x * Math.sin(sim.heading) + sun.y * Math.cos(sim.heading);
+    const side = sun.x * Math.cos(sim.heading) - sun.y * Math.sin(sim.heading);
+    const el = Math.atan2(sun.z, Math.abs(fwd) + 1e-6);
+    const dir = fwd >= 0 ? 1 : -1;
+    const sxp = dir > 0 ? w - 22 : 40, syp = 16 + (1 - Math.min(1, el / (Math.PI / 2))) * (h * 0.35);
+    ctx.save();
+    ctx.strokeStyle = color("sun"); ctx.globalAlpha = 0.35; ctx.lineWidth = 1;
+    for (const off of [-10, 0, 10]) {
+      ctx.beginPath(); ctx.moveTo(sxp, syp + off);
+      ctx.lineTo(sxp - dir * Math.cos(el) * 400, syp + off + Math.sin(el) * 400); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.fillStyle = color("sun");
+    ctx.beginPath(); ctx.arc(sxp, syp, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "9px 'JetBrains Mono', monospace"; ctx.textAlign = dir > 0 ? "right" : "left";
+    ctx.fillText(`☼ ${Math.round(Math.asin(sun.z) * 180 / Math.PI)}°${Math.abs(side) > 0.5 ? (side > 0 ? " r" : " l") : ""}`, sxp - dir * 10, syp + 3);
+    ctx.textAlign = "left";
+    ctx.restore();
+  }
   ctx.strokeStyle = color("sun"); ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
   ctx.beginPath(); ctx.moveTo(x(0), y(sim.alt));
   ctx.lineTo(w, y(sim.alt + sim.vz / Math.max(0.1, sim.speed) * Math.max(0, distanceAt(w)))); ctx.stroke(); ctx.setLineDash([]);
