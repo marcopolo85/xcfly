@@ -46,8 +46,8 @@ function draw(canvas: HTMLCanvasElement, g: Grid, hour: number, lat: number, sea
     const elev = (g.h[i]! - g.min) / Math.max(1, g.max - g.min);
     const base = (90 + 120 * elev) * light;
     const lift = slopeTrigger({ x: g.nx[i]!, y: g.ny[i]!, z: g.nz[i]! }, sun) * amp * (0.35 + 0.65 * g.heat[i]!) * (0.6 + 0.4 * elev);
-    const a = Math.min(0.85, lift * 1.4);
-    const [r, gg, b] = ramp(lift);
+    const a = Math.max(0, Math.min(0.85, (lift - 0.1) * 2.5));
+    const [r, gg, b] = ramp(Math.min(1, (lift - 0.1) * 1.8));
     d[i * 4] = base * (1 - a) + r * a; d[i * 4 + 1] = base * (1 - a) + gg * a; d[i * 4 + 2] = base * (1 - a) + b * a; d[i * 4 + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);
