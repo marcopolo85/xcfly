@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { Pause, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -82,9 +82,9 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, [open, grid]);
-  const onPointerDown = (e: React.PointerEvent) => { (e.target as Element).setPointerCapture?.(e.pointerId); ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); };
-  const onPointerUp = (e: React.PointerEvent) => { ptrs.current.delete(e.pointerId); };
-  const onPointerMove = (e: React.PointerEvent) => {
+  const onPointerDown = (e: RPointerEvent) => { (e.target as Element).setPointerCapture?.(e.pointerId); ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); };
+  const onPointerUp = (e: RPointerEvent) => { ptrs.current.delete(e.pointerId); };
+  const onPointerMove = (e: RPointerEvent) => {
     const m = ptrs.current, prev = m.get(e.pointerId); if (!prev) return;
     const rect = boxRef.current!.getBoundingClientRect();
     if (m.size === 1) {
