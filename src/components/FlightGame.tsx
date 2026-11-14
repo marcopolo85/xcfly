@@ -349,7 +349,7 @@ export function FlightGame() {
         const targetZoom = flightZoomTarget(flightZoom, inp.accel, mapZoom.transform.current.k, prefs);
         if (targetZoom !== null) mapZoom.zoomTo(targetZoom);
         const { turn, motion, sim: effSimSpeed } = frameSpeeds(inp, holdStart.current, now, prefs.normalSpeed);
-        const rot = steer(sim, inp, dtReal, turn, prefs.accelSpeed);
+        const rot = steer(sim, inp, dtReal, turn, prefs.accelSpeed, turn > 0 ? effSimSpeed / turn : 1);
         stepVisualYaw(visYaw, sim.heading, rot, dtReal, inp.accel);
         const simDt = dtReal * timeScale(inp.accel, effSimSpeed, prefs.accelSpeed);
         const motionDt = dtReal * timeScale(inp.accel, motion, prefs.accelSpeed);
@@ -507,7 +507,7 @@ export function FlightGame() {
       {config && <FlightSettings mapOpacity={mapOpacity} onMapOpacity={setMapOpacity} thermalOpacity={thermalOpacity} onThermalOpacity={setThermalOpacity} showProfile={showProfile} onShowProfile={(v) => { if (v) setShowMini(false); setShowProfile(v); }} showAirspaces={showAirspaces} onShowAirspaces={setShowAirspaces} showAirspaceLabels={showAirspaceLabels} onShowAirspaceLabels={setShowAirspaceLabels} open={settingsOpen} onOpenChange={setSettingsOpen} simPrefs={simPrefs} onSimPrefs={updateSimPrefs} />}
       {phase === "flying" && boss && <button aria-label="Fortsetzen" onClick={() => { setBoss(false); setPaused(false); }} className="fixed inset-0 z-[100] cursor-default bg-background"><img src={bossSheet} alt="" className="h-full w-full object-cover object-left-top" /></button>}
       {phase === "flying" && <button aria-label={paused ? "Fortsetzen" : "Pause"} aria-pressed={paused} onClick={() => setPaused((p) => !p)} onDoubleClick={() => { setBoss(true); setPaused(true); }} className="absolute right-14 top-3 z-20 grid h-9 w-9 place-items-center rounded-md border border-border bg-card/95 font-bold text-foreground backdrop-blur-md active:bg-accent">{paused ? "▶" : "❚❚"}</button>}
-      {phase === "flying" && <div className="absolute left-2 right-[6.25rem] top-3 z-20 flex items-center gap-1 overflow-x-auto pr-1 no-scrollbar sm:left-auto">
+      {phase === "flying" && <div className="absolute left-2 right-[6.25rem] top-3 z-20 flex items-stretch gap-1 overflow-x-auto pr-1 no-scrollbar sm:left-auto [&>button]:flex-1 sm:[&>button]:flex-none">
         {taskInfo && !config?.weekly && <button onClick={() => { taskRef.current = null; setTaskInfo(null); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Aufgabe abbrechen{taskInfo.next < taskInfo.total ? ` (${taskInfo.next}/${taskInfo.total - 1})` : " ✓"}</button>}
         {config?.mode === "xc" && !config?.weekly && <button aria-pressed={showTop3} onClick={() => setShowTop3((v) => !v)} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Top3</button>}
         <button aria-pressed={showMini} onClick={() => { if (!showMini) setShowProfile(false); setShowMini(!showMini); setZoomTarget("main"); miniZoom.reset(); }} className="h-8 shrink-0 whitespace-nowrap rounded-md border border-border bg-card/95 px-1 text-[10px] font-bold aria-pressed:bg-primary aria-pressed:text-primary-foreground sm:h-9 sm:px-2 sm:text-xs text-foreground backdrop-blur-md active:bg-accent">Minimap</button>
@@ -564,7 +564,7 @@ export function FlightGame() {
             <div className="mt-2 grid grid-cols-2 gap-1.5">
               <div className="hud-cell py-1"><div className="hud-label">XC Strecke</div><div className="hud-value text-lg">{(result.xc / 1000).toFixed(1)} km</div></div>
               <div className="hud-cell py-1"><div className="hud-label">XC Punkte</div><div className="hud-value text-lg">{result.points.toFixed(1)}</div></div>
-              <div className="hud-cell py-1"><div className="hud-label">Flugdauer</div><div className="hud-value text-lg">{Math.floor(result.time / 60)}:{String(Math.floor(result.time % 60)).padStart(2, "0")}</div></div>
+              <div className="hud-cell py-1"><div className="hud-label">Flugdauer</div><div className="hud-value text-lg">{[Math.floor(result.time / 3600), Math.floor(result.time % 3600 / 60), Math.floor(result.time % 60)].map((v) => String(v).padStart(2, "0")).join(":")}</div></div>
               <div className="hud-cell py-1"><div className="hud-label">XC Geschw.</div><div className="hud-value text-lg">{result.time > 0 ? (((result.xc / 1000) / (result.time / 3600))).toFixed(1) : "0.0"} km/h</div></div>
               <div className="hud-cell py-1"><div className="hud-label">Max Höhe</div><div className="hud-value text-lg">{Math.round(result.maxAlt)} m</div></div>
               <div className="hud-cell py-1"><div className="hud-label">Höhengewinn</div><div className="hud-value text-lg">{Math.round(result.climb)} m</div></div>

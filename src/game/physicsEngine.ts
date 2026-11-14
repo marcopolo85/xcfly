@@ -96,7 +96,7 @@ export interface Input { left: boolean; right: boolean; accel: boolean; steer?: 
  * On the speed bar the arrows turn at a fixed gentle 2°/s real time instead of
  * scaling with the accelerated simulation rate; slide steering is unchanged.
  */
-export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1, accelFactor = ACCEL_TIME_FACTOR) {
+export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1, accelFactor = ACCEL_TIME_FACTOR, circleFactor = 1) {
   const dirDigital = (input.right ? 1 : 0) - (input.left ? 1 : 0);
   const dirAnalog = (input.steer ?? 0) * STEER_ANALOG_FACTOR;
   const dtSim = dtReal * timeScale(input.accel, simSpeed, accelFactor);
@@ -108,7 +108,8 @@ export function steer(sim: Sim, input: Input, dtReal: number, simSpeed = 1, acce
     sim.turnAcc += Math.abs(rot);
     if (sim.turnAcc >= Math.PI * 2) {
       sim.turnAcc -= Math.PI * 2;
-      if (sim.vz > 0.3) sim.circles++;
+      // Hold boost: each drawn circle represents circleFactor simulated circles.
+      if (sim.vz > 0.3) sim.circles += Math.max(1, Math.round(circleFactor));
     }
   } else sim.turnAcc = 0;
   sim.heading = (sim.heading + rot + Math.PI * 2) % (Math.PI * 2);
