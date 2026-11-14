@@ -12,6 +12,7 @@ import { airLift, type ThermalField } from "@/game/thermals";
 import { loadThermalRaster, type ThermalMap } from "@/game/loadThermalRaster";
 import { stepPhysics, steer, stepVisualYaw, timeScale, frameSpeeds, setTurnInput, type Sim, type Input, type HoldStarts, type VisualYaw } from "@/game/physicsEngine";
 import { sunPosition, sunVector, fmtClock } from "@/game/sun";
+import { compassLabel } from "@/game/sunDisplay";
 import { SEASONS } from "@/game/sites";
 import { flightTimeLimit, modeLabel, XC_TIME_LIMIT_S, type FlightMode } from "@/game/modes";
 import { xcScore, XC_FACTORS, type RouteType } from "@/game/xcScore";
@@ -381,9 +382,9 @@ export function FlightGame() {
           setTaskInfo({ next: tk.next, total: tk.local.length });
           if (config.weekly && tk.next >= tk.local.length) { finish("Goal erreicht!"); return; }
         }
-        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: [...(showTop3Ref.current ? ghostList(sim.flightTime) : []), ...(remoteList(config.site) ?? [])], airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current, mapAlpha: mapOpacityRef.current }, mapZoom.transform.current);
+        if (canvasRef.current) drawScene(canvasRef.current, { task: taskRef.current, site: config.site, terrain, sim, trail, dusk, sun: sv, visYaw: visYaw.vis, glideVz: averageGlideVz(glideAvg, sim.speed, smoothVz), thermalMap: thermalOpacityRef.current > 0 ? thermalMap : null, thermalAlpha: thermalOpacityRef.current, triangle, showProfile: showProfileRef.current, anchorFraction: pilotAnchor.current, others: [...(showTop3Ref.current ? ghostList(sim.flightTime) : []), ...(remoteList(config.site) ?? [])], airspaces: showAirspacesRef.current ? airspaces : null, airspaceLabels: showAirspaceLabelsRef.current, mapAlpha: mapOpacityRef.current }, mapZoom.transform.current);
         if (showMiniRef.current && miniZoom.canvasRef.current) drawMiniMap(miniZoom.canvasRef.current, config.site, sim, triangle, miniZoom.transform.current, mapOpacityRef.current);
-        if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current);
+        if (profileZoom.canvasRef.current) drawSideProfile(profileZoom.canvasRef.current, terrain, sim, profileZoom.transform.current, showAirspacesRef.current ? airspaces : null, showAirspaceLabelsRef.current, sv);
 
         const xc = sim.xcDist;
         if (now - lastHud > 100) {
@@ -400,7 +401,7 @@ export function FlightGame() {
               return { nextName: tk.next === tk.local.length - 1 ? "Goal" : `TP ${tk.next}`, nextDist: Math.hypot(n.x - sim.x, n.y - sim.y), goalDist: Math.hypot(g.x - sim.x, g.y - sim.y) };
             })() : undefined,
             remain: flightTimeLimit(mode, config.weekly) === undefined ? undefined : Math.max(0, XC_TIME_LIMIT_S - sim.flightTime),
-            clock: fmtClock(sim.clock), accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
+            clock: fmtClock(sim.clock), sunDir: compassLabel(sp.az), sunEl: sp.el * 180 / Math.PI, accel: inp.accel, cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
         }
         const outDist = Math.hypot(sim.x, sim.y);

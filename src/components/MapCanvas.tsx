@@ -169,6 +169,7 @@ export interface SceneData {
   others?: { x: number; y: number; alt: number; heading: number; name: string; color?: string; metallic?: boolean; trail?: { x: number; y: number }[] | undefined }[] | undefined;
   task?: { local: { x: number; y: number }[]; next: number; radius: number } | null;
   mapAlpha?: number; // relief map opacity 0..1
+  sun?: { x: number; y: number; z: number };
   visYaw: number; // drawn glider rotation: one turn per second at most while thermalling
 }
 
@@ -390,6 +391,32 @@ function drawTriangle(ctx: CanvasRenderingContext2D, t: XcTriangle, sx: (x: numb
   ctx.setLineDash([]);
 }
 
+/** Coarse world-space sun/shade overlay of the loaded terrain, cached per terrain and quantized sun. */
+const shadeCache = new WeakMap<Terrain, { key: number; canvas: HTMLCanvasElement }>();
+const SHADE_STEP = 100;
+function sunShade(t: Terrain, sun: { x: number; y: number; z: number }) {
+  const key = Math.round(sun.x * 20) * 1e4 + Math.round(sun.y * 20) * 100 + Math.round(sun.z * 20);
+  const hit = shadeCache.get(t);
+  if (hit && hit.key === key) return hit.canvas;
+  const n = Math.round((2 * EXTENT) / SHADE_STEP);
+  const c = hit?.canvas ?? document.createElement("canvas");
+  c.width = n; c.height = n;
+  const g = c.getContext("2d");
+  if (!g) return c;
+  const img = g.createImageData(n, n);
+  const ox = (t.centerX ?? 0) - EXTENT, oy = (t.centerY ?? 0) + EXTENT;
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const nm = normalAt(t, ox + (i + 0.5) * SHADE_STEP, oy - (j + 0.5) * SHADE_STEP);
+    const irr = nm.x * sun.x + nm.y * sun.y + nm.z * sun.z;
+    const o = (j * n + i) * 4;
+    if (irr > 0.85) { img.data[o] = 255; img.data[o + 1] = 200; img.data[o + 2] = 80; img.data[o + 3] = Math.min(70, (irr - 0.85) * 600); }
+    else if (irr < 0.6) { img.data[o] = 20; img.data[o + 1] = 30; img.data[o + 2] = 70; img.data[o + 3] = Math.min(90, (0.6 - irr) * 220); }
+  }
+  g.putImageData(img, 0, 0);
+  shadeCache.set(t, { key, canvas: c });
+  return c;
+}
+
 export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTransform) {
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -420,6 +447,11 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
     ctx.font = "12px monospace";
     ctx.textAlign = "center";
     ctx.fillText(map.failed ? "Karte nicht erreichbar · erneuter Versuch folgt" : "Schweizer Reliefkarte lädt…", W / 2, H * 0.65);
+  }
+  if (s.sun && s.sun.z > 0) {
+    const shadeCanvas = sunShade(s.terrain, s.sun);
+    const left = (s.terrain.centerX ?? 0) - EXTENT, top = (s.terrain.centerY ?? 0) + EXTENT;
+    ctx.drawImage(shadeCanvas, sx(left), sy(top), 2 * EXTENT * z, 2 * EXTENT * z);
   }
   drawContours(ctx, s.terrain, sx, sy, z, sim.x - cx / z, sim.x + (W - cx) / z, sim.y - (H - cy) / z, sim.y + cy / z, sim.alt);
 
@@ -624,11 +656,20 @@ export function drawScene(canvas: HTMLCanvasElement, s: SceneData, view: ZoomTra
   }
 
   // glider (photo wing on transparent background)
+  const shadow = s.sun ? shadowOffset(s.sun, sim.alt - heightAt(s.terrain, sim.x, sim.y)) : null;
+  if (shadow) {
+    const len = Math.sqrt(shadow.x * shadow.x + shadow.y * shadow.y);
+    const k = len * z > 160 ? 160 / (len * z) : 1; // keep the shadow near the glider when high
+    ctx.save();
+    ctx.translate(cx + shadow.x * z * k, cy - shadow.y * z * k);
+    ctx.rotate(s.visYaw);
+    ctx.fillStyle = `rgba(0,0,0,${k < 1 ? 0.18 : 0.32})`;
+    ctx.beginPath(); ctx.ellipse(0, 0, 18, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(s.visYaw);
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
-  ctx.beginPath(); ctx.ellipse(6, 8, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "rgba(255,255,255,0.6)";
   ctx.setLineDash([3, 4]);
   ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, -70); ctx.stroke();
