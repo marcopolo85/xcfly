@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-14a",
+    date: "14. Nov 2026",
+    items: ["Auswertung: Flugdauer als HH:MM:SS", "Handy: Flugleiste nutzt ganze Breite, Buttons gleich hoch", "Thermikkreise zählen den Kurven-Boost mit"],
+  },
+  {
     id: "2026-11-13a",
     date: "13. Nov 2026",
     items: ["Ghost-Piloten zeigen ihre Höhe am Namensschild (bei neu gespeicherten Flügen)", "Medaillen-Schirme mit Metallic-Glanz; Gold und Bronze klarer unterscheidbar", "Minimap so gross wie die Seitenansicht, abwechselnd eingeblendet; Flugleiste aufs Handy angepasst"],
