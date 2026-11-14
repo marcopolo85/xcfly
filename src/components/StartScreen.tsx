@@ -1,5 +1,5 @@
 import { inThermalRegion } from "@/game/thermalRegion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITES, SEASONS, type Season, type Site } from "@/game/sites";
 import { sunTimes } from "@/game/sun";
@@ -101,6 +101,8 @@ const FIXED_SEASON: Season = "summer";
 
 export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void }) {
   const [site, setSite] = useState<Site | null>(null);
+  const [dayViewer, setDayViewer] = useState(false);
+  const logoTaps = useRef<number[]>([]);
   const [mode, setMode] = useState<FlightMode>("xc");
   const [startHour, setStartHour] = useState(11);
   const [choosing, setChoosing] = useState(false);
