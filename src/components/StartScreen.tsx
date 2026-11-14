@@ -15,6 +15,7 @@ import { RouteIcon } from "./RouteIcon";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
+import { ThermalDayViewer } from "./ThermalDayViewer";
 import { MultiTrackMap, trackColor } from "./TrackOverview";
 import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTask";
 import { loadLaunchAltitude } from "@/game/realTerrain";
@@ -155,7 +156,8 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
     <div className="relative h-[100dvh] overflow-hidden bg-background">
       <img src={heroImg} alt="Gleitschirm über Schweizer Alpen" className="absolute inset-0 h-full w-full object-cover opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
-      <img src={logoImg} alt="XCFly Logo" className="absolute right-4 top-4 h-56 w-auto sm:h-80" />
+      <img src={logoImg} alt="XCFly Logo" className="absolute right-4 top-4 z-10 h-56 w-auto select-none sm:h-80" onClick={() => { const now = Date.now(); logoTaps.current = logoTaps.current.filter((t) => now - t < 1000).concat(now); if (logoTaps.current.length >= 3) { logoTaps.current = []; setDayViewer(true); } }} />
+      <ThermalDayViewer open={dayViewer} onOpenChange={setDayViewer} />
       <div className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col justify-end px-5 pb-6 pt-64">
         <h1 className="mt-1 font-display text-6xl font-bold leading-none text-foreground sm:text-8xl">XCFly</h1>
 
