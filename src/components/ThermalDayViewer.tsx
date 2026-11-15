@@ -100,7 +100,7 @@ function renderField(f: Field, sun: { x: number; y: number; z: number }, flt: Th
       const surface = sunlitSurfaceLift(t, x, y, f.alt[i], sun);
       // KK7 is an all-day average: scale it with sun strength and local exposure for the diurnal cycle.
       const kk7 = f.kk7[i] * amp * (0.35 + 0.65 * local);
-      lift = combineLift(flt, f.peak[i] * amp, local > 0 ? (1 + 3 * local) * amp : 0, surface, kk7);
+      lift = combineLift(flt, f.peak[i] * amp, local > 0 && f.nz[i] < 0.97 ? (1 + 3 * local) * amp : 0, surface, kk7);
     }
     const a = Math.max(0, Math.min(0.85, (lift - 0.8) / 2.5));
     const [cr, cg, cb] = ramp((lift - 1) / 6.5);

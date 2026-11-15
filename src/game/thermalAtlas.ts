@@ -132,7 +132,7 @@ export function renderAtlas(at: Atlas, sun: { x: number; y: number; z: number },
       const local = Math.max(0, Math.min(1, (irr - 0.45) / 0.5));
       const pr = at.prom[i]!;
       const peak = pr > 80 ? Math.min(8, (pr / 120) * (0.6 + e / 3000)) * amp : 0;
-      const sunSlope = local > 0 ? (1 + 3 * local) * amp : 0;
+      const sunSlope = local > 0 && at.nz[i]! < 0.97 ? (1 + 3 * local) * amp : 0;
       const slope = local > 0.2 ? Math.min(6, (local - 0.2) * (1.5 + e / 900)) * amp : 0;
       const kk7 = at.kk7[i]! > 0 ? (2 + 5.5 * Math.max(0, (at.kk7[i]! / 255 - 0.1) / 0.9)) * amp * (0.35 + 0.65 * local) : 0;
       lift = combineLift(f, peak, sunSlope, slope, kk7);
