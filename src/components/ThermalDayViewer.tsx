@@ -182,7 +182,7 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
       finally { loadingRef.current = false; }
     })();
     return () => { cancelled = true; loadingRef.current = false; };
-  }, [open, view.cx, view.cy, win]);
+  }, [open, view.cx, view.cy, view.mpp, win]);
 
   // Rebuild static fields for the visible area (debounced while panning/zooming).
   useEffect(() => {
