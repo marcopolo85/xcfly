@@ -10,6 +10,25 @@ import { loadRealTerrain } from "@/game/realTerrain";
 import { loadThermalRaster } from "@/game/loadThermalRaster";
 import { rasterHeatAt, type ThermalRaster } from "@/game/thermalRaster";
 import { compassLabel } from "@/game/sunDisplay";
+import { visibleReliefTiles, waterTileUrl } from "@/game/swissMap";
+
+/** Faintly blue-tinted swisstopo lake tiles, cached per URL (bounded). */
+const lakeCache = new Map<string, HTMLCanvasElement | null>();
+function lakeTile(url: string, onLoad: () => void) {
+  if (lakeCache.has(url)) return lakeCache.get(url) ?? null;
+  lakeCache.set(url, null);
+  if (lakeCache.size > 200) { const k = lakeCache.keys().next().value; if (k !== undefined) lakeCache.delete(k); }
+  const img = new Image(); img.crossOrigin = "anonymous";
+  img.onload = () => {
+    const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const g = c.getContext("2d"); if (!g) return;
+    g.drawImage(img, 0, 0); g.globalCompositeOperation = "source-in";
+    g.fillStyle = "rgba(90,160,235,0.4)"; g.fillRect(0, 0, c.width, c.height);
+    lakeCache.set(url, c); onLoad();
+  };
+  img.src = url;
+  return null;
+}
 
 const START = 8, END = 21;
 const SITE = SITES.find((s) => s.id === "gummen") ?? SITES[0]!;
@@ -90,7 +109,6 @@ function renderField(f: Field, sun: { x: number; y: number; z: number }, out: HT
 export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [hour, setHour] = useState(10);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
   const [status, setStatus] = useState("");
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>({ cx: 0, cy: 0, mpp: 100 });
@@ -155,12 +173,12 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
     let raf = 0, last = performance.now();
     const tick = (now: number) => {
       const dt = (now - last) / 1000; last = now;
-      setHour((h) => { const n = h + dt * 0.5 * speed; return n > END ? START : n; });
+      setHour((h) => { const n = h + dt * 0.5; return n > END ? START : n; });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [open, playing, ready, speed]);
+  }, [open, playing, ready]);
 
   const sun = sunVector(sunPosition(SITE.lat, SEASON.doy, hour, SEASON.dst));
   const sunKey = Math.round(hour * 30); // redraw every 2 simulated minutes
@@ -184,7 +202,14 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
     const sx = (f.x0 - v.cx) / v.mpp + w / 2, sy = (v.cy - f.y0) / v.mpp + h / 2;
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(b, sx, sy, (f.w * f.mpp) / v.mpp, (f.h * f.mpp) / v.mpp);
+    // Lakes: tiles are anchored at 55% height; shift to our centred view.
+    const dy = -0.05 * h;
+    for (const t of visibleReliefTiles(SITE, v.cx, v.cy, w, h, 1 / v.mpp, dpr, 15)) {
+      const lake = lakeTile(waterTileUrl(t.x, t.y, t.level), () => blitRef.current());
+      if (lake) ctx.drawImage(lake, t.left, t.top + dy, t.size + 0.5, t.size + 0.5);
+    }
   };
+  const blitRef = useRef(blit); blitRef.current = blit;
   useEffect(blit);
 
   useEffect(() => {
@@ -220,33 +245,26 @@ export function ThermalDayViewer({ open, onOpenChange }: { open: boolean; onOpen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[95dvh] max-w-2xl overflow-y-auto">
-        <DialogHeader><DialogTitle>Thermik im Tagesverlauf</DialogTitle></DialogHeader>
-        <div ref={boxRef} className="relative aspect-square w-full touch-none select-none overflow-hidden rounded-lg border border-border bg-muted cursor-grab active:cursor-grabbing"
+      <DialogContent className="left-0 top-0 h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 p-0 sm:rounded-none">
+        <DialogHeader className="sr-only"><DialogTitle>Thermik im Tagesverlauf</DialogTitle></DialogHeader>
+        <div ref={boxRef} className="absolute inset-0 touch-none select-none overflow-hidden bg-muted cursor-grab active:cursor-grabbing"
           onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onDoubleClick={resetView}>
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
-          <div className="absolute bottom-2 right-2 flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
-            <Button size="sm" variant="secondary" aria-label="Hineinzoomen" onClick={() => zoomBtn(1.4)}>+</Button>
-            <Button size="sm" variant="secondary" aria-label="Herauszoomen" onClick={() => zoomBtn(1 / 1.4)}>−</Button>
-            <Button size="sm" variant="secondary" onClick={resetView}>Reset</Button>
-          </div>
           <div className="absolute left-2 top-2 rounded bg-background/80 px-2 py-1 font-mono text-sm">{fmtClock(hour)} · {sunInfo}</div>
-          <div className="absolute right-2 top-2 rounded bg-background/80 px-1.5 font-mono text-xs">N ↑ · 100 px ≈ {scaleKm} km</div>
-          {(status || !ready) && <div className="absolute inset-x-2 bottom-12 rounded bg-background/80 px-2 py-1 text-xs">{status || "Lade Höhendaten & Thermikraster …"}</div>}
+          <div className="absolute right-12 top-3 rounded bg-background/80 px-1.5 font-mono text-xs">N ↑ · 100 px ≈ {scaleKm} km</div>
+          {(status || !ready) && <div className="absolute inset-x-2 top-12 rounded bg-background/80 px-2 py-1 text-xs">{status || "Lade Höhendaten & Thermikraster …"}</div>}
+          <div className="absolute inset-x-2 bottom-2 space-y-1 rounded-lg bg-background/80 p-2 backdrop-blur" onPointerDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 text-sm">
+              <Button size="icon" variant="secondary" disabled={!ready} aria-label={playing ? "Pause" : "Abspielen"} onClick={() => setPlaying((p) => !p)}>{playing ? <Pause /> : <Play />}</Button>
+              <input aria-label="Tageszeit" type="range" min={START} max={END} step={1 / 60} value={hour} onChange={(e) => { setPlaying(false); setHour(Number(e.target.value)); }} className="flex-1 accent-primary" />
+              <span className="w-12 text-right font-mono">{fmtClock(hour)}</span>
+              <Button size="sm" variant="secondary" aria-label="Hineinzoomen" onClick={() => zoomBtn(1.4)}>+</Button>
+              <Button size="sm" variant="secondary" aria-label="Herauszoomen" onClick={() => zoomBtn(1 / 1.4)}>−</Button>
+              <Button size="sm" variant="secondary" onClick={resetView}>Reset</Button>
+            </div>
+            <p className="text-[10px] leading-tight text-muted-foreground">Farbe = erwartetes Steigen (blau ≈ 1 m/s → rot ≥ 7 m/s) aus Gipfelthermik, besonnten Hängen und KK7. Thermikdaten: thermal.kk7.ch, CC BY-NC-SA · Seen: swisstopo/BAFU.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Button size="icon" variant="secondary" disabled={!ready} aria-label={playing ? "Pause" : "Abspielen"} onClick={() => setPlaying((p) => !p)}>{playing ? <Pause /> : <Play />}</Button>
-          <label className="w-20 shrink-0 text-muted-foreground">Tageszeit</label>
-          <input aria-label="Tageszeit" type="range" min={START} max={END} step={1 / 60} value={hour} onChange={(e) => { setPlaying(false); setHour(Number(e.target.value)); }} className="flex-1 accent-primary" />
-          <span className="w-12 text-right font-mono">{fmtClock(hour)}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="w-10 shrink-0" />
-          <label className="w-20 shrink-0 text-muted-foreground">Tempo</label>
-          <input aria-label="Animationsgeschwindigkeit" type="range" min={-2} max={3} step={0.25} value={Math.log2(speed)} onChange={(e) => setSpeed(2 ** Number(e.target.value))} className="flex-1 accent-primary" />
-          <span className="w-12 text-right font-mono">{speed < 1 ? speed.toFixed(2) : speed.toFixed(1)}×</span>
-        </div>
-        <p className="text-xs text-muted-foreground">Farbe = erwartetes Steigen aus Gipfelthermik, besonnten Hängen und KK7-Thermikkarte (blau ≈ 1 m/s → rot ≥ 7 m/s), abhängig vom Sonnenstand. Karte verschieben/zoomen zeigt die Entwicklung im gewählten Bereich. Thermikdaten: thermal.kk7.ch, CC BY-NC-SA.</p>
       </DialogContent>
     </Dialog>
   );
