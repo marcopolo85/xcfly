@@ -265,7 +265,10 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             Weekly-Task
             <span role="button" tabIndex={0} aria-label="Rangliste Weekly-Task" title="Rangliste Weekly-Task" onClick={(e) => { e.stopPropagation(); setTaskRanking(true); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); setTaskRanking(true); } }} className="grid place-items-center rounded-md p-1 active:bg-accent"><Medal className="h-3.5 w-3.5" /></span>
           </button>
-          <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname (Multiplayer)" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="w-full min-w-0 rounded-lg border border-route-fai-light bg-route-fai-light/15 px-2 font-display text-xs font-bold text-route-fai-light placeholder:text-route-fai-light/60 focus:outline-none focus:ring-2 focus:ring-route-fai-light sm:text-sm" />
+          <div className="relative w-full min-w-0">
+            <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="h-full w-full min-w-0 rounded-lg border border-route-tri-light bg-route-tri-light/15 px-2 text-center font-display text-xs font-bold text-route-tri-light focus:outline-none focus:ring-2 focus:ring-route-tri-light sm:text-sm" />
+            {!pilotName && <span aria-hidden className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center font-display leading-tight text-route-tri-light/70"><span className="text-xs font-bold sm:text-sm">Pilotname</span><span className="text-[10px] sm:text-xs">(Multiplayer)</span></span>}
+          </div>
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             <div className="flex h-full flex-col justify-center rounded-md border border-border bg-card/60 p-2 text-[9px] leading-tight text-muted-foreground">
