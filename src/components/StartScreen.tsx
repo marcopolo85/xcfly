@@ -158,12 +158,12 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
     <div className="relative h-[100dvh] overflow-hidden bg-background">
       <img src={heroImg} alt="Gleitschirm über Schweizer Alpen" className="absolute inset-0 h-full w-full object-cover opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
-      <img src={logoImg} alt="XCFly Logo" className="absolute right-4 top-4 z-10 h-16 w-auto select-none sm:h-80" onClick={() => { const now = Date.now(); logoTaps.current = logoTaps.current.filter((t) => now - t < 1000).concat(now); if (logoTaps.current.length >= 3) { logoTaps.current = []; setDayViewer(true); } }} />
+      <img src={logoImg} alt="XCFly Logo" className="absolute right-4 top-4 z-10 hidden h-80 w-auto select-none sm:block" onClick={() => { const now = Date.now(); logoTaps.current = logoTaps.current.filter((t) => now - t < 1000).concat(now); if (logoTaps.current.length >= 3) { logoTaps.current = []; setDayViewer(true); } }} />
       <ThermalDayViewer open={dayViewer} onOpenChange={setDayViewer} />
-      <div className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col justify-end px-3 pb-2 pt-2 sm:px-5 sm:pb-6 sm:pt-64">
-        <h1 className="mt-1 font-display text-4xl sm:text-6xl font-bold leading-none text-foreground sm:text-8xl">XCFly</h1>
+      <div className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col justify-start px-3 pb-2 pt-2 sm:justify-end sm:px-5 sm:pb-6 sm:pt-64">
+        <div className="flex items-center sm:block"><h1 className="w-1/2 font-display text-[17vw] font-bold leading-none text-foreground sm:w-auto sm:text-8xl">XCFly</h1><img src={logoImg} alt="XCFly Logo" className="h-[14vw] w-1/2 select-none object-contain sm:hidden" onClick={() => { const now = Date.now(); logoTaps.current = logoTaps.current.filter((t) => now - t < 1000).concat(now); if (logoTaps.current.length >= 3) { logoTaps.current = []; setDayViewer(true); } }} /></div>
 
-        <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-card/85 p-2 sm:mt-4 sm:space-y-2.5 sm:p-4 backdrop-blur">
+        <div className="mt-1 min-h-0 flex-1 space-y-1.5 overflow-hidden rounded-xl sm:flex-none border border-border bg-card/85 p-2 sm:mt-4 sm:space-y-2.5 sm:p-4 backdrop-blur">
           <section>
             <div className="mb-1.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -265,7 +265,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             Weekly-Task
             <span role="button" tabIndex={0} aria-label="Rangliste Weekly-Task" title="Rangliste Weekly-Task" onClick={(e) => { e.stopPropagation(); setTaskRanking(true); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); e.preventDefault(); setTaskRanking(true); } }} className="grid place-items-center rounded-md p-1 active:bg-accent"><Medal className="h-3.5 w-3.5" /></span>
           </button>
-          <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="w-full min-w-0 rounded-lg border border-border bg-background/80 px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <input value={pilotName} maxLength={24} onChange={(e) => updatePilotName(e.target.value)} placeholder="Pilotname" aria-label="Pilotname für Multiplayer" title="Bleibt das Feld leer, fliegst du unsichtbar (kein Multiplayer)." className="w-full min-w-0 rounded-lg border border-route-fai-light bg-route-fai-light/15 px-2 font-display text-xs font-bold text-route-fai-light placeholder:text-route-fai-light/60 focus:outline-none focus:ring-2 focus:ring-route-fai-light sm:text-sm" />
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             <div className="flex h-full flex-col justify-center rounded-md border border-border bg-card/60 p-2 text-[9px] leading-tight text-muted-foreground">

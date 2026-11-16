@@ -3,7 +3,7 @@ export interface HudData {
   time: number;
   xc: number; xcSpeed: number; xcType?: "free" | "tri" | "fai";
   tri: number; triFai: boolean; triMin: number; triMax: number; close: number;
-  clock: string; sunDir?: string; sunEl?: number; accel: boolean; cloudbase: number;
+  clock: string; sunDir?: string; sunEl?: number; accel: boolean; simRate?: number; cloudbase: number;
   remain?: number | undefined; task?: { nextName: string; nextDist: number; goalDist: number } | undefined; outDist?: number | undefined; returnRadius?: number | undefined;
 }
 
@@ -30,7 +30,7 @@ export function FlightHUD({ d }: { d: HudData }) {
   return (
     <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[160px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
       <header className="flex items-center justify-between gap-1 whitespace-nowrap border-b border-border font-mono text-[8.5px] tracking-tighter sm:text-[10px] sm:tracking-normal">
-        <span className="font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}</span>
+        <span className="font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}{(d.simRate ?? 1) !== 1 && <span className="ml-1 text-sun">{Math.round(d.simRate ?? 1)}×</span>}</span>
         <span className="min-w-0 text-muted-foreground">{d.sunDir && (d.sunEl ?? 0) > 0 && <span className="mr-1 text-sun" title="Sonnenrichtung und -höhe">☼{d.sunDir} {Math.round(d.sunEl ?? 0)}°</span>}{d.clock}</span>
       </header>
       <div className="flex flex-1 gap-1.5 pt-0.5">
