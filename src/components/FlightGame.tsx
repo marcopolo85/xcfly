@@ -401,7 +401,7 @@ export function FlightGame() {
               return { nextName: tk.next === tk.local.length - 1 ? "Goal" : `TP ${tk.next}`, nextDist: Math.hypot(n.x - sim.x, n.y - sim.y), goalDist: Math.hypot(g.x - sim.x, g.y - sim.y) };
             })() : undefined,
             remain: flightTimeLimit(mode, config.weekly) === undefined ? undefined : Math.max(0, XC_TIME_LIMIT_S - sim.flightTime),
-            clock: fmtClock(sim.clock), sunDir: compassLabel(sp.az), sunEl: sp.el * 180 / Math.PI, accel: inp.accel, simRate: simDt / Math.max(dtReal, 1e-6), cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
+            clock: fmtClock(sim.clock), sunDir: compassLabel(sp.az), sunEl: sp.el * 180 / Math.PI, accel: inp.accel, simRate: timeScale(inp.accel, effSimSpeed, prefs.accelSpeed), cloudbase: cloudbaseAt(terrain, sim.x, sim.y),
           });
         }
         const outDist = Math.hypot(sim.x, sim.y);
