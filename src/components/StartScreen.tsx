@@ -158,12 +158,12 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
     <div className="relative h-[100dvh] overflow-hidden bg-background">
       <img src={heroImg} alt="Gleitschirm über Schweizer Alpen" className="absolute inset-0 h-full w-full object-cover opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
-      <img src={logoImg} alt="XCFly Logo" className="absolute right-4 top-4 z-10 h-56 w-auto select-none sm:h-80" onClick={() => { const now = Date.now(); logoTaps.current = logoTaps.current.filter((t) => now - t < 1000).concat(now); if (logoTaps.current.length >= 3) { logoTaps.current = []; setDayViewer(true); } }} />
+      <img src={logoImg} alt="XCFly Logo" className="absolute right-4 top-4 z-10 h-16 w-auto select-none sm:h-80" onClick={() => { const now = Date.now(); logoTaps.current = logoTaps.current.filter((t) => now - t < 1000).concat(now); if (logoTaps.current.length >= 3) { logoTaps.current = []; setDayViewer(true); } }} />
       <ThermalDayViewer open={dayViewer} onOpenChange={setDayViewer} />
-      <div className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col justify-end px-5 pb-6 pt-64">
-        <h1 className="mt-1 font-display text-6xl font-bold leading-none text-foreground sm:text-8xl">XCFly</h1>
+      <div className="relative mx-auto flex h-[100dvh] max-w-3xl flex-col justify-end px-3 pb-2 pt-2 sm:px-5 sm:pb-6 sm:pt-64">
+        <h1 className="mt-1 font-display text-4xl sm:text-6xl font-bold leading-none text-foreground sm:text-8xl">XCFly</h1>
 
-        <div className="mt-4 space-y-2.5 rounded-xl border border-border bg-card/85 p-4 backdrop-blur">
+        <div className="mt-2 space-y-1.5 rounded-xl border border-border bg-card/85 p-2 sm:mt-4 sm:space-y-2.5 sm:p-4 backdrop-blur">
           <section>
             <div className="mb-1.5 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
             <h2 className="hud-label mb-1.5">Startplatz</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {sortedSites.map((s) => (
-                <Button key={s.id} variant="outline" onClick={() => { setSite(s); setTask(null); }} data-active={site !== null && s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-1.5">
+                <Button key={s.id} variant="outline" onClick={() => { setSite(s); setTask(null); }} data-active={site !== null && s.id === site.id} className="choice h-auto min-w-0 flex-1 flex-col items-start gap-0 whitespace-normal px-2 py-0.5 sm:py-1.5">
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="block text-sm font-semibold leading-tight">{s.name.replace(/\s*\(.*?\)\s*/g, " ").trim()}</span>
                     <span className="flex shrink-0 items-center">
@@ -249,16 +249,16 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
                 </Button>
               ))}
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-1.5">
-              <Button variant="outline" className="h-9 text-sm" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
-              <Button variant="outline" className="h-9 text-sm" onClick={() => { setImportError(null); setImportOpen(true); }}><Route />Aufgabe importieren</Button>
-              <Button variant="outline" className="col-span-2 h-9 text-sm" onClick={() => setTodayOpen(true)}><MapPin />Tracks von heute</Button>
+            <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:mt-2">
+              <Button variant="outline" className="h-8 text-sm sm:h-9" onClick={() => setChoosing(true)}><MapPin />Auf Karte wählen</Button>
+              <Button variant="outline" className="h-8 text-sm sm:h-9" onClick={() => { setImportError(null); setImportOpen(true); }}><Route />Aufgabe importieren</Button>
+              <Button variant="outline" className="col-span-2 h-8 text-sm sm:h-9" onClick={() => setTodayOpen(true)}><MapPin />Tracks von heute</Button>
             </div>
             {task && <div className="mt-1 flex items-center justify-between font-mono text-xs text-foreground"><span>Aufgabe: {task.points.length - 1} Wegpunkte · {taskDistanceKm(task.points).toFixed(1)} km</span><button type="button" className="underline text-muted-foreground" onClick={() => setTask(null)}>entfernen</button></div>}
             {site?.id.startsWith("map-") && !task && <div className="mt-1 font-mono text-xs text-foreground">{site.region} · {site.launchAlt} m</div>}
           </section>
           <div className="grid grid-cols-3 gap-2">
-          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode, pilotName: pilotName.trim() || undefined, task: task ?? undefined }); }} className="w-full min-w-0 rounded-lg bg-primary py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+          <button disabled={!site || !inThermalRegion(site.lat, site.lon)} onClick={() => { if (site && inThermalRegion(site.lat, site.lon)) onStart({ site, season: FIXED_SEASON, startHour: effectiveHour, mode, pilotName: pilotName.trim() || undefined, task: task ?? undefined }); }} className="w-full min-w-0 rounded-lg bg-primary py-2 sm:py-3 font-display text-base font-bold text-primary-foreground shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
             Starten
           </button>
           <button type="button" title={(() => { const w = weeklyTask(); return `Weekly-Task ab ${w.site.name} · 3 Wegpunkte · 150 km`; })()} onClick={() => { const w = weeklyTask(); onStart({ site: w.site, season: FIXED_SEASON, startHour: effectiveHour, mode: "xc", pilotName: pilotName.trim() || undefined, task: w.task, weekly: true }); }} className="flex w-full min-w-0 items-center justify-center gap-1 rounded-lg border border-route-fai-light bg-route-fai-light/15 px-1 font-display text-xs sm:text-sm font-bold text-route-fai-light transition hover:bg-route-fai-light/25">
