@@ -28,10 +28,10 @@ export function FlightHUD({ d }: { d: HudData }) {
   const routeCls = d.tri > 0 ? (d.triFai ? "text-route-fai-light" : "text-route-tri-light") : "text-route-free";
   const cbAgl = Math.max(50, d.cloudbase - (d.alt - d.agl));
   return (
-    <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[150px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
-      <header className="flex items-center justify-between border-b border-border font-mono text-[10px]">
+    <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[160px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
+      <header className="flex items-center justify-between gap-1 whitespace-nowrap border-b border-border font-mono text-[8.5px] tracking-tighter sm:text-[10px] sm:tracking-normal">
         <span className="font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}</span>
-        <span className="text-muted-foreground">{d.sunDir && (d.sunEl ?? 0) > 0 && <span className="mr-1 text-sun" title="Sonnenrichtung und -höhe">☼{d.sunDir} {Math.round(d.sunEl ?? 0)}°</span>}{d.clock}</span>
+        <span className="min-w-0 text-muted-foreground">{d.sunDir && (d.sunEl ?? 0) > 0 && <span className="mr-1 text-sun" title="Sonnenrichtung und -höhe">☼{d.sunDir} {Math.round(d.sunEl ?? 0)}°</span>}{d.clock}</span>
       </header>
       <div className="flex flex-1 gap-1.5 pt-0.5">
       <div className="relative w-3 shrink-0 border-r border-border" role="meter" aria-label="Höhe über Grund" aria-valuemin={0} aria-valuemax={cbAgl} aria-valuenow={Math.max(0, d.agl)} aria-valuetext={`${Math.round(d.agl)} Meter über Grund`}>
