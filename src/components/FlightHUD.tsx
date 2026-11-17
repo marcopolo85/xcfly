@@ -30,8 +30,8 @@ export function FlightHUD({ d }: { d: HudData }) {
   return (
     <section aria-label="GPS Fluginstrument" className="pointer-events-none flex w-[160px] shrink-0 flex-col rounded-md border-2 border-border bg-card/95 px-2 py-1 backdrop-blur-md sm:w-[190px]">
       <header className="flex items-center justify-between gap-1 whitespace-nowrap border-b border-border font-mono text-[8.5px] tracking-tighter sm:text-[10px] sm:tracking-normal">
-        <span className="font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}{(d.simRate ?? 1) !== 1 && <span className="ml-1 text-sun">{Math.round(d.simRate ?? 1)}×</span>}</span>
-        <span className="min-w-0 text-muted-foreground">{d.sunDir && (d.sunEl ?? 0) > 0 && <span className="mr-1 text-sun" title="Sonnenrichtung und -höhe">☼{d.sunDir} {Math.round(d.sunEl ?? 0)}°</span>}{d.clock}</span>
+        <span className="shrink-0 font-bold text-foreground">GPS{d.accel && <span className="ml-1 text-sun">SPEED</span>}{(d.simRate ?? 1) !== 1 && <span className="ml-1 text-sun">{Math.round(d.simRate ?? 1)}×</span>}</span>
+        <span className="flex min-w-0 shrink items-center gap-1 text-muted-foreground"><span className="truncate text-sun" title="Sonnenrichtung und Sonnenhöhe über Horizont">{d.sunDir && (d.sunEl ?? 0) > 0 ? `☼${d.sunDir}·${Math.round(d.sunEl ?? 0)}°` : "☼–"}</span><span className="shrink-0">{d.clock}</span></span>
       </header>
       <div className="flex flex-1 gap-1.5 pt-0.5">
       <div className="relative w-3 shrink-0 border-r border-border" role="meter" aria-label="Höhe über Grund" aria-valuemin={0} aria-valuemax={cbAgl} aria-valuenow={Math.max(0, d.agl)} aria-valuetext={`${Math.round(d.agl)} Meter über Grund`}>

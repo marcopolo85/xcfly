@@ -204,6 +204,8 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
   let entry = surfaceCache.get(t);
   if (!entry || entry.sunKey !== sunKey) surfaceCache.set(t, (entry = { sunKey, cells: new Map(), rel: new Map() }));
   const cells = entry.cells;
+  if (cells.size > 400) cells.clear();
+  if (entry.rel.size > 400) entry.rel.clear();
   let best = 0;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
     const a = cx + dx, b = cy + dy;

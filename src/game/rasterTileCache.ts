@@ -20,7 +20,7 @@ export function loadRasterTile(url: string): Promise<HTMLImageElement> {
   });
   tiles.set(url, tile);
   tile.catch(() => { if (tiles.get(url) === tile) tiles.delete(url); });
-  if (tiles.size > 160) {
+  if (tiles.size > 96) {
     const oldest = tiles.keys().next().value;
     if (oldest !== undefined) tiles.delete(oldest);
   }

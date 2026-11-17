@@ -46,6 +46,7 @@ export async function loadLaunchAltitude(point: Pick<Site, "lat" | "lon">) {
   if (!ctx) throw new Error("Geländehöhe nicht lesbar");
   ctx.drawImage(image, 0, 0);
   const pixel = ctx.getImageData(Math.floor(px) - tx * 256, Math.floor(py) - ty * 256, 1, 1).data;
+  canvas.width = 0; canvas.height = 0;
   return Math.max(0, Math.round(decodeTerrarium(pixel[0], pixel[1], pixel[2])));
 }
 
@@ -72,6 +73,7 @@ export async function loadRealTerrain(site: Site, centerX = 0, centerY = 0): Pro
     }
   }));
   const data = ctx.getImageData(0, 0, w, hgt).data;
+  canvas.width = 0; canvas.height = 0; // release bitmap memory right away
   const at = (x: number, y: number) => {
     const xi = Math.max(0, Math.min(w - 1, x)), yi = Math.max(0, Math.min(hgt - 1, y));
     const k = (yi * w + xi) * 4;
