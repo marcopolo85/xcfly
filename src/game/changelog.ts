@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-17a",
+    date: "17. Nov 2026",
+    items: ["Thermik: mehr kleinere Gipfel als Auslöser", "Soaren an besonnten Hängen", "Hangthermik unten breit, zum Gipfel enger und stärker", "Thermikschläuche lösen auch an Kanten und Rippen ab"],
+  },
+  {
     id: "2026-11-14b",
     date: "14. Nov 2026",
     items: ["Sonne: Richtung im GPS, Schirmschatten, besonnte/schattige Hänge, Sonnenstand in der Seitenansicht", "Auswertung: Flugdauer als HH:MM:SS", "Handy: Flugleiste nutzt ganze Breite, Buttons gleich hoch", "Thermikkreise zählen den Kurven-Boost mit"],

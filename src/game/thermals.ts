@@ -51,10 +51,10 @@ export function terrainPeaks(t: Terrain) {
         const a = (i / 8) * Math.PI * 2;
         const n = heightAt(t, x + Math.cos(a) * step, y + Math.sin(a) * step);
         if (n >= h) isMax = false;
-        ring += heightAt(t, x + Math.cos(a) * 350, y + Math.sin(a) * 350);
+        ring += heightAt(t, x + Math.cos(a) * 150, y + Math.sin(a) * 150);
       }
-      // Exposed summit: at least 150 m above its 350 m surroundings.
-      if (!isMax || h - ring / 8 < 150) continue;
+      // Exposed summit: at least 50 m above its 150 m surroundings.
+      if (!isMax || h - ring / 8 < 50) continue;
       const k = key(Math.floor(x / PEAK_CELL), Math.floor(y / PEAK_CELL));
       let arr = grid.get(k); if (!arr) grid.set(k, (arr = []));
       arr.push({ x, y, h, prom: h - ring / 8 });
@@ -72,10 +72,10 @@ function peakRandom(x: number, y: number) {
 }
 
 /** Summit lift (m/s): grows with height (1000→4000 m) and exposure
- * (prominence 150→600 m), plus small per-summit scatter; capped at 8 m/s. */
+ * (prominence 50→350 m), plus small per-summit scatter; capped at 8 m/s. */
 export function summitCore(p: Peak) {
   const hf = Math.max(0, Math.min(1, (p.h - 1000) / 3000));
-  const ef = Math.max(0, Math.min(1, (p.prom - 150) / 450));
+  const ef = Math.max(0, Math.min(1, (p.prom - 50) / 300));
   return Math.min(8, 3 + 3.5 * hf + 1.5 * ef + (peakRandom(p.x, p.y) - 0.5));
 }
 
@@ -89,8 +89,12 @@ export function peakLift(t: Terrain, x: number, y: number) {
     for (const p of arr) {
       const d2 = (x - p.x) ** 2 + (y - p.y) ** 2;
       if (d2 > 640000) continue;
-      const core = summitCore(p);
-      const v = core * fastExpNeg(-d2 / (250 * 250));
+      // Funnel: on the slope below the summit lift is broad and weak, it
+      // narrows and strengthens towards the top and leaves as a tight column.
+      const g = heightAt(t, x, y);
+      const frac = Math.max(0, Math.min(1, 1 - (p.h - g) / 800));
+      const r = 380 - 220 * frac;
+      const v = summitCore(p) * (0.35 + 0.65 * frac) * fastExpNeg(-d2 / (r * r));
       if (v > best) best = v;
     }
   }
@@ -169,7 +173,7 @@ export function slopeTrigger(n: { x: number; y: number; z: number }, s: { x: num
   return Math.max(0, Math.min(1, (irr - 0.45) / 0.5));
 }
 
-const surfaceCache = new WeakMap<Terrain, { sunKey: number; cells: Map<number, number> }>();
+const surfaceCache = new WeakMap<Terrain, { sunKey: number; cells: Map<number, number>; rel: Map<number, number> }>();
 /** Exposure (0 when below threshold or shaded); expensive, so cached per cell. */
 function surfaceExposure(t: Terrain, px: number, py: number, sun: { x: number; y: number; z: number }, ox: number, oy: number) {
   const exposure = slopeTrigger(normalAt(t, px, py), sun);
@@ -198,7 +202,7 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
   // Sun moves slowly: quantize so cached exposure stays valid for minutes.
   const sunKey = Math.round(sun.x * 100) * 1e6 + Math.round(sun.y * 100) * 1e3 + Math.round(sun.z * 100);
   let entry = surfaceCache.get(t);
-  if (!entry || entry.sunKey !== sunKey) surfaceCache.set(t, (entry = { sunKey, cells: new Map() }));
+  if (!entry || entry.sunKey !== sunKey) surfaceCache.set(t, (entry = { sunKey, cells: new Map(), rel: new Map() }));
   const cells = entry.cells;
   let best = 0;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -207,7 +211,11 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
     const px = (a + 0.2 + 0.6 * peakRandom(a * 200 + 1400, b * 200 - 600)) * cell;
     const py = (b + 0.2 + 0.6 * peakRandom(a * 200 - 1000, b * 200 + 2200)) * cell;
     if (Math.abs(px - ox) > EXTENT - 100 || Math.abs(py - oy) > EXTENT - 100) continue;
-    const radius = 180 + 80 * peakRandom(a * 200 + 2600, b * 200 + 1800);
+    const ck0 = (a + 5000) * 10000 + (b + 5000);
+    let rel = entry.rel.get(ck0);
+    if (rel === undefined) { rel = releaseScore(t, px, py); entry.rel.set(ck0, rel); }
+    // Release edges (ribs, slope breaks) concentrate lift into a tight column.
+    const radius = (180 + 80 * peakRandom(a * 200 + 2600, b * 200 + 1800)) * (1 - 0.35 * rel);
     const d2 = (x - px) ** 2 + (y - py) ** 2;
     if (d2 > 6.25 * radius * radius) continue;
     const ck = (a + 5000) * 10000 + (b + 5000);
@@ -218,10 +226,21 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
     }
     const exposure = cached;
     if (exposure === 0) continue;
-    const core = 3 + 2 * peakRandom(a * 200 - 1800, b * 200 - 3000);
+    const core = (3 + 2 * peakRandom(a * 200 - 1800, b * 200 - 3000)) * (0.8 + 0.5 * rel);
     best = Math.max(best, core * exposure * fastExpNeg(-d2 / (radius * radius)));
   }
   return best * fade;
+}
+
+/** Anabatic slope lift close to sunlit faces (soarable): 1–2.5 m/s within
+ * 150 m AGL, fading with height above ground. */
+export function sunlitSlopeSoar(t: Terrain, x: number, y: number, alt: number, sun: { x: number; y: number; z: number }) {
+  if (sun.z <= 0) return 0;
+  const agl = alt - heightAt(t, x, y);
+  if (agl <= 0 || agl >= 150) return 0;
+  const e = slopeTrigger(normalAt(t, x, y), sun);
+  if (e < 0.2) return 0;
+  return (1 + 1.5 * e) * (1 - agl / 150);
 }
 
 /**
@@ -236,7 +255,7 @@ export function airLift(
   const sunAmp = maxLift * Math.sqrt(Math.max(0, sun.z) / 0.87);
   const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
   let lift = 0;
-  const surface = sunlitSurfaceLift(t, x, y, alt, sun);
+  const surface = Math.max(sunlitSurfaceLift(t, x, y, alt, sun), sunlitSlopeSoar(t, x, y, alt, sun));
   if (f.raster) {
     // KK7 color scale mapped to climb rates with a deterministic random
     // offset: blue 1–3 m/s, dark red 6–9 m/s, in between the same ratio.

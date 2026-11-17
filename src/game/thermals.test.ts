@@ -77,7 +77,7 @@ describe("summit thermals", () => {
     expect(low).toBeGreaterThanOrEqual(2.5);
     expect(high).toBeLessThanOrEqual(8);
     
-    expect(summitCore({ x: 0, y: 0, h: 2500, prom: 600 })).toBeGreaterThan(summitCore({ x: 0, y: 0, h: 2500, prom: 160 }) + 1.2);
+    expect(summitCore({ x: 0, y: 0, h: 2500, prom: 350 })).toBeGreaterThan(summitCore({ x: 0, y: 0, h: 2500, prom: 50 }) + 1.2);
   });
 });
 
@@ -116,5 +116,24 @@ describe("sunlit surfaces below ridge height", () => {
   });
   it("does not fabricate lift outside loaded terrain", () => {
     expect(sunlitSurfaceLift({ ...terrain, centerX: best.x + 50000 }, best.x, best.y, 550, sun)).toBe(0);
+  });
+});
+
+import { sunlitSlopeSoar } from "./thermals";
+describe("sunlit slope soaring", () => {
+  it("lifts near a sunlit slope and stops at 150 m AGL", () => {
+    const site = SITES[0];
+    const terrain = generateTerrain(site);
+    const sun = sunVector(sunPosition(site.lat, 172, 12, true));
+    let found = false;
+    for (let x = -3000; x <= 3000 && !found; x += 100) for (let y = -3000; y <= 3000 && !found; y += 100) {
+      const g = heightAt(terrain, x, y);
+      const low = sunlitSlopeSoar(terrain, x, y, g + 20, sun);
+      if (low >= 1) {
+        found = true;
+        expect(sunlitSlopeSoar(terrain, x, y, g + 160, sun)).toBe(0);
+      }
+    }
+    expect(found).toBe(true);
   });
 });
