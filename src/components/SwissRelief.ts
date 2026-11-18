@@ -138,37 +138,89 @@ function tileImage(url: string, filter = "none", tint = "", underlayUrl?: string
 }
 
 const XC_WATER = "rgba(70, 140, 215, 0.9)";
+const XC_CACHE = "xcfly-xcrelief-v1";
+/** Hypsometric colours are smooth: DEM level 12 is enough, only the hillshade stays sharp. */
+const XC_DEM_MAX_LEVEL = 12;
 const xcCache = new Map<string, Tile>();
-/** XC Relief base: hypsometric DEM tint multiplied with swisstopo hillshade, built once per tile. */
-function xcTile(level: number, x: number, y: number): Tile {
-  const key = `${level}/${x}/${y}`;
-  const existing = xcCache.get(key);
-  if (existing && (!existing.failedAt || Date.now() - existing.failedAt < 30000)) { xcCache.delete(key); xcCache.set(key, existing); return existing; }
-  const tile: Tile = { image: null as unknown as HTMLImageElement, loaded: false, failedAt: 0 };
-  const dz = Math.max(0, level - 14), dl = level - dz;
+// Pixel tinting is spread over frames so several arriving tiles never block the animation.
+const xcQueue: (() => void)[] = [];
+let xcPumping = false;
+function pumpXc() {
+  if (xcPumping) return;
+  xcPumping = true;
+  const step = () => {
+    const end = performance.now() + 6;
+    while (xcQueue.length && performance.now() < end) xcQueue.shift()!();
+    if (xcQueue.length) requestAnimationFrame(step); else xcPumping = false;
+  };
+  requestAnimationFrame(step);
+}
+function persistXc(key: string, surface: HTMLCanvasElement) {
+  if (typeof caches === "undefined") return;
+  surface.toBlob((blob) => {
+    if (!blob) return;
+    caches.open(XC_CACHE).then((c) => c.put(`/xcrelief/${key}`, new Response(blob, { headers: { "Content-Type": blob.type } }))).catch(() => {});
+  }, "image/webp", 0.9);
+}
+function computeXc(tile: Tile, key: string, level: number, x: number, y: number) {
+  const dz = Math.max(0, level - XC_DEM_MAX_LEVEL), dl = level - dz;
   const demUrl = `https://elevation-tiles-prod.s3.amazonaws.com/terrarium/${dl}/${x >> dz}/${y >> dz}.png`;
   let relief: HTMLImageElement | null = null, dem: HTMLImageElement | null = null, pending = 2;
   const done = () => {
     if (--pending > 0) return;
     if (!dem) { tile.failedAt = Date.now(); return; }
-    const surface = document.createElement("canvas");
-    surface.width = surface.height = 256;
-    const c = surface.getContext("2d", { willReadFrequently: true });
-    if (!c) return;
-    const part = 256 >> dz, sx = (x & ((1 << dz) - 1)) * part, sy = (y & ((1 << dz) - 1)) * part;
-    c.imageSmoothingEnabled = false;
-    c.drawImage(dem, sx, sy, part, part, 0, 0, 256, 256);
-    const img = c.getImageData(0, 0, 256, 256);
-    tintTerrarium(img.data);
-    c.putImageData(img, 0, 0);
-    if (dz > 0) { c.filter = `blur(${Math.min(4, dz)}px)`; c.drawImage(surface, 0, 0); c.filter = "none"; }
-    if (relief) { c.globalCompositeOperation = "multiply"; c.drawImage(relief, 0, 0, 256, 256); c.globalCompositeOperation = "source-over"; }
-    tile.image = (relief ?? dem); tile.surface = surface; tile.loaded = true;
+    xcQueue.push(() => {
+      const surface = document.createElement("canvas");
+      surface.width = surface.height = 256;
+      const c = surface.getContext("2d", { willReadFrequently: true });
+      if (!c || !dem) return;
+      const part = 256 >> dz, sx = (x & ((1 << dz) - 1)) * part, sy = (y & ((1 << dz) - 1)) * part;
+      if (dz > 0) {
+        // Tint the small DEM source once, then upscale smoothly instead of tinting blocky pixels.
+        const src = document.createElement("canvas");
+        src.width = src.height = Math.max(1, part);
+        const sc = src.getContext("2d", { willReadFrequently: true });
+        if (!sc) return;
+        sc.drawImage(dem, sx, sy, part, part, 0, 0, part, part);
+        const img = sc.getImageData(0, 0, part, part);
+        tintTerrarium(img.data);
+        sc.putImageData(img, 0, 0);
+        c.imageSmoothingEnabled = true;
+        c.imageSmoothingQuality = "high";
+        c.drawImage(src, 0, 0, 256, 256);
+        src.width = src.height = 0;
+      } else {
+        c.drawImage(dem, 0, 0);
+        const img = c.getImageData(0, 0, 256, 256);
+        tintTerrarium(img.data);
+        c.putImageData(img, 0, 0);
+      }
+      if (relief) { c.globalCompositeOperation = "multiply"; c.drawImage(relief, 0, 0, 256, 256); c.globalCompositeOperation = "source-over"; }
+      tile.image = (relief ?? dem); tile.surface = surface; tile.loaded = true;
+      if (relief) persistXc(key, surface);
+    });
+    pumpXc();
   };
   loadImageElement(reliefTileUrl(x, y, level), (i) => { relief = i; done(); }, done);
   loadImageElement(demUrl, (i) => { dem = i; done(); }, done);
+}
+/** XC Relief base: hypsometric DEM tint multiplied with swisstopo hillshade, built once per tile and kept on the device. */
+function xcTile(level: number, x: number, y: number): Tile {
+  const key = `${level}/${x}/${y}`;
+  const existing = xcCache.get(key);
+  if (existing && (!existing.failedAt || Date.now() - existing.failedAt < 30000)) { xcCache.delete(key); xcCache.set(key, existing); return existing; }
+  const tile: Tile = { image: null as unknown as HTMLImageElement, loaded: false, failedAt: 0 };
+  const fromStore = typeof caches === "undefined" ? Promise.resolve(undefined) : caches.open(XC_CACHE).then((c) => c.match(`/xcrelief/${key}`)).catch(() => undefined);
+  fromStore.then((res) => res ? res.blob() : null).then((blob) => {
+    if (!blob) { computeXc(tile, key, level, x, y); return; }
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => { URL.revokeObjectURL(url); tile.image = image; tile.loaded = true; };
+    image.onerror = () => { URL.revokeObjectURL(url); computeXc(tile, key, level, x, y); };
+    image.src = url;
+  }).catch(() => computeXc(tile, key, level, x, y));
   xcCache.set(key, tile);
-  if (xcCache.size > 96) {
+  if (xcCache.size > 256) {
     const oldest = xcCache.keys().next().value;
     if (oldest !== undefined) { const old = xcCache.get(oldest); xcCache.delete(oldest); if (old?.surface) { old.surface.width = 0; old.surface.height = 0; } }
   }
@@ -214,6 +266,12 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Pick<Site, 
       level = p.level;
       const tile = xcTile(p.level, p.x, p.y);
       if (tile.loaded) loaded++; else if (tile.failedAt) failed++;
+      if (!tile.loaded) {
+        // Show the plain hillshade until the coloured tile is ready instead of a blank gap.
+        const base = tileImage(reliefTileUrl(p.x, p.y, p.level));
+        if (base.loaded) ctx.drawImage(base.surface ?? base.image, p.left, p.top, p.size + 0.5, p.size + 0.5);
+        continue;
+      }
       const water = tileImage(waterTileUrl(p.x, p.y, p.level), "none", XC_WATER);
       const river = tileImage(riverTileUrl(p.x, p.y, p.level), "none", XC_WATER);
       const surface = composedTile(`xc/${p.level}/${p.x}/${p.y}`, [tile, water, river]);

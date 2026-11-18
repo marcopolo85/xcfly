@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-18a",
+    date: "18. Nov 2026",
+    items: ["XC Relief: flüssigere Karte, besuchte Gebiete werden auf dem Gerät gespeichert"],
+  },
+  {
     id: "2026-11-17a",
     date: "17. Nov 2026",
     items: ["Thermik: mehr kleinere Gipfel als Auslöser", "Soaren an besonnten Hängen", "Hangthermik unten breit, zum Gipfel enger und stärker", "Thermikschläuche lösen auch an Kanten und Rippen ab", "Weniger Speicherverbrauch", "GPS: Sonnenrichtung und -höhe immer sichtbar", "Neuer Kartenstil «XC Relief» mit Höhenfarben und Gipfelnamen"],
