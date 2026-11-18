@@ -1,11 +1,14 @@
 import { reliefTileUrl, waterTileUrl, forestTileUrl, riverTileUrl, visibleReliefTiles } from "@/game/swissMap";
 import type { Site } from "@/game/sites";
 import { offlineEnabled, tileResponse } from "@/lib/offline-data";
+import { mapOrigin } from "@/game/swissMap";
+import { PEAKS, tintTerrarium } from "@/game/xcRelief";
 
-export type MapStyle = "relief" | "landeskarte" | "grau" | "luftbild" | "topo" | "osm";
+export type MapStyle = "relief" | "xcrelief" | "landeskarte" | "grau" | "luftbild" | "topo" | "osm";
 export const MAP_STYLES: { v: MapStyle; label: string; credit: string; url: (z: number, x: number, y: number) => string; fallback?: (z: number, x: number, y: number) => string }[] = [
   // swisstopo serves data only around Switzerland; `fallback` fills transparent tile areas worldwide.
   { v: "relief", label: "Relief", credit: "© swisstopo · OpenTopoMap (CC-BY-SA)", url: (z, x, y) => reliefTileUrl(x, y, z), fallback: (z, x, y) => `https://${"abc"[(x + y) % 3]}.tile.opentopomap.org/${z}/${x}/${y}.png` },
+  { v: "xcrelief", label: "XC Relief", credit: "© swisstopo · Höhen: Mapzen Terrarium (AWS)", url: (z, x, y) => reliefTileUrl(x, y, z) },
   { v: "landeskarte", label: "Landeskarte", credit: "© swisstopo · © OpenStreetMap", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/${z}/${x}/${y}.jpeg`, fallback: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png` },
   { v: "grau", label: "Landeskarte grau", credit: "© swisstopo · © OpenStreetMap © CARTO", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/3857/${z}/${x}/${y}.jpeg`, fallback: (z, x, y) => `https://${"abcd"[(x + y) % 4]}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png` },
   { v: "luftbild", label: "Luftbild", credit: "© swisstopo SWISSIMAGE · © Esri", url: (z, x, y) => `https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/${z}/${x}/${y}.jpeg`, fallback: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}.png` },
@@ -134,6 +137,67 @@ function tileImage(url: string, filter = "none", tint = "", underlayUrl?: string
   return tile;
 }
 
+const XC_WATER = "rgba(70, 140, 215, 0.9)";
+const xcCache = new Map<string, Tile>();
+/** XC Relief base: hypsometric DEM tint multiplied with swisstopo hillshade, built once per tile. */
+function xcTile(level: number, x: number, y: number): Tile {
+  const key = `${level}/${x}/${y}`;
+  const existing = xcCache.get(key);
+  if (existing && (!existing.failedAt || Date.now() - existing.failedAt < 30000)) { xcCache.delete(key); xcCache.set(key, existing); return existing; }
+  const tile: Tile = { image: null as unknown as HTMLImageElement, loaded: false, failedAt: 0 };
+  const dz = Math.max(0, level - 14), dl = level - dz;
+  const demUrl = `https://elevation-tiles-prod.s3.amazonaws.com/terrarium/${dl}/${x >> dz}/${y >> dz}.png`;
+  let relief: HTMLImageElement | null = null, dem: HTMLImageElement | null = null, pending = 2;
+  const done = () => {
+    if (--pending > 0) return;
+    if (!dem) { tile.failedAt = Date.now(); return; }
+    const surface = document.createElement("canvas");
+    surface.width = surface.height = 256;
+    const c = surface.getContext("2d", { willReadFrequently: true });
+    if (!c) return;
+    const part = 256 >> dz, sx = (x & ((1 << dz) - 1)) * part, sy = (y & ((1 << dz) - 1)) * part;
+    c.imageSmoothingEnabled = false;
+    c.drawImage(dem, sx, sy, part, part, 0, 0, 256, 256);
+    const img = c.getImageData(0, 0, 256, 256);
+    tintTerrarium(img.data);
+    c.putImageData(img, 0, 0);
+    if (dz > 0) { c.filter = `blur(${Math.min(4, dz)}px)`; c.drawImage(surface, 0, 0); c.filter = "none"; }
+    if (relief) { c.globalCompositeOperation = "multiply"; c.drawImage(relief, 0, 0, 256, 256); c.globalCompositeOperation = "source-over"; }
+    tile.image = (relief ?? dem); tile.surface = surface; tile.loaded = true;
+  };
+  loadImageElement(reliefTileUrl(x, y, level), (i) => { relief = i; done(); }, done);
+  loadImageElement(demUrl, (i) => { dem = i; done(); }, done);
+  xcCache.set(key, tile);
+  if (xcCache.size > 96) {
+    const oldest = xcCache.keys().next().value;
+    if (oldest !== undefined) { const old = xcCache.get(oldest); xcCache.delete(oldest); if (old?.surface) { old.surface.width = 0; old.surface.height = 0; } }
+  }
+  return tile;
+}
+
+function drawPeaks(ctx: CanvasRenderingContext2D, site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number, level: number) {
+  const o = mapOrigin(site), cx = o.x + x / o.scale, cy = o.y + y / o.scale, R = 6378137;
+  const placed: [number, number, number, number][] = [];
+  ctx.save();
+  ctx.font = "600 11px system-ui, sans-serif";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  for (const [name, lat, lon, h, minLevel] of PEAKS) {
+    if (level < minLevel) continue;
+    const px = R * lon * Math.PI / 180, py = R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+    const sx = width / 2 + (px - cx) * o.scale * zoom, sy = height * 0.55 - (py - cy) * o.scale * zoom;
+    if (sx < -100 || sx > width + 20 || sy < -20 || sy > height + 20) continue;
+    const text = `${name} ${h}m`, w = ctx.measureText(text).width + 14;
+    if (placed.some(([a, b, c, d]) => sx < c && sx + w > a && sy - 8 < d && sy + 8 > b)) continue;
+    placed.push([sx - 6, sy - 8, sx + w, sy + 8]);
+    ctx.fillStyle = "rgba(40,30,25,0.85)";
+    ctx.beginPath(); ctx.moveTo(sx, sy - 5); ctx.lineTo(sx + 5, sy + 4); ctx.lineTo(sx - 5, sy + 4); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.8)"; ctx.lineWidth = 3;
+    ctx.strokeText(text, sx + 8, sy); ctx.fillText(text, sx + 8, sy);
+  }
+  ctx.restore();
+}
+
 /** Browser-only tile rendering; the flight engine remains independent of the map. */
 export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Pick<Site, "lat" | "lon">, x: number, y: number, width: number, height: number, zoom: number, dpr = 1, mapStyle = activeStyle) {
   let loaded = 0, failed = 0;
@@ -144,6 +208,20 @@ export function drawSwissRelief(ctx: CanvasRenderingContext2D, site: Pick<Site, 
   const offline = offlineEnabled() && !navigator.onLine;
   const style = MAP_STYLES.find((m) => m.v === (offline ? "relief" : mapStyle)) ?? MAP_STYLES[0];
   const relief = style.v === "relief";
+  if (style.v === "xcrelief") {
+    let level = 0;
+    for (const p of visibleReliefTiles(site, x, y, width, height, zoom, dpr, 17)) {
+      level = p.level;
+      const tile = xcTile(p.level, p.x, p.y);
+      if (tile.loaded) loaded++; else if (tile.failedAt) failed++;
+      const water = tileImage(waterTileUrl(p.x, p.y, p.level), "none", XC_WATER);
+      const river = tileImage(riverTileUrl(p.x, p.y, p.level), "none", XC_WATER);
+      const surface = composedTile(`xc/${p.level}/${p.x}/${p.y}`, [tile, water, river]);
+      if (surface) ctx.drawImage(surface, p.left, p.top, p.size + 0.5, p.size + 0.5);
+    }
+    drawPeaks(ctx, site, x, y, width, height, zoom, level);
+    return { loaded, failed };
+  }
   for (const position of visibleReliefTiles(site, x, y, width, height, zoom, dpr, offline ? 12 : 17)) {
     const tile = tileImage(style.url(position.level, position.x, position.y), relief ? reliefFilter : "none", "", style.fallback?.(position.level, position.x, position.y));
     if (tile.loaded) {

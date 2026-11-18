@@ -3,7 +3,7 @@ export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
     id: "2026-11-17a",
     date: "17. Nov 2026",
-    items: ["Thermik: mehr kleinere Gipfel als Auslöser", "Soaren an besonnten Hängen", "Hangthermik unten breit, zum Gipfel enger und stärker", "Thermikschläuche lösen auch an Kanten und Rippen ab", "Weniger Speicherverbrauch", "GPS: Sonnenrichtung und -höhe immer sichtbar"],
+    items: ["Thermik: mehr kleinere Gipfel als Auslöser", "Soaren an besonnten Hängen", "Hangthermik unten breit, zum Gipfel enger und stärker", "Thermikschläuche lösen auch an Kanten und Rippen ab", "Weniger Speicherverbrauch", "GPS: Sonnenrichtung und -höhe immer sichtbar", "Neuer Kartenstil «XC Relief» mit Höhenfarben und Gipfelnamen"],
   },
   {
     id: "2026-11-14b",
