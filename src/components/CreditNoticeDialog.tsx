@@ -16,11 +16,11 @@ export function CreditNoticeDialog() {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md">
-        <DialogHeader><DialogTitle>Aktuell eingeschränkter Flugbetrieb</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Information</DialogTitle></DialogHeader>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>Aktuell eingeschränkter Flugbetrieb weil das monatliche Kontingent an Cloud-Credits aufgebraucht ist.</p>
           <p>Dies betrifft Livetracking der anderen Piloten, Ranglisten und Weekly-Task.</p>
-          <p>Der Flugmodus funktioniert weiterhin uneingeschränkt.</p>
+          <p className="font-bold text-foreground">Der Flugmodus funktioniert weiterhin uneingeschränkt.</p>
           <p>Ab dem 21. November startet der neue Abrechnungszyklus, danach sollten alle Online-Funktionen wieder wie gewohnt laufen.</p>
           <p>Ich prüfe derzeit Optimierungen, um den Datenverbrauch effizienter zu gestalten, damit die Gratis-Credits künftig der Nachfrage genügen.</p>
           <p>Wer das Projekt unterstützen möchte, kann dies gerne via «Buy me a beer» tun. Alle Buy-me-a-beer-Einnahmen werden in die Weiterentwicklung des Spiels investiert.</p>
