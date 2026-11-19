@@ -15,6 +15,7 @@ import { RouteIcon } from "./RouteIcon";
 import { LaunchMapPicker } from "./LaunchMapPicker";
 import { Leaderboard } from "./Leaderboard";
 import { InfoDialog } from "./InfoDialog";
+import { CreditNoticeDialog } from "./CreditNoticeDialog";
 import { ThermalDayViewer } from "./ThermalDayViewer";
 import { MultiTrackMap, trackColor } from "./TrackOverview";
 import { parseFlyxcLink, taskDistanceKm, type FlightTask } from "@/game/flyxcTask";
@@ -303,6 +304,7 @@ export function StartScreen({ onStart }: { onStart: (c: FlightConfig) => void })
       {overallRanking && <Leaderboard overall weekly={weeklyRanking} onClose={() => setOverallRanking(false)} />}
       {taskRanking && <Leaderboard task onClose={() => setTaskRanking(false)} />}
       {todayOpen && <TodayTracks onClose={() => setTodayOpen(false)} />}
+      <CreditNoticeDialog />
       <InfoDialog open={infoOpen} onOpenChange={setInfoOpen} />
       <ChangelogDialog open={changelogOpen} onOpenChange={setChangelogOpen} />
       <Dialog open={modeInfo !== null} onOpenChange={(v) => !v && setModeInfo(null)}>
