@@ -48,6 +48,9 @@ type Phase = "config" | "loading" | "flying" | "done" | "error";
 const STEER_DEADZONE_PX = 10;
 const STEER_RANGE_PX = 140;
 
+/** Top-3 ghost tracks per launch site, fetched once per session to save backend reads. */
+const ghostCache = new Map<string, PromiseLike<{ pilot_name: string; duration_s: number; track: unknown }[]>>();
+
 export function FlightGame() {
   const [phase, setPhase] = useState<Phase>("config");
   const [config, setConfig] = useState<FlightConfig | null>(null);
@@ -199,9 +202,12 @@ export function FlightGame() {
   const start = (c: FlightConfig) => {
     ghosts.current = [];
     if (c.mode === "xc" && !c.weekly) {
-      void supabase.from("leaderboard_entries").select("pilot_name,duration_s,track").eq("site_name", c.site.name).eq("mode", "xc").order("points", { ascending: false }).limit(3)
-        .then(({ data }) => {
-          ghosts.current = (data ?? []).flatMap((r, rank) => Array.isArray(r.track) && r.track.length >= 2
+      const cached = ghostCache.get(c.site.name);
+      const req = cached ?? supabase.from("leaderboard_entries").select("pilot_name,duration_s,track").eq("site_name", c.site.name).eq("mode", "xc").order("points", { ascending: false }).limit(3)
+        .then(({ data }) => data ?? []);
+      if (!cached) ghostCache.set(c.site.name, req);
+      void req.then((data) => {
+          ghosts.current = data.flatMap((r, rank) => Array.isArray(r.track) && r.track.length >= 2
             ? [{ name: r.pilot_name, rank, duration: r.duration_s, pts: (r.track as TrackPoint[]).map(([lat, lon, alt]) => ({ ...toLocal(c.site, lat, lon), alt: alt ?? NaN })) }] : []);
         });
     }

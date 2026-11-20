@@ -31,10 +31,18 @@ function FlightStats() {
   const [stats, setStats] = useState<{ total: number; unranked: number; pilots: number; hours: number } | null>(null);
   useEffect(() => {
     let cancelled = false;
+    const KEY = "xcfly-stats-cache";
+    try {
+      const c = JSON.parse(sessionStorage.getItem(KEY) ?? "null") as { t: number; v: { total: number; unranked: number; pilots: number; hours: number } } | null;
+      if (c && Date.now() - c.t < 30 * 60_000) { setStats(c.v); return; }
+    } catch { /* ignore */ }
     supabase.rpc("flight_summary_with_hours").then(({ data, error }) => {
       if (cancelled || error || !data) return;
       const row = Array.isArray(data) ? data[0] : data;
-      if (row) setStats({ total: Number(row.flights_total), unranked: Number(row.flights_unranked), pilots: Number(row.pilots), hours: Number(row.flight_hours) });
+      if (!row) return;
+      const v = { total: Number(row.flights_total), unranked: Number(row.flights_unranked), pilots: Number(row.pilots), hours: Number(row.flight_hours) };
+      setStats(v);
+      try { sessionStorage.setItem(KEY, JSON.stringify({ t: Date.now(), v })); } catch { /* ignore */ }
     });
     return () => { cancelled = true; };
   }, []);
@@ -55,7 +63,7 @@ function TodayTracks({ onClose }: { onClose: () => void }) {
   const [listOpen, setListOpen] = useState(true);
   useEffect(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0);
-    supabase.from("leaderboard_entries").select("pilot_name, distance_km, points, track").gte("created_at", d.toISOString()).order("points", { ascending: false }).limit(200).then(({ data }) => {
+    supabase.from("leaderboard_entries").select("pilot_name, distance_km, points, track").gte("created_at", d.toISOString()).order("points", { ascending: false }).limit(30).then(({ data }) => {
       const all = (data ?? []) as unknown as (Omit<TodayRow, "track"> & { track: TrackPoint[] | null })[];
       setRows(all.filter((r) => Array.isArray(r.track) && r.track.length >= 2) as TodayRow[]);
     });

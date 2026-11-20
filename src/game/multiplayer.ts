@@ -4,7 +4,7 @@ export interface PilotPacket { id: string; name: string; lat: number; lon: numbe
 /** Display state (dx/dy/dh/da) is advanced every frame and eased towards the extrapolated packet. */
 export interface RemotePilot extends PilotPacket { seen: number; px?: number; py?: number; dx?: number | undefined; dy?: number | undefined; dh?: number | undefined; da?: number | undefined; trail?: { x: number; y: number }[] }
 
-export const SEND_INTERVAL_MS = 250;
+export const SEND_INTERVAL_MS = 1000;
 /** Never extrapolate further than this past the last packet (lost connection, landed). */
 export const MAX_EXTRAPOLATION_S = 2;
 const EASE_S = 0.15;
