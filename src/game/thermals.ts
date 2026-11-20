@@ -79,7 +79,27 @@ export function summitCore(p: Peak) {
   return Math.min(8, 3 + 3.5 * hf + 1.5 * ef + (peakRandom(p.x, p.y) - 0.5));
 }
 
-export function peakLift(t: Terrain, x: number, y: number) {
+const catchCache = new WeakMap<Terrain, { sunKey: number; m: Map<Peak, number> }>();
+/** Solar catchment (0.55..1.35): share of the summit's flanks (300 m and 600 m
+ * below/around it) facing the sun. Large sunlit faces feed a stronger column. */
+export function summitCatchment(t: Terrain, p: Peak, sun: { x: number; y: number; z: number }) {
+  if (sun.z <= 0) return 0.55;
+  const sunKey = Math.round(sun.x * 50) * 1e6 + Math.round(sun.y * 50) * 1e3 + Math.round(sun.z * 50);
+  let e = catchCache.get(t);
+  if (!e || e.sunKey !== sunKey) catchCache.set(t, (e = { sunKey, m: new Map() }));
+  const c = e.m.get(p);
+  if (c !== undefined) return c;
+  let sum = 0;
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2, cs = Math.cos(a), sn = Math.sin(a);
+    for (const d of [300, 600]) sum += slopeTrigger(normalAt(t, p.x + cs * d, p.y + sn * d), sun);
+  }
+  const v = 0.55 + 0.8 * Math.min(1, (sum / 16) / 0.5);
+  e.m.set(p, v);
+  return v;
+}
+
+export function peakLift(t: Terrain, x: number, y: number, sun?: { x: number; y: number; z: number }) {
   const grid = terrainPeaks(t);
   const cx = Math.floor(x / PEAK_CELL), cy = Math.floor(y / PEAK_CELL);
   let best = 0;
@@ -94,7 +114,7 @@ export function peakLift(t: Terrain, x: number, y: number) {
       const g = heightAt(t, x, y);
       const frac = Math.max(0, Math.min(1, 1 - (p.h - g) / 800));
       const r = 380 - 220 * frac;
-      const v = summitCore(p) * (0.35 + 0.65 * frac) * fastExpNeg(-d2 / (r * r));
+      const v = Math.min(8.5, summitCore(p) * (sun ? summitCatchment(t, p, sun) : 1)) * (0.35 + 0.65 * frac) * fastExpNeg(-d2 / (r * r));
       if (v > best) best = v;
     }
   }
@@ -228,7 +248,8 @@ export function sunlitSurfaceLift(t: Terrain, x: number, y: number, alt: number,
     }
     const exposure = cached;
     if (exposure === 0) continue;
-    const core = (3 + 2 * peakRandom(a * 200 - 1800, b * 200 - 3000)) * (0.8 + 0.5 * rel);
+    const hf = 1 + 0.5 * Math.max(0, Math.min(1, (heightAt(t, px, py) - 1000) / 2000));
+    const core = (3 + 2 * peakRandom(a * 200 - 1800, b * 200 - 3000)) * (0.8 + 0.5 * rel) * hf;
     best = Math.max(best, core * exposure * fastExpNeg(-d2 / (radius * radius)));
   }
   return best * fade;
@@ -242,7 +263,9 @@ export function sunlitSlopeSoar(t: Terrain, x: number, y: number, alt: number, s
   if (agl <= 0 || agl >= 150) return 0;
   const e = slopeTrigger(normalAt(t, x, y), sun);
   if (e < 0.2) return 0;
-  return (1 + 1.5 * e) * (1 - agl / 150);
+  // High alpine faces heat more (thin air, large rock surfaces): ×1 at 1000 m, ×1.6 at 3000 m.
+  const hf = 1 + 0.6 * Math.max(0, Math.min(1, (alt - agl - 1000) / 2000));
+  return (1 + 1.5 * e) * hf * (1 - agl / 150);
 }
 
 /**
@@ -266,7 +289,7 @@ export function airLift(
     const shadeSink = local < 0.05 ? -0.55 : -0.15;
     if (sun.z <= 0) return shadeSink;
     const fadeP = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
-    const summit = peakLift(t, x, y) * Math.sqrt(Math.max(0, sun.z) / 0.87) * fadeP;
+    const summit = peakLift(t, x, y, sun) * Math.sqrt(Math.max(0, sun.z) / 0.87) * fadeP;
     if (heat <= 0) return Math.max(summit, surface) > 0.3 ? Math.max(summit, surface) : shadeSink;
     const t01 = Math.max(0, Math.min(1, (heat - 0.1) / 0.9));
     const fade = Math.max(0, Math.min(1, (cloudbaseAt(t, x, y) - alt) / 200));
@@ -294,6 +317,6 @@ export function airLift(
   lift *= Math.max(0, Math.min(1, (cb - alt) / 200));
   const local = slopeTrigger(normalAt(t, x, y), sun);
   const shadeSink = local < 0.05 ? -0.55 : -0.15;
-  const summit = peakLift(t, x, y) * Math.sqrt(Math.max(0, sun.z) / 0.87) * Math.max(0, Math.min(1, (cb - alt) / 200));
+  const summit = peakLift(t, x, y, sun) * Math.sqrt(Math.max(0, sun.z) / 0.87) * Math.max(0, Math.min(1, (cb - alt) / 200));
   return Math.max(summit, surface, Math.min(maxLift * 1.5, lift) + shadeSink);
 }

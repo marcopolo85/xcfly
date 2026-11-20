@@ -1,6 +1,11 @@
 /** Newest first. Add a new entry at the top for each relevant update; its id makes the button glow. */
 export const CHANGELOG: { id: string; date: string; items: string[] }[] = [
   {
+    id: "2026-11-21a",
+    date: "21. Nov 2026",
+    items: ["Thermik: Gipfel mit grossen Sonnenflanken steigen stärker", "Hochgebirgshänge liefern kräftigere Aufwinde"],
+  },
+  {
     id: "2026-11-18a",
     date: "18. Nov 2026",
     items: ["XC Relief: flüssigere Karte, besuchte Gebiete werden auf dem Gerät gespeichert"],
